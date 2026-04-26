@@ -20,6 +20,7 @@ import {
 import Link from "next/link";
 import * as React from "react";
 import { toast } from "sonner";
+import { QuickAddTask } from "@/components/projects/quick-add-task";
 import { TaskDetailPanel } from "@/components/projects/task-detail-panel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +33,11 @@ import { trpc } from "@/trpc/client";
 
 const PRIORITY_CONFIG: Record<
 	string,
-	{ icon: React.ComponentType<{ className?: string }>; label: string; color: string }
+	{
+		icon: React.ComponentType<{ className?: string }>;
+		label: string;
+		color: string;
+	}
 > = {
 	urgent: { icon: AlertCircleIcon, label: "Urgent", color: "text-red-500" },
 	high: { icon: ArrowUpIcon, label: "High", color: "text-orange-500" },
@@ -90,11 +95,13 @@ export function MyTasksView(): React.JSX.Element {
 	const utils = trpc.useUtils();
 
 	const includeCompleted = tab === "completed";
-	const { data: tasks, isLoading } =
-		trpc.organization.task.listForOrg.useQuery({
+	const { data: tasks, isLoading } = trpc.organization.task.listForOrg.useQuery(
+		{
 			onlyMine: true,
 			includeCompleted,
-		});
+		},
+	);
+	const { data: projects } = trpc.organization.project.list.useQuery();
 
 	const bulkComplete = trpc.organization.task.bulkComplete.useMutation({
 		onSuccess: (res) => {
@@ -140,7 +147,9 @@ export function MyTasksView(): React.JSX.Element {
 		}));
 
 		const isOpen = (t: MyTask) =>
-			!t.completedAt && t.status?.type !== "done" && t.status?.type !== "cancelled";
+			!t.completedAt &&
+			t.status?.type !== "done" &&
+			t.status?.type !== "cancelled";
 
 		switch (tab) {
 			case "today":
@@ -152,9 +161,7 @@ export function MyTasksView(): React.JSX.Element {
 							(isPast(t.dueDate) && t.dueDate >= new Date(0))),
 				);
 			case "upcoming":
-				return typed.filter(
-					(t) => isOpen(t) && t.dueDate && t.dueDate > today,
-				);
+				return typed.filter((t) => isOpen(t) && t.dueDate && t.dueDate > today);
 			case "completed":
 				return typed.filter((t) => t.completedAt !== null);
 			default:
@@ -169,15 +176,21 @@ export function MyTasksView(): React.JSX.Element {
 	);
 
 	const openIds = React.useMemo(
-		() =>
-			new Set(
-				filteredTasks.filter((t) => !t.completedAt).map((t) => t.id),
-			),
+		() => new Set(filteredTasks.filter((t) => !t.completedAt).map((t) => t.id)),
 		[filteredTasks],
 	);
 	const selectedOpenCount = React.useMemo(
 		() => Array.from(selectedIds).filter((id) => openIds.has(id)).length,
 		[selectedIds, openIds],
+	);
+	const projectOptions = React.useMemo(
+		() =>
+			(projects ?? []).map((project) => ({
+				id: project.id,
+				name: project.name,
+				color: project.color,
+			})),
+		[projects],
 	);
 
 	const handleBulkComplete = () => {
@@ -258,12 +271,20 @@ export function MyTasksView(): React.JSX.Element {
 				})}
 			</div>
 
+			<div className="border-b bg-muted/10 px-4 py-2 sm:px-6">
+				<QuickAddTask
+					projectOptions={projectOptions}
+					placeholder="Add a task..."
+					buttonLabel="Create"
+				/>
+			</div>
+
 			{/* Bulk action bar */}
 			{selectedOpenCount > 0 && (
 				<div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-4 py-2 sm:px-6">
 					<span className="text-sm">
-						<span className="font-medium">{selectedOpenCount}</span>{" "}
-						task{selectedOpenCount === 1 ? "" : "s"} selected
+						<span className="font-medium">{selectedOpenCount}</span> task
+						{selectedOpenCount === 1 ? "" : "s"} selected
 					</span>
 					<div className="flex items-center gap-2">
 						<Button
@@ -303,9 +324,7 @@ export function MyTasksView(): React.JSX.Element {
 							<GroupSection
 								group={group}
 								key={group.key}
-								onBulkComplete={(ids) =>
-									bulkComplete.mutate({ ids })
-								}
+								onBulkComplete={(ids) => bulkComplete.mutate({ ids })}
 								onSelect={toggleSelect}
 								onSelectGroup={selectGroup}
 								onSelectTask={setSelectedTaskId}
@@ -498,12 +517,9 @@ function groupTasks(tasks: MyTask[], groupBy: GroupBy): Group[] {
 	});
 	if (buckets.overdue!.length)
 		groups.push(mk("overdue", "Overdue", buckets.overdue!));
-	if (buckets.today!.length)
-		groups.push(mk("today", "Today", buckets.today!));
-	if (buckets.week!.length)
-		groups.push(mk("week", "This week", buckets.week!));
-	if (buckets.later!.length)
-		groups.push(mk("later", "Later", buckets.later!));
+	if (buckets.today!.length) groups.push(mk("today", "Today", buckets.today!));
+	if (buckets.week!.length) groups.push(mk("week", "This week", buckets.week!));
+	if (buckets.later!.length) groups.push(mk("later", "Later", buckets.later!));
 	if (buckets.none!.length)
 		groups.push(mk("none", "No due date", buckets.none!));
 	return groups;
@@ -534,8 +550,7 @@ function GroupSection({
 		.filter((t) => !t.completedAt)
 		.map((t) => t.id);
 	const allSelected =
-		groupOpenIds.length > 0 &&
-		groupOpenIds.every((id) => selectedIds.has(id));
+		groupOpenIds.length > 0 && groupOpenIds.every((id) => selectedIds.has(id));
 
 	return (
 		<div>
@@ -606,12 +621,7 @@ interface TaskRowProps {
 	onSelectTask: (taskId: string) => void;
 }
 
-function TaskRow({
-	task,
-	isSelected,
-	onSelect,
-	onSelectTask,
-}: TaskRowProps) {
+function TaskRow({ task, isSelected, onSelect, onSelectTask }: TaskRowProps) {
 	const StatusIcon =
 		STATUS_TYPE_ICONS[task.status?.type ?? "todo"] ?? CircleIcon;
 	const priorityConfig = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.none;
@@ -619,7 +629,10 @@ function TaskRow({
 	const priorityColor = priorityConfig?.color ?? "text-muted-foreground";
 	const isDone = task.status?.type === "done" || task.completedAt !== null;
 	const isOverdue =
-		!isDone && task.dueDate != null && isPast(task.dueDate) && !isToday(task.dueDate);
+		!isDone &&
+		task.dueDate != null &&
+		isPast(task.dueDate) &&
+		!isToday(task.dueDate);
 
 	return (
 		<div
@@ -648,9 +661,7 @@ function TaskRow({
 					)}
 				/>
 
-				<PriorityIcon
-					className={cn("size-3.5 shrink-0", priorityColor)}
-				/>
+				<PriorityIcon className={cn("size-3.5 shrink-0", priorityColor)} />
 
 				<span
 					className={cn(
@@ -671,9 +682,7 @@ function TaskRow({
 						className="h-1.5 w-1.5 rounded-full"
 						style={{ backgroundColor: task.project.color }}
 					/>
-					<span className="max-w-56 truncate">
-						{task.project.name}
-					</span>
+					<span className="max-w-56 truncate">{task.project.name}</span>
 				</Link>
 			</button>
 

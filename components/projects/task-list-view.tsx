@@ -24,6 +24,7 @@ import {
 	STATUS_TYPE_ICON,
 	StatusPicker,
 } from "@/components/projects/pickers/status-picker";
+import { QuickAddTask } from "@/components/projects/quick-add-task";
 import { TaskDetailPanel } from "@/components/projects/task-detail-panel";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,8 +32,8 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import type { TaskStatusType } from "@/lib/db/schema/enums";
+import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 
 interface TaskItem {
@@ -45,7 +46,11 @@ interface TaskItem {
 	status: { type: string; color: string; name: string } | null;
 	assignee: { id: string; name: string; image: string | null } | null;
 	labels: Array<{ labelId: string; label: { name: string; color: string } }>;
-	subtasks: Array<{ id: string; title: string; status: { type: string } | null }>;
+	subtasks: Array<{
+		id: string;
+		title: string;
+		status: { type: string } | null;
+	}>;
 }
 
 interface TaskFilters {
@@ -58,7 +63,9 @@ interface TaskListViewProps {
 	projectId: string;
 }
 
-export function TaskListView({ projectId }: TaskListViewProps): React.JSX.Element {
+export function TaskListView({
+	projectId,
+}: TaskListViewProps): React.JSX.Element {
 	const [createOpen, setCreateOpen] = React.useState(false);
 	const [selectedTaskId, setSelectedTaskId] = React.useState<string | null>(
 		null,
@@ -99,10 +106,12 @@ export function TaskListView({ projectId }: TaskListViewProps): React.JSX.Elemen
 	>([]);
 	React.useEffect(() => {
 		if (project?.members) {
-			projectMembersRef.current = project.members as typeof projectMembersRef.current;
+			projectMembersRef.current =
+				project.members as typeof projectMembersRef.current;
 		}
 		if (project?.taskStatuses) {
-			projectStatusesRef.current = project.taskStatuses as typeof projectStatusesRef.current;
+			projectStatusesRef.current =
+				project.taskStatuses as typeof projectStatusesRef.current;
 		}
 	}, [project?.members, project?.taskStatuses]);
 
@@ -135,7 +144,8 @@ export function TaskListView({ projectId }: TaskListViewProps): React.JSX.Elemen
 			return { previous };
 		},
 		onError: (err, _vars, ctx) => {
-			if (ctx?.previous) utils.organization.task.list.setData(listKey, ctx.previous);
+			if (ctx?.previous)
+				utils.organization.task.list.setData(listKey, ctx.previous);
 			toast.error(err.message);
 		},
 		onSettled: invalidate,
@@ -153,7 +163,8 @@ export function TaskListView({ projectId }: TaskListViewProps): React.JSX.Elemen
 					if (vars.title !== undefined) patched.title = vars.title;
 					if (vars.priority !== undefined)
 						patched.priority = vars.priority as typeof t.priority;
-					if (vars.dueDate !== undefined) patched.dueDate = vars.dueDate ?? null;
+					if (vars.dueDate !== undefined)
+						patched.dueDate = vars.dueDate ?? null;
 					if (vars.startDate !== undefined)
 						patched.startDate = vars.startDate ?? null;
 					if (vars.assigneeId !== undefined) {
@@ -175,7 +186,8 @@ export function TaskListView({ projectId }: TaskListViewProps): React.JSX.Elemen
 			return { previous };
 		},
 		onError: (err, _vars, ctx) => {
-			if (ctx?.previous) utils.organization.task.list.setData(listKey, ctx.previous);
+			if (ctx?.previous)
+				utils.organization.task.list.setData(listKey, ctx.previous);
 			toast.error(err.message);
 		},
 		onSettled: invalidate,
@@ -194,7 +206,10 @@ export function TaskListView({ projectId }: TaskListViewProps): React.JSX.Elemen
 		[project?.members],
 	);
 
-	const handleStatusToggle = (taskId: string, _currentStatusId: string | null) => {
+	const handleStatusToggle = (
+		taskId: string,
+		_currentStatusId: string | null,
+	) => {
 		const task = tasks?.find((t) => t.id === taskId);
 		if (!task) return;
 
@@ -313,11 +328,7 @@ export function TaskListView({ projectId }: TaskListViewProps): React.JSX.Elemen
 		<div className="flex h-full flex-col">
 			{/* Toolbar */}
 			<div className="flex items-center gap-2 border-b px-4 py-2">
-				<Button
-					onClick={() => setCreateOpen(true)}
-					size="sm"
-					variant="outline"
-				>
+				<Button onClick={() => setCreateOpen(true)} size="sm" variant="outline">
 					<PlusIcon className="mr-1 size-3.5" />
 					Add Task
 				</Button>
@@ -340,6 +351,13 @@ export function TaskListView({ projectId }: TaskListViewProps): React.JSX.Elemen
 						Clear
 					</Button>
 				)}
+			</div>
+
+			<div className="border-b bg-muted/10 px-4 py-2">
+				<QuickAddTask
+					projectId={projectId}
+					placeholder="Add a task to this project..."
+				/>
 			</div>
 
 			{/* Task list */}
@@ -379,6 +397,7 @@ export function TaskListView({ projectId }: TaskListViewProps): React.JSX.Elemen
 								updateStatus.mutate({ id: taskId, statusId })
 							}
 							memberCandidates={projectMemberCandidates}
+							projectId={projectId}
 							statusOptions={project?.taskStatuses ?? []}
 							status={status}
 							tasks={groupTasks}
@@ -587,18 +606,21 @@ interface StatusGroupProps {
 		},
 	) => void;
 	onUpdateStatus: (taskId: string, statusId: string | null) => void;
-	memberCandidates: Array<{
-		userId: string;
-		name: string;
-		email?: string | null;
-		image: string | null;
-	}> | undefined;
+	memberCandidates:
+		| Array<{
+				userId: string;
+				name: string;
+				email?: string | null;
+				image: string | null;
+		  }>
+		| undefined;
 	statusOptions: Array<{
 		id: string;
 		name: string;
 		color: string;
 		type: string;
 	}>;
+	projectId: string;
 }
 
 function StatusGroup({
@@ -610,6 +632,7 @@ function StatusGroup({
 	onUpdateStatus,
 	memberCandidates,
 	statusOptions,
+	projectId,
 }: StatusGroupProps) {
 	const [collapsed, setCollapsed] = React.useState(false);
 
@@ -646,6 +669,15 @@ function StatusGroup({
 						task={task}
 					/>
 				))}
+			{!collapsed && (
+				<div className="border-b bg-muted/5 px-4 py-2 pl-11">
+					<QuickAddTask
+						projectId={projectId}
+						statusId={status.id === "__none__" ? null : status.id}
+						placeholder={`Add task to ${status.name}...`}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }
@@ -665,12 +697,14 @@ interface TaskRowProps {
 		},
 	) => void;
 	onUpdateStatus: (taskId: string, statusId: string | null) => void;
-	memberCandidates: Array<{
-		userId: string;
-		name: string;
-		email?: string | null;
-		image: string | null;
-	}> | undefined;
+	memberCandidates:
+		| Array<{
+				userId: string;
+				name: string;
+				email?: string | null;
+				image: string | null;
+		  }>
+		| undefined;
 	statusOptions: Array<{
 		id: string;
 		name: string;
@@ -689,7 +723,8 @@ function TaskRow({
 	statusOptions,
 }: TaskRowProps) {
 	const [expanded, setExpanded] = React.useState(false);
-	const StatusIcon = STATUS_TYPE_ICON[task.status?.type ?? "todo"] ?? CircleIcon;
+	const StatusIcon =
+		STATUS_TYPE_ICON[task.status?.type ?? "todo"] ?? CircleIcon;
 	const isDone = task.status?.type === "done";
 
 	// Stop the row click handler from firing when users interact with an inline
@@ -824,9 +859,7 @@ function TaskRow({
 				<div data-stop-open="">
 					<AssigneePicker
 						value={task.assigneeId}
-						onChange={(userId) =>
-							onUpdateTask(task.id, { assigneeId: userId })
-						}
+						onChange={(userId) => onUpdateTask(task.id, { assigneeId: userId })}
 						candidates={memberCandidates}
 						currentUser={
 							task.assignee

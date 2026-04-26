@@ -14,6 +14,7 @@ import {
 import { Loader2Icon, PlusIcon } from "lucide-react";
 import * as React from "react";
 import { CreateTaskDialog } from "@/components/projects/create-task-dialog";
+import { QuickAddTask } from "@/components/projects/quick-add-task";
 import { TaskDetailPanel } from "@/components/projects/task-detail-panel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,9 @@ export function TaskBoardView({
 	projectId,
 }: TaskBoardViewProps): React.JSX.Element {
 	const [createOpen, setCreateOpen] = React.useState(false);
-	const [createStatusId, setCreateStatusId] = React.useState<string | undefined>();
+	const [createStatusId, setCreateStatusId] = React.useState<
+		string | undefined
+	>();
 	const [selectedTaskId, setSelectedTaskId] = React.useState<string | null>(
 		null,
 	);
@@ -140,11 +143,7 @@ export function TaskBoardView({
 		<div className="flex h-full flex-col">
 			{/* Toolbar */}
 			<div className="flex items-center gap-2 border-b px-4 py-2">
-				<Button
-					onClick={() => setCreateOpen(true)}
-					size="sm"
-					variant="outline"
-				>
+				<Button onClick={() => setCreateOpen(true)} size="sm" variant="outline">
 					<PlusIcon className="mr-1 size-3.5" />
 					Add Task
 				</Button>
@@ -164,6 +163,7 @@ export function TaskBoardView({
 						return (
 							<BoardColumn
 								key={status.id}
+								projectId={projectId}
 								status={status}
 								taskCount={columnTasks.length}
 								onAddTask={() => {
@@ -191,6 +191,7 @@ export function TaskBoardView({
 						if (unassigned.length === 0) return null;
 						return (
 							<BoardColumn
+								projectId={projectId}
 								status={{
 									id: "none",
 									name: "No Status",
@@ -246,6 +247,7 @@ interface BoardColumnProps {
 	status: { id: string; name: string; color: string; type: string };
 	taskCount: number;
 	onAddTask?: () => void;
+	projectId: string;
 	children: React.ReactNode;
 }
 
@@ -253,6 +255,7 @@ function BoardColumn({
 	status,
 	taskCount,
 	onAddTask,
+	projectId,
 	children,
 }: BoardColumnProps) {
 	const { setNodeRef, isOver } = useDroppable({ id: `col:${status.id}` });
@@ -285,7 +288,17 @@ function BoardColumn({
 				)}
 			</div>
 
-			<div className="flex min-h-10 flex-col gap-2 px-1 pb-1">{children}</div>
+			<div className="flex min-h-10 flex-col gap-2 px-1 pb-1">
+				{children}
+				<QuickAddTask
+					buttonLabel="Add"
+					className="rounded-md bg-muted/20 px-2 py-1"
+					inputClassName="text-xs"
+					projectId={projectId}
+					statusId={status.id === "none" ? null : status.id}
+					placeholder={`Add task...`}
+				/>
+			</div>
 		</div>
 	);
 }

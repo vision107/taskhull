@@ -19,6 +19,7 @@ import {
 } from "date-fns";
 import * as React from "react";
 import { toast } from "sonner";
+import { QuickAddTask } from "@/components/projects/quick-add-task";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 
@@ -67,11 +68,7 @@ const HEADER_HEIGHT = 48;
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
-function getDateColumns(
-	start: Date,
-	end: Date,
-	scale: TimeScale,
-): Date[] {
+function getDateColumns(start: Date, end: Date, scale: TimeScale): Date[] {
 	switch (scale) {
 		case "day":
 			return eachDayOfInterval({ start, end });
@@ -126,8 +123,7 @@ export function GanttChart({
 
 	const utils = trpc.useUtils();
 	const updateTask = trpc.organization.task.update.useMutation({
-		onSuccess: () =>
-			utils.organization.task.list.invalidate({ projectId }),
+		onSuccess: () => utils.organization.task.list.invalidate({ projectId }),
 		onError: (err) => toast.error(err.message),
 	});
 
@@ -169,6 +165,31 @@ export function GanttChart({
 		[viewStart, scale, colWidth],
 	);
 
+	const xToDate = React.useCallback(
+		(x: number): Date => {
+			switch (scale) {
+				case "day":
+					return addDays(viewStart, Math.round(x / colWidth));
+				case "week":
+					return addDays(viewStart, Math.round((x / colWidth) * 7));
+				case "month":
+					return addDays(viewStart, Math.round((x / colWidth) * 30.44));
+			}
+		},
+		[viewStart, scale, colWidth],
+	);
+
+	const scheduleTaskAtPointer = (
+		e: React.MouseEvent<SVGRectElement>,
+		task: GanttTask,
+	) => {
+		if (task.startDate || task.dueDate) return;
+		const rect = e.currentTarget.getBoundingClientRect();
+		const x = ((e.clientX - rect.left) / rect.width) * totalWidth;
+		const date = startOfDay(xToDate(x));
+		updateTask.mutate({ id: task.id, startDate: date, dueDate: date });
+	};
+
 	// ─── Drag handlers ────────────────────────────────────────────────────────
 
 	const onMouseDown = (
@@ -176,15 +197,17 @@ export function GanttChart({
 		task: GanttTask,
 		type: "move" | "resize-start" | "resize-end",
 	) => {
-		if (!task.startDate || !task.dueDate) return;
+		const resolvedStart = task.startDate ?? task.dueDate;
+		const resolvedEnd = task.dueDate ?? task.startDate;
+		if (!resolvedStart || !resolvedEnd) return;
 		e.preventDefault();
 		e.stopPropagation();
 		isDragging.current = {
 			taskId: task.id,
 			type,
 			startX: e.clientX,
-			origStart: task.startDate,
-			origEnd: task.dueDate,
+			origStart: resolvedStart,
+			origEnd: resolvedEnd,
 		};
 	};
 
@@ -243,7 +266,8 @@ export function GanttChart({
 	// ─── Group header labels ─────────────────────────────────────────────────
 
 	const groupHeaders = React.useMemo(() => {
-		const groups: Array<{ label: string; startIdx: number; count: number }> = [];
+		const groups: Array<{ label: string; startIdx: number; count: number }> =
+			[];
 		let currentGroup = "";
 		let currentStart = 0;
 		let currentCount = 0;
@@ -252,7 +276,11 @@ export function GanttChart({
 			const label = getGroupLabel(date, scale);
 			if (label !== currentGroup) {
 				if (currentGroup) {
-					groups.push({ label: currentGroup, startIdx: currentStart, count: currentCount });
+					groups.push({
+						label: currentGroup,
+						startIdx: currentStart,
+						count: currentCount,
+					});
 				}
 				currentGroup = label;
 				currentStart = idx;
@@ -262,7 +290,11 @@ export function GanttChart({
 			}
 		});
 		if (currentGroup) {
-			groups.push({ label: currentGroup, startIdx: currentStart, count: currentCount });
+			groups.push({
+				label: currentGroup,
+				startIdx: currentStart,
+				count: currentCount,
+			});
 		}
 		return groups;
 	}, [columns, scale]);
@@ -301,7 +333,7 @@ export function GanttChart({
 	return (
 		<div className="flex h-full flex-col">
 			{/* Controls */}
-			<div className="flex items-center gap-2 border-b px-4 py-2">
+			<div className="flex flex-wrap items-center gap-2 border-b px-4 py-2">
 				<div className="flex rounded-md border">
 					{(["day", "week", "month"] as TimeScale[]).map((s) => (
 						<button
@@ -368,6 +400,11 @@ export function GanttChart({
 						Forward →
 					</button>
 				</div>
+				<QuickAddTask
+					className="ml-auto min-w-72 flex-1 border-solid"
+					projectId={projectId}
+					placeholder="Add unscheduled task..."
+				/>
 			</div>
 
 			{/* Main Gantt area */}
@@ -388,23 +425,31 @@ export function GanttChart({
 							</span>
 						</div>
 					</div>
-					{tasks.map((task) => (
-						<button
-							className="flex w-full cursor-pointer items-center gap-2 border-b px-3 text-left hover:bg-muted/30"
-							key={task.id}
-							onClick={() => onTaskSelect(task.id)}
-							style={{ height: ROW_HEIGHT }}
-							type="button"
-						>
-							{task.status && (
-								<span
-									className="h-2 w-2 shrink-0 rounded-full"
-									style={{ backgroundColor: task.status.color }}
-								/>
-							)}
-							<span className="truncate text-xs">{task.title}</span>
-						</button>
-					))}
+					{tasks.map((task) => {
+						const isUnscheduled = !task.startDate && !task.dueDate;
+						return (
+							<button
+								className="flex w-full cursor-pointer items-center gap-2 border-b px-3 text-left hover:bg-muted/30"
+								key={task.id}
+								onClick={() => onTaskSelect(task.id)}
+								style={{ height: ROW_HEIGHT }}
+								type="button"
+							>
+								{task.status && (
+									<span
+										className="h-2 w-2 shrink-0 rounded-full"
+										style={{ backgroundColor: task.status.color }}
+									/>
+								)}
+								<span className="truncate text-xs">{task.title}</span>
+								{isUnscheduled && (
+									<span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+										Unscheduled
+									</span>
+								)}
+							</button>
+						);
+					})}
 				</div>
 
 				{/* Scrollable chart area */}
@@ -501,6 +546,36 @@ export function GanttChart({
 								/>
 							))}
 
+							{/* Click-to-schedule lane for undated tasks */}
+							{tasks.map((task, idx) => {
+								if (task.startDate || task.dueDate) return null;
+								return (
+									<g key={`schedule-${task.id}`}>
+										<rect
+											className="fill-primary/0 hover:fill-primary/5"
+											height={ROW_HEIGHT}
+											onClick={(e) => scheduleTaskAtPointer(e, task)}
+											role="button"
+											tabIndex={0}
+											width={totalWidth}
+											x={0}
+											y={idx * ROW_HEIGHT}
+										/>
+										<foreignObject
+											height={ROW_HEIGHT}
+											pointerEvents="none"
+											width={240}
+											x={8}
+											y={idx * ROW_HEIGHT}
+										>
+											<div className="flex h-full items-center text-[11px] text-muted-foreground">
+												Click the timeline to schedule
+											</div>
+										</foreignObject>
+									</g>
+								);
+							})}
+
 							{/* Today line */}
 							{(() => {
 								const todayX = dateToX(new Date()) + colWidth / 2;
@@ -551,27 +626,26 @@ export function GanttChart({
 
 							{/* Task bars */}
 							{tasks.map((task, idx) => {
-								if (!task.startDate || !task.dueDate) {
+								const barStart = task.startDate ?? task.dueDate;
+								const barEnd = task.dueDate ?? task.startDate;
+								if (!barStart || !barEnd) {
 									return null;
 								}
 
-								const x = dateToX(task.startDate);
-								const endX = dateToX(task.dueDate) + colWidth;
+								const x = dateToX(barStart);
+								const endX = dateToX(barEnd) + colWidth;
 								const barWidth = Math.max(endX - x, colWidth);
 								const y = idx * ROW_HEIGHT + 6;
 								const barHeight = ROW_HEIGHT - 12;
 								const isDone = task.status?.type === "done";
-								const isOverdue =
-									!isDone && task.dueDate < new Date();
+								const isOverdue = !isDone && barEnd < new Date();
 
 								const barColor = task.status?.color ?? "#6366f1";
 
 								return (
 									<g
 										key={task.id}
-										onMouseDown={(e) =>
-											onMouseDown(e, task, "move")
-										}
+										onMouseDown={(e) => onMouseDown(e, task, "move")}
 										role="button"
 										style={{ cursor: "grab" }}
 										tabIndex={0}
@@ -639,9 +713,7 @@ export function GanttChart({
 										<rect
 											fill="transparent"
 											height={barHeight}
-											onMouseDown={(e) =>
-												onMouseDown(e, task, "resize-start")
-											}
+											onMouseDown={(e) => onMouseDown(e, task, "resize-start")}
 											role="slider"
 											style={{ cursor: "ew-resize" }}
 											tabIndex={0}
@@ -653,9 +725,7 @@ export function GanttChart({
 										<rect
 											fill="transparent"
 											height={barHeight}
-											onMouseDown={(e) =>
-												onMouseDown(e, task, "resize-end")
-											}
+											onMouseDown={(e) => onMouseDown(e, task, "resize-end")}
 											role="slider"
 											style={{ cursor: "ew-resize" }}
 											tabIndex={0}
