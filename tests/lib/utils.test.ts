@@ -1,5 +1,19 @@
-import { describe, expect, it } from "vitest";
-import { capitalize, getInitials } from "@/lib/utils";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { capitalize, getBaseUrl, getInitials } from "@/lib/utils";
+
+afterEach(() => {
+	vi.unstubAllGlobals();
+});
+
+describe("getBaseUrl", () => {
+	it("uses the current browser origin", () => {
+		vi.stubGlobal("window", {
+			location: { origin: "http://localhost:3001" },
+		});
+
+		expect(getBaseUrl()).toBe("http://localhost:3001");
+	});
+});
 
 describe("capitalize", () => {
 	it("capitalizes the first letter of a word", () => {

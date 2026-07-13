@@ -39,6 +39,10 @@ export function getInitials(name: string): string {
  * 4. Localhost (fallback)
  */
 export function getBaseUrl(): string {
+	if (typeof window !== "undefined") {
+		return window.location.origin;
+	}
+
 	// 1. Preview deployments on Vercel (branch URL)
 	if (
 		env.NEXT_PUBLIC_VERCEL_ENV === "preview" &&
