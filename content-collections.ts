@@ -107,5 +107,5 @@ const docsMeta = defineCollection({
 });
 
 export default defineConfig({
-	collections: [posts, legalPages, docs, docsMeta],
+	content: [posts, legalPages, docs, docsMeta],
 });
