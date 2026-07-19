@@ -12,13 +12,13 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useProgressRouter } from "@/hooks/use-progress-router";
-import { authClient } from "@/lib/auth/client";
 import { trpc } from "@/trpc/client";
 
 export function OnboardingCard(): React.JSX.Element {
 	const router = useProgressRouter();
 	const searchParams = useSearchParams();
 	const utils = trpc.useUtils();
+	const completeOnboarding = trpc.user.completeOnboarding.useMutation();
 
 	const stepSearchParam = searchParams.get("step");
 	const redirectTo = searchParams.get("redirectTo");
@@ -27,9 +27,7 @@ export function OnboardingCard(): React.JSX.Element {
 		: 1;
 
 	const onCompleted = async () => {
-		await authClient.updateUser({
-			onboardingComplete: true,
-		});
+		await completeOnboarding.mutateAsync();
 
 		await utils.user.getSession.invalidate();
 

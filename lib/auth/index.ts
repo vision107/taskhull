@@ -55,24 +55,40 @@ export const auth = betterAuth({
 	session: {
 		expiresIn: authConfig.sessionCookieMaxAge,
 		freshAge: 0,
+		additionalFields: {
+			activeOrganizationId: {
+				type: "string",
+				required: false,
+				input: false,
+			},
+		},
 	},
 	user: {
 		additionalFields: {
+			twoFactorEnabled: {
+				type: "boolean",
+				required: false,
+				input: false,
+			},
 			onboardingComplete: {
 				type: "boolean",
 				required: false,
+				input: false,
 			},
 			banned: {
 				type: "boolean",
 				required: false,
+				input: false,
 			},
 			banReason: {
 				type: "string",
 				required: false,
+				input: false,
 			},
 			banExpires: {
 				type: "date",
 				required: false,
+				input: false,
 			},
 		},
 		deleteUser: {
@@ -80,7 +96,7 @@ export const auth = betterAuth({
 		},
 		changeEmail: {
 			enabled: true,
-			sendChangeEmailVerification: async (
+			sendChangeEmailConfirmation: async (
 				{ user: { email, name }, url },
 				_request,
 			) => {

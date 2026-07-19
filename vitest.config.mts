@@ -19,14 +19,13 @@ if (process.env.NODE_ENV === "test" || process.env.VITEST === "true") {
 	process.env.EMAIL_FROM = process.env.EMAIL_FROM || "test@example.com";
 }
 
-import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
 // Check if we should run database tests (need Docker)
 const runDbTests = process.env.RUN_DB_TESTS === "true";
 
 export default defineConfig({
-	plugins: [tsconfigPaths()],
+	resolve: { tsconfigPaths: true },
 	test: {
 		coverage: {
 			provider: "v8",

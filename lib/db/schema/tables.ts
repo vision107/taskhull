@@ -188,6 +188,11 @@ export const twoFactorTable = pgTable(
 		userId: uuid("user_id")
 			.notNull()
 			.references(() => userTable.id, { onDelete: "cascade" }),
+		verified: boolean("verified").default(false).notNull(),
+		failedVerificationCount: integer("failed_verification_count")
+			.default(0)
+			.notNull(),
+		lockedUntil: timestamp("locked_until", { withTimezone: true }),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),
