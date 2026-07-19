@@ -11,10 +11,10 @@ const isCI = !!process.env.CI;
  */
 export default defineConfig({
 	testDir: "./tests/e2e",
-	fullyParallel: true,
+	fullyParallel: false,
 	forbidOnly: isCI,
 	retries: isCI ? 1 : 0,
-	workers: isCI ? 1 : undefined,
+	workers: 1,
 	reporter: [["html"]],
 	use: {
 		baseURL: "http://localhost:3000",

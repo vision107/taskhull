@@ -9,12 +9,12 @@ test.describe("Authentication Pages", () => {
 
 		// Check main heading
 		await expect(
-			page.getByRole("heading", { name: "Sign in to your account" }),
+			page.getByText("Sign in to your account", { exact: true }),
 		).toBeVisible();
 
 		// Check form elements
 		await expect(page.getByLabel("Email")).toBeVisible();
-		await expect(page.getByLabel("Password")).toBeVisible();
+		await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
 		await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
 
 		// Check links
@@ -28,17 +28,17 @@ test.describe("Authentication Pages", () => {
 		await page.goto("/auth/sign-up");
 
 		// Check page title
-		await expect(page).toHaveTitle(/Sign up/);
+		await expect(page).toHaveTitle(/Create an account/);
 
 		// Check main heading
 		await expect(
-			page.getByRole("heading", { name: "Create your account" }),
+			page.getByText("Create your account", { exact: true }),
 		).toBeVisible();
 
 		// Check form elements
 		await expect(page.getByLabel("Name")).toBeVisible();
 		await expect(page.getByLabel("Email")).toBeVisible();
-		await expect(page.getByLabel("Password")).toBeVisible();
+		await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
 		await expect(
 			page.getByRole("button", { name: "Create account" }),
 		).toBeVisible();
@@ -55,7 +55,7 @@ test.describe("Authentication Pages", () => {
 
 		// Check main heading
 		await expect(
-			page.getByRole("heading", { name: "Forgot your password?" }),
+			page.getByText("Forgot your password?", { exact: true }),
 		).toBeVisible();
 
 		// Check form elements
@@ -74,7 +74,7 @@ test.describe("Authentication Pages", () => {
 		// Should be on sign-up page
 		await expect(page).toHaveURL(/\/auth\/sign-up/);
 		await expect(
-			page.getByRole("heading", { name: "Create your account" }),
+			page.getByText("Create your account", { exact: true }),
 		).toBeVisible();
 	});
 
@@ -105,10 +105,10 @@ test.describe("Authentication Pages", () => {
 
 		// Fill in invalid data
 		await page.getByLabel("Email").fill("invalid-email");
-		await page.getByLabel("Password").fill("123"); // Too short
+		await page.getByLabel("Password", { exact: true }).fill("123"); // Too short
 
 		// Try to submit
-		await page.getByRole("button", { name: "Sign up" }).click();
+		await page.getByRole("button", { name: "Create account" }).click();
 
 		// Email field should be invalid (HTML5 validation)
 		const emailInput = page.getByLabel("Email");
