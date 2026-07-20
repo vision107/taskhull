@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import NiceModal from "@ebay/nice-modal-react";
-import { TextStreamChatTransport } from "ai";
+import { DefaultChatTransport } from "ai";
 import {
 	AlertCircleIcon,
 	CoinsIcon,
@@ -67,6 +67,7 @@ import {
 	getChatModelCostEstimate,
 } from "@/config/billing.config";
 import { useSession } from "@/hooks/use-session";
+import { AI_CHAT_ERROR_MESSAGES } from "@/lib/ai/chat-errors";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 
@@ -201,7 +202,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 	// Use the AI SDK's useChat hook
 	const { messages, setMessages, sendMessage, status, stop } = useChat({
 		id: chatId ?? "new",
-		transport: new TextStreamChatTransport({
+		transport: new DefaultChatTransport({
 			api: "/api/ai/chat",
 			body: {
 				chatId,
@@ -275,7 +276,15 @@ export function AiChat({ organizationId }: AiChatProps) {
 					toast.error(userFriendlyMessage);
 				}
 			} catch {
-				toast.error(userFriendlyMessage);
+				const streamedMessage = Object.values(AI_CHAT_ERROR_MESSAGES).find(
+					(message) => errorText.includes(message),
+				);
+				if (streamedMessage) {
+					userFriendlyMessage = streamedMessage;
+					toast.error("AI unavailable", { description: streamedMessage });
+				} else {
+					toast.error(userFriendlyMessage);
+				}
 			}
 
 			// Persist the error message in the chat history

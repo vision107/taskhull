@@ -7,6 +7,7 @@ import {
 	chatModels,
 	DEFAULT_CHAT_MODEL,
 } from "@/config/billing.config";
+import { getSafeAIChatErrorMessage } from "@/lib/ai/chat-errors";
 import { assertUserIsOrgMember, getSession } from "@/lib/auth/server";
 import {
 	CreditError,
@@ -188,6 +189,17 @@ export async function POST(req: Request) {
 	const result = streamText({
 		model: openai(selectedModel),
 		messages,
+		onError({ error }) {
+			logger.error(
+				{
+					error,
+					organizationId,
+					model: selectedModel,
+					userId: session.user.id,
+				},
+				"AI provider stream failed",
+			);
+		},
 		async onFinish({ text, usage }) {
 			const inputTokens = usage?.inputTokens ?? 0;
 			const outputTokens = usage?.outputTokens ?? 0;
@@ -277,5 +289,7 @@ export async function POST(req: Request) {
 		},
 	});
 
-	return result.toTextStreamResponse();
+	return result.toUIMessageStreamResponse({
+		onError: getSafeAIChatErrorMessage,
+	});
 }

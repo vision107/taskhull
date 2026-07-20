@@ -102,7 +102,8 @@ Request:
 }
 ```
 
-Response: Server-sent text stream
+Response: AI SDK UI message stream. Provider failures are converted to safe
+client messages while the original error is logged only on the server.
 
 ### tRPC Procedures
 
@@ -134,10 +135,10 @@ export default function AiPage() {
 
 ```tsx
 import { useChat } from "@ai-sdk/react";
-import { TextStreamChatTransport } from "ai";
+import { DefaultChatTransport } from "ai";
 
 const { messages, sendMessage, status } = useChat({
-  transport: new TextStreamChatTransport({
+  transport: new DefaultChatTransport({
     api: "/api/ai/chat",
     body: { chatId, organizationId },
   }),

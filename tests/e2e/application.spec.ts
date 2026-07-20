@@ -83,6 +83,7 @@ test("owner can enroll in and authenticate with TOTP", async ({ page }) => {
 test("AI chat enforces organization credits", async ({ page }) => {
 	await signIn(page, "owner@e2e.local");
 	await page.getByText("Open", { exact: true }).click();
+	await expect(page).toHaveURL(/\/dashboard\/organization/);
 	await page.goto("/dashboard/organization/chatbot");
 	await page.getByPlaceholder("Ask me anything...").fill("E2E message");
 	await page.getByRole("button", { name: "Submit" }).click();
