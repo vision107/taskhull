@@ -72,7 +72,7 @@ export function ChangelogSection() {
 				<div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 md:max-w-3xl lg:max-w-7xl lg:px-10">
 					<h1
 						className={cn(
-							"text-balance font-display text-5xl leading-12 tracking-tight",
+							"font-display text-5xl leading-12 tracking-tight text-balance",
 							"text-marketing-fg",
 							"sm:text-[5rem] sm:leading-20",
 						)}

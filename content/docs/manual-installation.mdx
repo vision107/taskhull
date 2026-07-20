@@ -29,23 +29,23 @@ Make sure to configure the library correctly following their setup guide before 
 Wrap the entire application inside Root Provider, and add required styles to `body`.
 
 ```tsx title="app/layout.tsx"
-import { RootProvider } from 'fumadocs-ui/provider';
-import type { ReactNode } from 'react';
+import { RootProvider } from "fumadocs-ui/provider";
+import type { ReactNode } from "react";
 
 export default function Layout({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: '100vh',
-        }}
-      >
-        <RootProvider>{children}</RootProvider>
-      </body>
-    </html>
-  );
+	return (
+		<html lang="en" suppressHydrationWarning>
+			<body
+				style={{
+					display: "flex",
+					flexDirection: "column",
+					minHeight: "100vh",
+				}}
+			>
+				<RootProvider>{children}</RootProvider>
+			</body>
+		</html>
+	);
 }
 ```
 
@@ -54,9 +54,9 @@ export default function Layout({ children }: { children: ReactNode }) {
 Setup Tailwind CSS v4 on your Next.js app, add the following to `global.css`.
 
 ```css title="global.css"
-@import 'tailwindcss';
-@import 'fumadocs-ui/css/neutral.css';
-@import 'fumadocs-ui/css/preset.css';
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
 
 /* path of fumadocs-ui relative to the CSS file */
 @source '../node_modules/fumadocs-ui/dist/**/*.js';
@@ -69,29 +69,29 @@ It doesn't come with a default font, you may choose one from `next/font`.
 Create a `app/layout.config.tsx` file to put the shared options for our layouts.
 
 ```tsx title="app/layout.config.tsx"
-import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
+import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 
 export const baseOptions: BaseLayoutProps = {
-  nav: {
-    title: 'My App',
-  },
+	nav: {
+		title: "My App",
+	},
 };
 ```
 
 Create a folder `/app/docs` for our docs, and give it a proper layout.
 
 ```tsx title="app/docs/layout.tsx"
-import { DocsLayout } from 'fumadocs-ui/layouts/docs';
-import { baseOptions } from '@/app/layout.config';
-import { source } from '@/lib/source';
-import type { ReactNode } from 'react';
+import { DocsLayout } from "fumadocs-ui/layouts/docs";
+import { baseOptions } from "@/app/layout.config";
+import { source } from "@/lib/source";
+import type { ReactNode } from "react";
 
 export default function Layout({ children }: { children: ReactNode }) {
-  return (
-    <DocsLayout {...baseOptions} tree={source.pageTree}>
-      {children}
-    </DocsLayout>
-  );
+	return (
+		<DocsLayout {...baseOptions} tree={source.pageTree}>
+			{children}
+		</DocsLayout>
+	);
 }
 ```
 
@@ -104,51 +104,51 @@ Create a catch-all route `/app/docs/[[...slug]]` for docs pages.
 In the page, wrap your content in the Page component. It may vary depending on your content source. You should configure static rendering with `generateStaticParams` and metadata with `generateMetadata`.
 
 ```tsx title="app/docs/[[...slug]]/page.tsx"
-import { source } from '@/lib/source';
+import { source } from "@/lib/source";
 import {
-  DocsPage,
-  DocsBody,
-  DocsTitle,
-  DocsDescription,
-} from 'fumadocs-ui/page';
-import { notFound } from 'next/navigation';
-import defaultMdxComponents from 'fumadocs-ui/mdx';
+	DocsPage,
+	DocsBody,
+	DocsTitle,
+	DocsDescription,
+} from "fumadocs-ui/page";
+import { notFound } from "next/navigation";
+import defaultMdxComponents from "fumadocs-ui/mdx";
 
 export default async function Page(props: {
-  params: Promise<{ slug?: string[] }>;
+	params: Promise<{ slug?: string[] }>;
 }) {
-  const params = await props.params;
-  const page = source.getPage(params.slug);
-  if (!page) notFound();
+	const params = await props.params;
+	const page = source.getPage(params.slug);
+	if (!page) notFound();
 
-  const MDX = page.data.body;
+	const MDX = page.data.body;
 
-  return (
-    <DocsPage toc={page.data.toc}>
-      <DocsTitle>{page.data.title}</DocsTitle>
-      <DocsDescription>{page.data.description}</DocsDescription>
-      <DocsBody>
-        <MDX components={{ ...defaultMdxComponents }} />
-      </DocsBody>
-    </DocsPage>
-  );
+	return (
+		<DocsPage toc={page.data.toc}>
+			<DocsTitle>{page.data.title}</DocsTitle>
+			<DocsDescription>{page.data.description}</DocsDescription>
+			<DocsBody>
+				<MDX components={{ ...defaultMdxComponents }} />
+			</DocsBody>
+		</DocsPage>
+	);
 }
 
 export async function generateStaticParams() {
-  return source.generateParams();
+	return source.generateParams();
 }
 
 export async function generateMetadata(props: {
-  params: Promise<{ slug?: string[] }>;
+	params: Promise<{ slug?: string[] }>;
 }) {
-  const params = await props.params;
-  const page = source.getPage(params.slug);
-  if (!page) notFound();
+	const params = await props.params;
+	const page = source.getPage(params.slug);
+	if (!page) notFound();
 
-  return {
-    title: page.data.title,
-    description: page.data.description,
-  };
+	return {
+		title: page.data.title,
+		description: page.data.description,
+	};
 }
 ```
 
@@ -157,17 +157,17 @@ export async function generateMetadata(props: {
 Use the default document search based on Orama.
 
 ```ts title="app/api/search/route.ts"
-import { source } from '@/lib/source';
-import { createSearchAPI } from 'fumadocs-core/search/server';
+import { source } from "@/lib/source";
+import { createSearchAPI } from "fumadocs-core/search/server";
 
-export const { GET } = createSearchAPI('advanced', {
-  indexes: source.getPages().map((page) => ({
-    title: page.data.title,
-    description: page.data.description,
-    url: page.url,
-    id: page.url,
-    structuredData: page.data.structuredData,
-  })),
+export const { GET } = createSearchAPI("advanced", {
+	indexes: source.getPages().map((page) => ({
+		title: page.data.title,
+		description: page.data.description,
+		url: page.url,
+		id: page.url,
+		structuredData: page.data.structuredData,
+	})),
 });
 ```
 

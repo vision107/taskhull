@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type * as React from "react";
+
 import { OrganizationsGrid } from "@/components/organization/organizations-grid";
 
 export const metadata: Metadata = {

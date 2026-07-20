@@ -39,50 +39,50 @@ Edit `config/billing.config.ts` to match your Stripe prices:
 
 ```typescript
 export const billingConfig = {
-  enabled: true,
-  defaultCurrency: "usd",
-  plans: {
-    free: {
-      id: "free",
-      name: "Free",
-      description: "Get started with basic features",
-      isFree: true,
-      features: ["Up to 3 team members", "Basic analytics"],
-      limits: { maxMembers: 3, maxStorage: 1 },
-    },
-    pro: {
-      id: "pro",
-      name: "Pro",
-      description: "For growing teams",
-      recommended: true,
-      features: ["Unlimited team members", "Advanced analytics"],
-      limits: { maxMembers: -1, maxStorage: 100 }, // -1 = unlimited
-      prices: [
-        {
-          id: "pro_monthly",
-          stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY ?? "",
-          type: "recurring",
-          interval: "month",
-          intervalCount: 1,
-          amount: 2900, // $29.00 in cents
-          currency: "usd",
-          seatBased: true,
-          trialDays: 14,
-        },
-        {
-          id: "pro_yearly",
-          stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY ?? "",
-          type: "recurring",
-          interval: "year",
-          intervalCount: 1,
-          amount: 27800, // $278.00 in cents
-          currency: "usd",
-          seatBased: true,
-          trialDays: 14,
-        },
-      ],
-    },
-  },
+	enabled: true,
+	defaultCurrency: "usd",
+	plans: {
+		free: {
+			id: "free",
+			name: "Free",
+			description: "Get started with basic features",
+			isFree: true,
+			features: ["Up to 3 team members", "Basic analytics"],
+			limits: { maxMembers: 3, maxStorage: 1 },
+		},
+		pro: {
+			id: "pro",
+			name: "Pro",
+			description: "For growing teams",
+			recommended: true,
+			features: ["Unlimited team members", "Advanced analytics"],
+			limits: { maxMembers: -1, maxStorage: 100 }, // -1 = unlimited
+			prices: [
+				{
+					id: "pro_monthly",
+					stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY ?? "",
+					type: "recurring",
+					interval: "month",
+					intervalCount: 1,
+					amount: 2900, // $29.00 in cents
+					currency: "usd",
+					seatBased: true,
+					trialDays: 14,
+				},
+				{
+					id: "pro_yearly",
+					stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY ?? "",
+					type: "recurring",
+					interval: "year",
+					intervalCount: 1,
+					amount: 27800, // $278.00 in cents
+					currency: "usd",
+					seatBased: true,
+					trialDays: 14,
+				},
+			],
+		},
+	},
 };
 ```
 
@@ -213,12 +213,12 @@ enterprise: {
 import { requirePaidPlan } from "@/lib/billing/guards";
 
 export const myRouter = createTRPCRouter({
-  premiumFeature: protectedOrganizationProcedure.mutation(async ({ ctx }) => {
-    // Throws FORBIDDEN if on free plan
-    await requirePaidPlan(ctx.organization.id);
-    
-    // Premium feature logic...
-  }),
+	premiumFeature: protectedOrganizationProcedure.mutation(async ({ ctx }) => {
+		// Throws FORBIDDEN if on free plan
+		await requirePaidPlan(ctx.organization.id);
+
+		// Premium feature logic...
+	}),
 });
 ```
 
@@ -228,27 +228,30 @@ export const myRouter = createTRPCRouter({
 import { requireSpecificPlan } from "@/lib/billing/guards";
 
 export const myRouter = createTRPCRouter({
-  enterpriseOnly: protectedOrganizationProcedure.mutation(async ({ ctx }) => {
-    // Only allow enterprise or lifetime plans
-    await requireSpecificPlan(ctx.organization.id, ["enterprise", "lifetime"]);
-    
-    // Enterprise feature logic...
-  }),
+	enterpriseOnly: protectedOrganizationProcedure.mutation(async ({ ctx }) => {
+		// Only allow enterprise or lifetime plans
+		await requireSpecificPlan(ctx.organization.id, ["enterprise", "lifetime"]);
+
+		// Enterprise feature logic...
+	}),
 });
 ```
 
 ### Check Plan Limits
 
 ```typescript
-import { getOrganizationPlanLimits, requireMemberSlot } from "@/lib/billing/guards";
+import {
+	getOrganizationPlanLimits,
+	requireMemberSlot,
+} from "@/lib/billing/guards";
 
 // Check limits manually
 const limits = await getOrganizationPlanLimits(organizationId);
 if (limits.maxMembers !== -1 && memberCount >= limits.maxMembers) {
-  throw new TRPCError({
-    code: "FORBIDDEN",
-    message: "Member limit reached. Please upgrade your plan.",
-  });
+	throw new TRPCError({
+		code: "FORBIDDEN",
+		message: "Member limit reached. Please upgrade your plan.",
+	});
 }
 
 // Or use the helper
@@ -287,13 +290,13 @@ const { data } = trpc.organizationBilling.getStatus.useQuery();
 const createCheckout = trpc.organizationBilling.createCheckout.useMutation();
 
 const handleUpgrade = async (priceId: string) => {
-  const { url } = await createCheckout.mutateAsync({
-    stripePriceId: priceId,
-    successUrl: `${window.location.origin}/dashboard/settings?success=true`,
-    cancelUrl: `${window.location.origin}/dashboard/settings?canceled=true`,
-  });
-  
-  window.location.href = url;
+	const { url } = await createCheckout.mutateAsync({
+		stripePriceId: priceId,
+		successUrl: `${window.location.origin}/dashboard/settings?success=true`,
+		cancelUrl: `${window.location.origin}/dashboard/settings?canceled=true`,
+	});
+
+	window.location.href = url;
 };
 ```
 
@@ -303,11 +306,11 @@ const handleUpgrade = async (priceId: string) => {
 const createPortal = trpc.organizationBilling.createPortalSession.useMutation();
 
 const handleManageBilling = async () => {
-  const { url } = await createPortal.mutateAsync({
-    returnUrl: window.location.href,
-  });
-  
-  window.location.href = url;
+	const { url } = await createPortal.mutateAsync({
+		returnUrl: window.location.href,
+	});
+
+	window.location.href = url;
 };
 ```
 
@@ -328,39 +331,39 @@ await cancel.mutateAsync({ subscriptionId });
 
 Stores Stripe subscription data for quick access:
 
-| Column | Description |
-|--------|-------------|
-| `id` | Stripe subscription ID (`sub_xxx`) |
-| `organizationId` | FK to organization |
-| `status` | `active`, `trialing`, `past_due`, `canceled`, etc. |
-| `stripePriceId` | Current price ID |
-| `quantity` | Seat count for per-seat billing |
-| `currentPeriodEnd` | When current period ends |
-| `cancelAtPeriodEnd` | Scheduled for cancellation |
-| `trialEnd` | When trial ends |
+| Column              | Description                                        |
+| ------------------- | -------------------------------------------------- |
+| `id`                | Stripe subscription ID (`sub_xxx`)                 |
+| `organizationId`    | FK to organization                                 |
+| `status`            | `active`, `trialing`, `past_due`, `canceled`, etc. |
+| `stripePriceId`     | Current price ID                                   |
+| `quantity`          | Seat count for per-seat billing                    |
+| `currentPeriodEnd`  | When current period ends                           |
+| `cancelAtPeriodEnd` | Scheduled for cancellation                         |
+| `trialEnd`          | When trial ends                                    |
 
 ### Order Table
 
 Stores one-time payments (lifetime deals):
 
-| Column | Description |
-|--------|-------------|
-| `id` | UUID |
-| `organizationId` | FK to organization |
-| `status` | `completed`, `refunded` |
-| `totalAmount` | Amount in cents |
-| `stripePaymentIntentId` | Stripe payment intent |
+| Column                  | Description             |
+| ----------------------- | ----------------------- |
+| `id`                    | UUID                    |
+| `organizationId`        | FK to organization      |
+| `status`                | `completed`, `refunded` |
+| `totalAmount`           | Amount in cents         |
+| `stripePaymentIntentId` | Stripe payment intent   |
 
 ### Billing Event Table
 
 Audit log of all Stripe events:
 
-| Column | Description |
-|--------|-------------|
-| `stripeEventId` | Unique event ID (for idempotency) |
-| `eventType` | e.g., `invoice.paid` |
-| `organizationId` | Related organization |
-| `processed` | Whether event was handled |
+| Column           | Description                       |
+| ---------------- | --------------------------------- |
+| `stripeEventId`  | Unique event ID (for idempotency) |
+| `eventType`      | e.g., `invoice.paid`              |
+| `organizationId` | Related organization              |
+| `processed`      | Whether event was handled         |
 
 ---
 
@@ -368,26 +371,26 @@ Audit log of all Stripe events:
 
 The webhook handler at `/api/webhooks/stripe` processes these events:
 
-| Event | Action |
-|-------|--------|
-| `checkout.session.completed` | Create order for one-time payments, process credit purchases |
-| `customer.subscription.created` | Create subscription record |
-| `customer.subscription.updated` | Update status, plan changes |
-| `customer.subscription.deleted` | Mark canceled, send notification |
-| `customer.subscription.paused` | Update status to paused |
-| `customer.subscription.resumed` | Update status to active |
-| `customer.subscription.trial_will_end` | Send trial ending email (3 days before) |
-| `invoice.paid` | Log successful payment |
-| `invoice.payment_failed` | Send payment failed email |
-| `charge.refunded` | Revoke access for full refunds |
-| `refund.created` | Track refund initiation |
-| `refund.updated` | Update refund status |
-| `refund.failed` | Log refund failure |
-| `charge.dispute.created` | Alert admins, log dispute |
-| `charge.dispute.updated` | Update dispute status |
-| `charge.dispute.closed` | Log dispute resolution |
-| `customer.deleted` | Clear Stripe customer ID |
-| `payment_intent.succeeded` | Log payment for audit trail |
+| Event                                  | Action                                                       |
+| -------------------------------------- | ------------------------------------------------------------ |
+| `checkout.session.completed`           | Create order for one-time payments, process credit purchases |
+| `customer.subscription.created`        | Create subscription record                                   |
+| `customer.subscription.updated`        | Update status, plan changes                                  |
+| `customer.subscription.deleted`        | Mark canceled, send notification                             |
+| `customer.subscription.paused`         | Update status to paused                                      |
+| `customer.subscription.resumed`        | Update status to active                                      |
+| `customer.subscription.trial_will_end` | Send trial ending email (3 days before)                      |
+| `invoice.paid`                         | Log successful payment                                       |
+| `invoice.payment_failed`               | Send payment failed email                                    |
+| `charge.refunded`                      | Revoke access for full refunds                               |
+| `refund.created`                       | Track refund initiation                                      |
+| `refund.updated`                       | Update refund status                                         |
+| `refund.failed`                        | Log refund failure                                           |
+| `charge.dispute.created`               | Alert admins, log dispute                                    |
+| `charge.dispute.updated`               | Update dispute status                                        |
+| `charge.dispute.closed`                | Log dispute resolution                                       |
+| `customer.deleted`                     | Clear Stripe customer ID                                     |
+| `payment_intent.succeeded`             | Log payment for audit trail                                  |
 
 **Idempotency**: Events are logged to `billingEventTable` before processing. Duplicate events are automatically skipped.
 
@@ -406,7 +409,7 @@ Failed payments don't immediately revoke access:
 Configure in `lib/billing/guards.ts`:
 
 ```typescript
-const GRACE_PERIOD_DAYS = 7;  // Set to 0 for immediate revocation
+const GRACE_PERIOD_DAYS = 7; // Set to 0 for immediate revocation
 ```
 
 ---
@@ -436,12 +439,12 @@ await syncOrganizationSeats(organizationId, { force: true });
 import { PricingTable } from "@/components/billing/pricing-table";
 
 <PricingTable
-  plans={plans}
-  currentPlanId={currentPlan?.id}
-  onSelectPlan={(priceId) => handleCheckout(priceId)}
-  defaultInterval="month"
-  yearlySavingsPercent={20}
-/>
+	plans={plans}
+	currentPlanId={currentPlan?.id}
+	onSelectPlan={(priceId) => handleCheckout(priceId)}
+	defaultInterval="month"
+	yearlySavingsPercent={20}
+/>;
 ```
 
 ### Current Plan Card
@@ -450,11 +453,11 @@ import { PricingTable } from "@/components/billing/pricing-table";
 import { CurrentPlanCard } from "@/components/billing/current-plan-card";
 
 <CurrentPlanCard
-  planName="Pro"
-  status="active"
-  currentPeriodEnd={new Date()}
-  onManageBilling={() => openPortal()}
-/>
+	planName="Pro"
+	status="active"
+	currentPeriodEnd={new Date()}
+	onManageBilling={() => openPortal()}
+/>;
 ```
 
 ### Billing Settings Tab
@@ -464,7 +467,7 @@ Full billing settings page with plan display, upgrade options and invoice histor
 ```tsx
 import { BillingSettingsTab } from "@/components/billing/billing-settings-tab";
 
-<BillingSettingsTab />
+<BillingSettingsTab />;
 ```
 
 ---
@@ -499,20 +502,22 @@ import { BillingSettingsTab } from "@/components/billing/billing-settings-tab";
 ## Adding a New Limit
 
 1. **Extend PlanLimits type** in `config/billing.config.ts`:
+
    ```typescript
    export type PlanLimits = {
-     maxMembers: number;
-     maxStorage: number;
-     maxProjects: number;  // New limit
+   	maxMembers: number;
+   	maxStorage: number;
+   	maxProjects: number; // New limit
    };
    ```
 
 2. **Update DEFAULT_PLAN_LIMITS** in `lib/billing/plans.ts`:
+
    ```typescript
    export const DEFAULT_PLAN_LIMITS: PlanLimits = {
-     maxMembers: 3,
-     maxStorage: 1,
-     maxProjects: 5,
+   	maxMembers: 3,
+   	maxStorage: 1,
+   	maxProjects: 5,
    };
    ```
 
@@ -521,16 +526,16 @@ import { BillingSettingsTab } from "@/components/billing/billing-settings-tab";
 4. **Create guard function** in `lib/billing/guards.ts`:
    ```typescript
    export async function requireProjectSlot(
-     organizationId: string,
-     currentCount: number,
+   	organizationId: string,
+   	currentCount: number,
    ): Promise<void> {
-     const limits = await getOrganizationPlanLimits(organizationId);
-     if (limits.maxProjects !== -1 && currentCount >= limits.maxProjects) {
-       throw new TRPCError({
-         code: "FORBIDDEN",
-         message: "Project limit reached. Please upgrade your plan.",
-       });
-     }
+   	const limits = await getOrganizationPlanLimits(organizationId);
+   	if (limits.maxProjects !== -1 && currentCount >= limits.maxProjects) {
+   		throw new TRPCError({
+   			code: "FORBIDDEN",
+   			message: "Project limit reached. Please upgrade your plan.",
+   		});
+   	}
    }
    ```
 
@@ -542,8 +547,8 @@ Set `enabled: false` in config:
 
 ```typescript
 export const billingConfig = {
-  enabled: false,  // All guard functions will pass
-  // ...
+	enabled: false, // All guard functions will pass
+	// ...
 };
 ```
 
@@ -559,11 +564,11 @@ Use Stripe test mode keys (`sk_test_xxx`) for development.
 
 ### Test Cards
 
-| Card Number | Result |
-|-------------|--------|
+| Card Number           | Result             |
+| --------------------- | ------------------ |
 | `4242 4242 4242 4242` | Successful payment |
 | `4000 0000 0000 3220` | 3D Secure required |
-| `4000 0000 0000 9995` | Declined |
+| `4000 0000 0000 9995` | Declined           |
 
 ### Trigger Webhooks Locally
 
@@ -614,14 +619,14 @@ If subscriptions get out of sync (missed webhooks, database restore, manual Stri
 
 ### What Gets Synced
 
-| Data | Action |
-|------|--------|
-| Subscription status | Updated from Stripe |
-| Current period dates | Updated from Stripe |
-| Price/Plan | Updated from Stripe |
-| Quantity (seats) | Updated from Stripe |
-| Cancel settings | Updated from Stripe |
-| Subscription items | Replaced with Stripe data |
+| Data                 | Action                    |
+| -------------------- | ------------------------- |
+| Subscription status  | Updated from Stripe       |
+| Current period dates | Updated from Stripe       |
+| Price/Plan           | Updated from Stripe       |
+| Quantity (seats)     | Updated from Stripe       |
+| Cancel settings      | Updated from Stripe       |
+| Subscription items   | Replaced with Stripe data |
 
 ### Programmatic Sync
 
@@ -629,10 +634,7 @@ If subscriptions get out of sync (missed webhooks, database restore, manual Stri
 import { syncSelectedSubscriptions } from "@/lib/billing/sync";
 
 // Sync specific subscriptions
-const result = await syncSelectedSubscriptions([
-  "sub_xxx",
-  "sub_yyy",
-]);
+const result = await syncSelectedSubscriptions(["sub_xxx", "sub_yyy"]);
 
 // Result includes details for each subscription
 // result.successful: number
@@ -658,23 +660,23 @@ const result = await syncSelectedSubscriptions([
 
 ## File Reference
 
-| File | Purpose |
-|------|---------|
-| `config/billing.config.ts` | Plans, prices, limits, credit packages |
-| `lib/billing/guards.ts` | Access control functions |
-| `lib/billing/checkout.ts` | Checkout session creation |
-| `lib/billing/subscriptions.ts` | Subscription operations |
-| `lib/billing/customer.ts` | Customer management |
-| `lib/billing/queries.ts` | Database queries |
-| `lib/billing/plans.ts` | Plan lookup helpers |
-| `lib/billing/seat-sync.ts` | Per-seat billing sync |
-| `lib/billing/notifications.ts` | Email notifications |
-| `lib/billing/credits.ts` | Credit operations service |
-| `app/api/webhooks/stripe/route.ts` | Webhook handler |
-| `trpc/routers/organization/organization-billing.ts` | Billing API endpoints |
-| `trpc/routers/organization/organization-credits.ts` | Credits API endpoints |
-| `trpc/routers/admin/admin-credits.ts` | Admin credits management |
-| `components/billing/*.tsx` | UI components |
+| File                                                | Purpose                                |
+| --------------------------------------------------- | -------------------------------------- |
+| `config/billing.config.ts`                          | Plans, prices, limits, credit packages |
+| `lib/billing/guards.ts`                             | Access control functions               |
+| `lib/billing/checkout.ts`                           | Checkout session creation              |
+| `lib/billing/subscriptions.ts`                      | Subscription operations                |
+| `lib/billing/customer.ts`                           | Customer management                    |
+| `lib/billing/queries.ts`                            | Database queries                       |
+| `lib/billing/plans.ts`                              | Plan lookup helpers                    |
+| `lib/billing/seat-sync.ts`                          | Per-seat billing sync                  |
+| `lib/billing/notifications.ts`                      | Email notifications                    |
+| `lib/billing/credits.ts`                            | Credit operations service              |
+| `app/api/webhooks/stripe/route.ts`                  | Webhook handler                        |
+| `trpc/routers/organization/organization-billing.ts` | Billing API endpoints                  |
+| `trpc/routers/organization/organization-credits.ts` | Credits API endpoints                  |
+| `trpc/routers/admin/admin-credits.ts`               | Admin credits management               |
+| `components/billing/*.tsx`                          | UI components                          |
 
 ---
 
@@ -731,39 +733,39 @@ Packages are configured in `config/billing.config.ts`:
 
 ```typescript
 export const creditPackages = [
-  {
-    id: "credits_starter",
-    name: "Starter",
-    description: "Great for trying out AI features",
-    credits: 10_000,
-    bonusCredits: 0,
-    priceAmount: 999, // $9.99 in cents
-    currency: "usd",
-    stripePriceId: env.NEXT_PUBLIC_STRIPE_PRICE_CREDITS_STARTER ?? "",
-    popular: false,
-  },
-  {
-    id: "credits_basic",
-    name: "Basic",
-    description: "For regular AI usage",
-    credits: 50_000,
-    bonusCredits: 5_000, // 10% bonus
-    priceAmount: 3999,
-    currency: "usd",
-    stripePriceId: env.NEXT_PUBLIC_STRIPE_PRICE_CREDITS_BASIC ?? "",
-    popular: true,
-  },
-  {
-    id: "credits_pro",
-    name: "Pro",
-    description: "Best value for power users",
-    credits: 200_000,
-    bonusCredits: 40_000, // 20% bonus
-    priceAmount: 14999,
-    currency: "usd",
-    stripePriceId: env.NEXT_PUBLIC_STRIPE_PRICE_CREDITS_PRO ?? "",
-    popular: false,
-  },
+	{
+		id: "credits_starter",
+		name: "Starter",
+		description: "Great for trying out AI features",
+		credits: 10_000,
+		bonusCredits: 0,
+		priceAmount: 999, // $9.99 in cents
+		currency: "usd",
+		stripePriceId: env.NEXT_PUBLIC_STRIPE_PRICE_CREDITS_STARTER ?? "",
+		popular: false,
+	},
+	{
+		id: "credits_basic",
+		name: "Basic",
+		description: "For regular AI usage",
+		credits: 50_000,
+		bonusCredits: 5_000, // 10% bonus
+		priceAmount: 3999,
+		currency: "usd",
+		stripePriceId: env.NEXT_PUBLIC_STRIPE_PRICE_CREDITS_BASIC ?? "",
+		popular: true,
+	},
+	{
+		id: "credits_pro",
+		name: "Pro",
+		description: "Best value for power users",
+		credits: 200_000,
+		bonusCredits: 40_000, // 20% bonus
+		priceAmount: 14999,
+		currency: "usd",
+		stripePriceId: env.NEXT_PUBLIC_STRIPE_PRICE_CREDITS_PRO ?? "",
+		popular: false,
+	},
 ];
 ```
 
@@ -775,30 +777,31 @@ AI models have different credit costs based on token usage. Configure in `config
 
 ```typescript
 export const creditCosts = {
-  // Budget tier
-  "gpt-4o-mini": {
-    input: 1,    // 1 credit per 1K input tokens
-    output: 6,   // 6 credits per 1K output tokens
-  },
-  // Standard tier  
-  "gpt-4o": {
-    input: 25,
-    output: 100,
-  },
-  // Premium tier
-  "claude-3-5-sonnet": {
-    input: 30,
-    output: 150,
-  },
-  // Reasoning models
-  "o1": {
-    input: 150,
-    output: 600,
-  },
+	// Budget tier
+	"gpt-4o-mini": {
+		input: 1, // 1 credit per 1K input tokens
+		output: 6, // 6 credits per 1K output tokens
+	},
+	// Standard tier
+	"gpt-4o": {
+		input: 25,
+		output: 100,
+	},
+	// Premium tier
+	"claude-3-5-sonnet": {
+		input: 30,
+		output: 150,
+	},
+	// Reasoning models
+	o1: {
+		input: 150,
+		output: 600,
+	},
 } as const;
 ```
 
 **Pricing methodology:**
+
 - 1 credit ≈ $0.001 (1/10th of a cent)
 - Prices include ~5-10x markup over API costs
 - Typical chat message: 3-15 credits (budget) to 50-200 credits (standard)
@@ -811,29 +814,29 @@ export const creditCosts = {
 
 Denormalized balance per organization for fast reads:
 
-| Column | Description |
-|--------|-------------|
-| `organizationId` | FK to organization (unique) |
-| `balance` | Current credit balance |
+| Column              | Description                  |
+| ------------------- | ---------------------------- |
+| `organizationId`    | FK to organization (unique)  |
+| `balance`           | Current credit balance       |
 | `lifetimePurchased` | Total credits ever purchased |
-| `lifetimeGranted` | Total bonus/promo credits |
-| `lifetimeUsed` | Total credits consumed |
-| `lifetimeExpired` | Total credits expired |
+| `lifetimeGranted`   | Total bonus/promo credits    |
+| `lifetimeUsed`      | Total credits consumed       |
+| `lifetimeExpired`   | Total credits expired        |
 
 ### Credit Transaction Table
 
 Immutable ledger of all credit changes:
 
-| Column | Description |
-|--------|-------------|
-| `type` | `purchase`, `usage`, `bonus`, `promo`, `refund`, `adjustment`, etc. |
-| `amount` | Positive = add, negative = deduct |
-| `balanceAfter` | Running balance after transaction |
-| `model` | AI model used (for usage transactions) |
-| `inputTokens` | Tokens consumed (input) |
-| `outputTokens` | Tokens consumed (output) |
-| `referenceType` | Source: `order`, `ai_chat`, `admin`, etc. |
-| `referenceId` | Related entity ID |
+| Column          | Description                                                         |
+| --------------- | ------------------------------------------------------------------- |
+| `type`          | `purchase`, `usage`, `bonus`, `promo`, `refund`, `adjustment`, etc. |
+| `amount`        | Positive = add, negative = deduct                                   |
+| `balanceAfter`  | Running balance after transaction                                   |
+| `model`         | AI model used (for usage transactions)                              |
+| `inputTokens`   | Tokens consumed (input)                                             |
+| `outputTokens`  | Tokens consumed (output)                                            |
+| `referenceType` | Source: `order`, `ai_chat`, `admin`, etc.                           |
+| `referenceId`   | Related entity ID                                                   |
 
 ---
 
@@ -855,27 +858,30 @@ const canProceed = await hasEnoughCredits(organizationId, 100);
 ### Consume Credits (AI Usage)
 
 ```typescript
-import { consumeCredits, InsufficientCreditsError } from "@/lib/billing/credits";
+import {
+	consumeCredits,
+	InsufficientCreditsError,
+} from "@/lib/billing/credits";
 
 try {
-  const { transaction, remainingBalance } = await consumeCredits({
-    organizationId,
-    amount: 50,
-    description: "AI Chat (gpt-4o-mini)",
-    model: "gpt-4o-mini",
-    inputTokens: 1500,
-    outputTokens: 800,
-    referenceType: "ai_chat",
-    referenceId: chatId,
-    createdBy: userId,
-  });
-  
-  console.log(`Remaining: ${remainingBalance}`);
+	const { transaction, remainingBalance } = await consumeCredits({
+		organizationId,
+		amount: 50,
+		description: "AI Chat (gpt-4o-mini)",
+		model: "gpt-4o-mini",
+		inputTokens: 1500,
+		outputTokens: 800,
+		referenceType: "ai_chat",
+		referenceId: chatId,
+		createdBy: userId,
+	});
+
+	console.log(`Remaining: ${remainingBalance}`);
 } catch (error) {
-  if (error instanceof InsufficientCreditsError) {
-    // Handle insufficient credits
-    console.log(`Need ${error.required}, have ${error.available}`);
-  }
+	if (error instanceof InsufficientCreditsError) {
+		// Handle insufficient credits
+		console.log(`Need ${error.required}, have ${error.available}`);
+	}
 }
 ```
 
@@ -887,23 +893,23 @@ import { CreditTransactionType } from "@/lib/db/schema/enums";
 
 // After Stripe webhook confirms payment
 await addCredits({
-  organizationId,
-  amount: 50000,
-  type: CreditTransactionType.purchase,
-  description: "Purchased Basic credit package",
-  referenceType: "checkout_session",
-  referenceId: stripeSessionId,
-  createdBy: userId,
+	organizationId,
+	amount: 50000,
+	type: CreditTransactionType.purchase,
+	description: "Purchased Basic credit package",
+	referenceType: "checkout_session",
+	referenceId: stripeSessionId,
+	createdBy: userId,
 });
 
 // Add bonus credits
 await addCredits({
-  organizationId,
-  amount: 5000,
-  type: CreditTransactionType.bonus,
-  description: "Bonus credits from Basic package",
-  referenceType: "checkout_session",
-  referenceId: stripeSessionId,
+	organizationId,
+	amount: 5000,
+	type: CreditTransactionType.bonus,
+	description: "Bonus credits from Basic package",
+	referenceType: "checkout_session",
+	referenceId: stripeSessionId,
 });
 ```
 
@@ -914,18 +920,18 @@ import { adjustCredits } from "@/lib/billing/credits";
 
 // Add credits (positive amount)
 await adjustCredits({
-  organizationId,
-  amount: 1000,
-  description: "Compensation for service issue",
-  createdBy: adminUserId,
+	organizationId,
+	amount: 1000,
+	description: "Compensation for service issue",
+	createdBy: adminUserId,
 });
 
 // Remove credits (negative amount)
 await adjustCredits({
-  organizationId,
-  amount: -500,
-  description: "Correction for billing error",
-  createdBy: adminUserId,
+	organizationId,
+	amount: -500,
+	description: "Correction for billing error",
+	createdBy: adminUserId,
 });
 ```
 
@@ -959,8 +965,8 @@ const { data } = trpc.organization.credits.getBalance.useQuery();
 
 ```typescript
 const { data } = trpc.organization.credits.getTransactions.useQuery({
-  limit: 20,
-  offset: 0,
+	limit: 20,
+	offset: 0,
 });
 // data: Array<{ id, type, amount, balanceAfter, description, model, createdAt }>
 ```
@@ -969,11 +975,11 @@ const { data } = trpc.organization.credits.getTransactions.useQuery({
 
 ```typescript
 const purchaseMutation = trpc.organization.credits.purchaseCredits.useMutation({
-  onSuccess: (data) => {
-    if (data.url) {
-      window.location.href = data.url; // Redirect to Stripe Checkout
-    }
-  },
+	onSuccess: (data) => {
+		if (data.url) {
+			window.location.href = data.url; // Redirect to Stripe Checkout
+		}
+	},
 });
 
 purchaseMutation.mutate({ packageId: "credits_basic" });
@@ -991,37 +997,40 @@ const balance = await getCreditBalance(organizationId);
 const estimatedCost = estimateCreditCost(model, messages);
 
 if (balance.balance < estimatedCost) {
-  return Response.json({
-    error: "insufficient_credits",
-    balance: balance.balance,
-    estimated: estimatedCost,
-  }, { status: 402 });
+	return Response.json(
+		{
+			error: "insufficient_credits",
+			balance: balance.balance,
+			estimated: estimatedCost,
+		},
+		{ status: 402 },
+	);
 }
 
 // 2. Stream the response
 const result = streamText({
-  model: openai(model),
-  messages,
-  async onFinish({ usage }) {
-    // 3. Deduct actual credits after completion
-    const actualCost = calculateCreditCost(
-      model,
-      usage.promptTokens,
-      usage.completionTokens
-    );
-    
-    await consumeCredits({
-      organizationId,
-      amount: actualCost,
-      description: `AI Chat (${model})`,
-      model,
-      inputTokens: usage.promptTokens,
-      outputTokens: usage.completionTokens,
-      referenceType: "ai_chat",
-      referenceId: chatId,
-      createdBy: userId,
-    });
-  },
+	model: openai(model),
+	messages,
+	async onFinish({ usage }) {
+		// 3. Deduct actual credits after completion
+		const actualCost = calculateCreditCost(
+			model,
+			usage.promptTokens,
+			usage.completionTokens,
+		);
+
+		await consumeCredits({
+			organizationId,
+			amount: actualCost,
+			description: `AI Chat (${model})`,
+			model,
+			inputTokens: usage.promptTokens,
+			outputTokens: usage.completionTokens,
+			referenceType: "ai_chat",
+			referenceId: chatId,
+			createdBy: userId,
+		});
+	},
 });
 ```
 
@@ -1035,7 +1044,7 @@ Credit purchases are processed via webhook (`checkout.session.completed`):
 // In app/api/webhooks/stripe/route.ts
 case "checkout.session.completed":
   const session = event.data.object;
-  
+
   if (session.metadata?.type === "credit_purchase") {
     await handleCreditPurchase(event.id, session);
   }
@@ -1043,6 +1052,7 @@ case "checkout.session.completed":
 ```
 
 The handler:
+
 1. Validates the package exists
 2. Adds base credits as `purchase` transaction
 3. Adds bonus credits as `bonus` transaction (if any)
@@ -1066,17 +1076,17 @@ Access at: `/dashboard/admin/credits`
 ```typescript
 // Get all balances (paginated, searchable)
 trpc.admin.credits.getAllBalances.useQuery({
-  limit: 25,
-  offset: 0,
-  query: "search term",
-  filters: { balanceRange: ["low", "medium"] },
+	limit: 25,
+	offset: 0,
+	query: "search term",
+	filters: { balanceRange: ["low", "medium"] },
 });
 
 // Adjust credits for any organization
 trpc.admin.credits.adjustCredits.useMutation({
-  organizationId,
-  amount: 1000, // positive to add, negative to remove
-  description: "Reason for adjustment",
+	organizationId,
+	amount: 1000, // positive to add, negative to remove
+	description: "Reason for adjustment",
 });
 
 // Export to CSV/Excel
@@ -1095,10 +1105,11 @@ Full credits management in organization settings:
 ```tsx
 import { CreditsSettingsTab } from "@/components/billing/credits-settings-tab";
 
-<CreditsSettingsTab isAdmin={isAdmin} />
+<CreditsSettingsTab isAdmin={isAdmin} />;
 ```
 
 Features:
+
 - Current balance display
 - Lifetime stats (purchased, granted, used)
 - Transaction history with pagination
@@ -1137,20 +1148,20 @@ try {
 If credit deduction fails after an AI response is already sent (rare race condition), failures are logged for reconciliation:
 
 ```typescript
-import { 
-  logFailedDeduction,
-  getUnresolvedDeductionFailures,
-  resolveDeductionFailure,
+import {
+	logFailedDeduction,
+	getUnresolvedDeductionFailures,
+	resolveDeductionFailure,
 } from "@/lib/billing/credits";
 
 // Logged automatically in AI chat route
 await logFailedDeduction({
-  organizationId,
-  amount,
-  errorCode: "INSUFFICIENT_CREDITS",
-  model,
-  referenceType: "ai_chat",
-  referenceId: chatId,
+	organizationId,
+	amount,
+	errorCode: "INSUFFICIENT_CREDITS",
+	model,
+	referenceType: "ai_chat",
+	referenceId: chatId,
 });
 
 // Admin can review and resolve
@@ -1162,16 +1173,16 @@ await resolveDeductionFailure(failureId, adminUserId, "Manually deducted");
 
 ## Transaction Types
 
-| Type | Direction | Description |
-|------|-----------|-------------|
-| `purchase` | + | User bought credits via Stripe |
-| `subscription_grant` | + | Monthly subscription allocation |
-| `bonus` | + | Bonus from package purchase |
-| `promo` | + | Promotional credits (coupon, referral) |
-| `usage` | - | Credits consumed by AI features |
-| `refund` | + | Credits refunded |
-| `expire` | - | Unused credits expired |
-| `adjustment` | +/- | Manual admin adjustment |
+| Type                 | Direction | Description                            |
+| -------------------- | --------- | -------------------------------------- |
+| `purchase`           | +         | User bought credits via Stripe         |
+| `subscription_grant` | +         | Monthly subscription allocation        |
+| `bonus`              | +         | Bonus from package purchase            |
+| `promo`              | +         | Promotional credits (coupon, referral) |
+| `usage`              | -         | Credits consumed by AI features        |
+| `refund`             | +         | Credits refunded                       |
+| `expire`             | -         | Unused credits expired                 |
+| `adjustment`         | +/-       | Manual admin adjustment                |
 
 ---
 
@@ -1184,7 +1195,7 @@ Before expensive AI operations, verify credits are available:
 ```typescript
 const estimated = estimateCreditCost(model, messages);
 if (!(await hasEnoughCredits(organizationId, estimated))) {
-  throw new Error("Insufficient credits");
+	throw new Error("Insufficient credits");
 }
 ```
 
@@ -1203,11 +1214,11 @@ Always provide meaningful descriptions and references:
 
 ```typescript
 await consumeCredits({
-  // ... 
-  description: "AI Chat (gpt-4o-mini)", // User-visible
-  referenceType: "ai_chat",             // For filtering
-  referenceId: chatId,                  // For tracing
-  createdBy: userId,                    // For audit
+	// ...
+	description: "AI Chat (gpt-4o-mini)", // User-visible
+	referenceType: "ai_chat", // For filtering
+	referenceId: chatId, // For tracing
+	createdBy: userId, // For audit
 });
 ```
 

@@ -16,8 +16,8 @@ npm run stripe:listen # Forward Stripe webhooks locally
 npm run email:dev     # Preview email templates (port 3001)
 npm run test          # Run unit tests
 npm run e2e           # Run E2E tests
-npm run lint          # Run Biome linter
-npm run check:write   # Fix lint/format issues
+npm run lint          # Run Oxlint
+npm run check:write   # Fix lint issues and format with Oxfmt
 npm run typecheck     # Type check
 npm run deps:check    # Check for dependency updates
 npm run deps:update   # Update package.json versions
@@ -88,19 +88,19 @@ export function MyComponent({ required, optional, className }: MyComponentProps)
 ```typescript
 // Simple query
 const user = await db.query.userTable.findFirst({
-  where: eq(userTable.id, userId),
-  with: { organizations: true },
+	where: eq(userTable.id, userId),
+	with: { organizations: true },
 });
 
 // Complex query
 const leads = await db
-  .select()
-  .from(leadTable)
-  .where(
-    and(eq(leadTable.organizationId, orgId), eq(leadTable.status, "qualified"))
-  )
-  .orderBy(desc(leadTable.createdAt))
-  .limit(10);
+	.select()
+	.from(leadTable)
+	.where(
+		and(eq(leadTable.organizationId, orgId), eq(leadTable.status, "qualified")),
+	)
+	.orderBy(desc(leadTable.createdAt))
+	.limit(10);
 ```
 
 ### tRPC Procedures
@@ -108,30 +108,30 @@ const leads = await db
 ```typescript
 // Available procedures
 import {
-  publicProcedure, // No auth required
-  protectedProcedure, // Requires login
-  protectedAdminProcedure, // Requires admin role
-  protectedOrganizationProcedure, // Requires org membership
+	publicProcedure, // No auth required
+	protectedProcedure, // Requires login
+	protectedAdminProcedure, // Requires admin role
+	protectedOrganizationProcedure, // Requires org membership
 } from "@/trpc/init";
 
 // Example router
 export const myRouter = createTRPCRouter({
-  getAll: protectedOrganizationProcedure.query(async ({ ctx }) => {
-    // ctx.user, ctx.organization, ctx.membership available
-    return db.query.myTable.findMany({
-      where: eq(myTable.organizationId, ctx.organization.id),
-    });
-  }),
+	getAll: protectedOrganizationProcedure.query(async ({ ctx }) => {
+		// ctx.user, ctx.organization, ctx.membership available
+		return db.query.myTable.findMany({
+			where: eq(myTable.organizationId, ctx.organization.id),
+		});
+	}),
 
-  create: protectedOrganizationProcedure
-    .input(createSchema)
-    .mutation(async ({ ctx, input }) => {
-      // Always check roles for sensitive actions
-      if (ctx.membership.role !== "owner" && ctx.membership.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
-      // ...
-    }),
+	create: protectedOrganizationProcedure
+		.input(createSchema)
+		.mutation(async ({ ctx, input }) => {
+			// Always check roles for sensitive actions
+			if (ctx.membership.role !== "owner" && ctx.membership.role !== "admin") {
+				throw new TRPCError({ code: "FORBIDDEN" });
+			}
+			// ...
+		}),
 });
 ```
 
@@ -222,19 +222,19 @@ NiceModal.show(MyModal, { name: "Example" });
 ```typescript
 // tRPC mutations
 try {
-  await mutation.mutateAsync(data);
-  toast.success("Saved successfully");
+	await mutation.mutateAsync(data);
+	toast.success("Saved successfully");
 } catch (error) {
-  logger.error({ error }, "Operation failed");
-  toast.error("Something went wrong. Please try again.");
+	logger.error({ error }, "Operation failed");
+	toast.error("Something went wrong. Please try again.");
 }
 
 // tRPC procedures
 if (!item) {
-  throw new TRPCError({
-    code: "NOT_FOUND",
-    message: "Item not found",
-  });
+	throw new TRPCError({
+		code: "NOT_FOUND",
+		message: "Item not found",
+	});
 }
 ```
 
@@ -274,7 +274,7 @@ if (ctx.membership.role !== "owner" && ctx.membership.role !== "admin") { ... }
 ```typescript
 // ✅ CORRECT
 const leads = await db.query.leadTable.findMany({
-  where: eq(leadTable.organizationId, ctx.organization.id),
+	where: eq(leadTable.organizationId, ctx.organization.id),
 });
 
 // ❌ WRONG - Data leak across tenants
@@ -302,8 +302,8 @@ import { toast } from "sonner";
 
 ```typescript
 import {
-  requirePaidPlan,
-  getOrganizationPlanLimits,
+	requirePaidPlan,
+	getOrganizationPlanLimits,
 } from "@/lib/billing/guards";
 
 // In tRPC procedure
@@ -312,7 +312,7 @@ await requirePaidPlan(ctx.organization.id);
 // Check limits
 const limits = await getOrganizationPlanLimits(ctx.organization.id);
 if (memberCount >= limits.maxMembers) {
-  throw new TRPCError({ code: "FORBIDDEN", message: "Member limit reached" });
+	throw new TRPCError({ code: "FORBIDDEN", message: "Member limit reached" });
 }
 ```
 

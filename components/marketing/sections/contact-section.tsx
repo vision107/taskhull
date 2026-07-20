@@ -6,6 +6,7 @@ import type { ElementType } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
+
 import { TurnstileCaptcha } from "@/components/ui/custom/turnstile";
 import {
 	Form,
@@ -90,7 +91,7 @@ export function ContactSection() {
 				<div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 md:max-w-3xl lg:max-w-7xl lg:px-10">
 					<h1
 						className={cn(
-							"text-balance font-display text-5xl leading-12 tracking-tight",
+							"font-display text-5xl leading-12 tracking-tight text-balance",
 							"text-marketing-fg",
 							"sm:text-[5rem] sm:leading-20",
 						)}
@@ -115,14 +116,14 @@ export function ContactSection() {
 							<div className="flex flex-col gap-6">
 								<h2
 									className={cn(
-										"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+										"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 										"text-marketing-fg",
 										"sm:text-5xl sm:leading-14",
 									)}
 								>
 									Let's talk
 								</h2>
-								<div className="text-base leading-7 text-marketing-fg-muted text-pretty">
+								<div className="text-base leading-7 text-pretty text-marketing-fg-muted">
 									<p>
 										Drop us a message. We typically respond within 24 hours on
 										business days.
@@ -174,7 +175,7 @@ export function ContactSection() {
 															placeholder="John"
 															autoComplete="given-name"
 															className={cn(
-																"flex h-10 w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors",
+																"flex h-10 w-full rounded-lg px-3 py-2 text-sm transition-colors outline-none",
 																"border border-border bg-marketing-bg-elevated text-marketing-fg placeholder:text-marketing-fg-subtle",
 																"focus:border-marketing-border-strong focus:ring-1 focus:ring-ring",
 															)}
@@ -198,7 +199,7 @@ export function ContactSection() {
 															placeholder="Doe"
 															autoComplete="family-name"
 															className={cn(
-																"flex h-10 w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors",
+																"flex h-10 w-full rounded-lg px-3 py-2 text-sm transition-colors outline-none",
 																"border border-border bg-marketing-bg-elevated text-marketing-fg placeholder:text-marketing-fg-subtle",
 																"focus:border-marketing-border-strong focus:ring-1 focus:ring-ring",
 															)}
@@ -224,7 +225,7 @@ export function ContactSection() {
 														placeholder="john@example.com"
 														autoComplete="email"
 														className={cn(
-															"flex h-10 w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors",
+															"flex h-10 w-full rounded-lg px-3 py-2 text-sm transition-colors outline-none",
 															"border border-border bg-marketing-bg-elevated text-marketing-fg placeholder:text-marketing-fg-subtle",
 															"focus:border-marketing-border-strong focus:ring-1 focus:ring-ring",
 														)}
@@ -247,7 +248,7 @@ export function ContactSection() {
 													<textarea
 														placeholder="How can we help?"
 														className={cn(
-															"flex min-h-[160px] w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors resize-none",
+															"flex min-h-[160px] w-full resize-none rounded-lg px-3 py-2 text-sm transition-colors outline-none",
 															"border border-border bg-marketing-bg-elevated text-marketing-fg placeholder:text-marketing-fg-subtle",
 															"focus:border-marketing-border-strong focus:ring-1 focus:ring-ring",
 														)}

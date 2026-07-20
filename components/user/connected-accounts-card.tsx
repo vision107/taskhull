@@ -1,6 +1,7 @@
 "use client";
 
 import type * as React from "react";
+
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -59,7 +60,7 @@ export function ConnectedAccountsCard(): React.JSX.Element {
 							>
 								<div className="flex items-center gap-3">
 									<providerData.icon className="size-5 text-primary/50" />
-									<span className="font-medium text-sm">
+									<span className="text-sm font-medium">
 										{providerData.name}
 									</span>
 								</div>

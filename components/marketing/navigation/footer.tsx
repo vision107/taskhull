@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+
 import { Logo } from "@/components/logo";
 import {
 	GitHubIcon,
@@ -67,7 +68,7 @@ function AppInfo() {
 export function Footer() {
 	return (
 		<footer className="pt-24" id="footer">
-			<div className="bg-marketing-card/50 border-t border-marketing-border py-16">
+			<div className="border-t border-marketing-border bg-marketing-card/50 py-16">
 				<div className="mx-auto flex max-w-7xl flex-col gap-16 px-6 lg:px-10">
 					{/* Top Section */}
 					<div className="grid grid-cols-1 gap-x-12 gap-y-16 text-sm lg:grid-cols-2">
@@ -78,7 +79,7 @@ export function Footer() {
 						<nav className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
 							{footerLinks.map((group) => (
 								<div key={group.group} className="flex flex-col gap-4">
-									<h3 className="font-semibold tracking-wider text-marketing-fg uppercase text-xs">
+									<h3 className="text-xs font-semibold tracking-wider text-marketing-fg uppercase">
 										{group.group}
 									</h3>
 									<ul className="flex flex-col gap-3">
@@ -86,7 +87,7 @@ export function Footer() {
 											<li key={item.title}>
 												<Link
 													href={item.href}
-													className="text-marketing-fg-muted hover:text-marketing-fg transition-colors duration-200"
+													className="text-marketing-fg-muted transition-colors duration-200 hover:text-marketing-fg"
 												>
 													{item.title}
 												</Link>
@@ -99,12 +100,12 @@ export function Footer() {
 					</div>
 
 					{/* Bottom Section */}
-					<div className="flex flex-col items-center justify-between gap-8 border-t border-marketing-border pt-8 sm:flex-row text-sm">
-						<div className="text-marketing-fg-muted order-2 sm:order-1">
+					<div className="flex flex-col items-center justify-between gap-8 border-t border-marketing-border pt-8 text-sm sm:flex-row">
+						<div className="order-2 text-marketing-fg-muted sm:order-1">
 							© {new Date().getFullYear()} {appConfig.appName}. All rights
 							reserved.
 						</div>
-						<div className="flex items-center gap-6 order-1 sm:order-2">
+						<div className="order-1 flex items-center gap-6 sm:order-2">
 							{socialLinks.map((link) => (
 								<Link
 									key={link.name}
@@ -112,7 +113,7 @@ export function Footer() {
 									target="_blank"
 									rel="noopener noreferrer"
 									aria-label={link.name}
-									className="text-marketing-fg-muted hover:text-marketing-fg transition-all duration-200 hover:scale-110 active:scale-95 *:size-5"
+									className="text-marketing-fg-muted transition-all duration-200 *:size-5 hover:scale-110 hover:text-marketing-fg active:scale-95"
 								>
 									<link.icon />
 								</Link>

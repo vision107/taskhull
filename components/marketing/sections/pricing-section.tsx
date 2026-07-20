@@ -3,6 +3,7 @@
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+
 import { appConfig } from "@/config/app.config";
 import { billingConfig } from "@/config/billing.config";
 import type { PlanDisplay } from "@/lib/billing/types";
@@ -85,7 +86,7 @@ function PricingCard({
 					disabled
 					className={cn(
 						"inline-flex w-full shrink-0 items-center justify-center gap-1 rounded-full px-4 py-2 text-sm font-medium",
-						"bg-marketing-card-hover text-marketing-fg/50-hover/50",
+						"text-marketing-fg/50-hover/50 bg-marketing-card-hover",
 						"cursor-not-allowed",
 					)}
 				>
@@ -170,7 +171,7 @@ function PricingCard({
 			<div className="self-stretch">
 				<div className="flex items-center justify-between">
 					{isPopular && (
-						<div className="order-last inline-flex rounded-full bg-marketing-card-hover px-2 py-1 text-xs font-medium text-marketing-fg-hover">
+						<div className="text-marketing-fg-hover order-last inline-flex rounded-full bg-marketing-card-hover px-2 py-1 text-xs font-medium">
 							Most popular
 						</div>
 					)}
@@ -280,7 +281,7 @@ export function PricingSection({
 						<div className="flex flex-col gap-2">
 							<h2
 								className={cn(
-									"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+									"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 									"text-marketing-fg",
 									"sm:text-5xl sm:leading-14",
 								)}
@@ -299,7 +300,7 @@ export function PricingSection({
 								type="button"
 								onClick={() => setSelectedInterval("month")}
 								className={cn(
-									"cursor-pointer rounded-full px-4 py-1 text-sm font-medium leading-7 transition-colors",
+									"cursor-pointer rounded-full px-4 py-1 text-sm leading-7 font-medium transition-colors",
 									selectedInterval === "month"
 										? "bg-marketing-accent text-marketing-accent-fg"
 										: "text-marketing-fg hover:bg-marketing-card-hover",
@@ -311,7 +312,7 @@ export function PricingSection({
 								type="button"
 								onClick={() => setSelectedInterval("year")}
 								className={cn(
-									"inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-1 text-sm font-medium leading-7 transition-colors",
+									"inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-1 text-sm leading-7 font-medium transition-colors",
 									selectedInterval === "year"
 										? "bg-marketing-accent text-marketing-accent-fg"
 										: "text-marketing-fg hover:bg-marketing-card-hover",
@@ -330,7 +331,7 @@ export function PricingSection({
 
 				{/* Pricing Cards */}
 				{plans.length === 0 ? (
-					<p className="py-8 text-center text-marketing-fg-muted text-sm">
+					<p className="py-8 text-center text-sm text-marketing-fg-muted">
 						No plans available
 					</p>
 				) : (

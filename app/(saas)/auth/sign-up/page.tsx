@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type * as React from "react";
 import { withQuery } from "ufo";
+
 import { SignUpCard } from "@/components/auth/sign-up-card";
 import { authConfig } from "@/config/auth.config";
 import { db } from "@/lib/db";

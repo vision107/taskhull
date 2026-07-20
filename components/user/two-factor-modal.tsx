@@ -6,6 +6,7 @@ import { ArrowRightIcon } from "lucide-react";
 import * as React from "react";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { InputPassword } from "@/components/ui/custom/input-password";
 import {

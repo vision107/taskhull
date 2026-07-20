@@ -1,0 +1,51 @@
+{
+	"$schema": "./node_modules/oxfmt/configuration_schema.json",
+	"arrowParens": "always",
+	"printWidth": 80,
+	"useTabs": true,
+	"semi": true,
+	"singleQuote": false,
+	"jsxSingleQuote": false,
+	"sortImports": {
+		"groups": [
+			"builtin",
+			"external",
+			["internal", "subpath"],
+			["parent", "sibling", "index"],
+			"style",
+			"unknown"
+		]
+	},
+	"sortTailwindcss": {
+		"attributes": ["className"],
+		"functions": ["cn"],
+		"stylesheet": "./app/globals.css"
+	},
+	"ignorePatterns": [
+		".agent/**",
+		".claude/**",
+		".codex/**",
+		".content-collections/**",
+		".cursor/**",
+		".gemini/**",
+		".next/**",
+		".opencode/**",
+		".source/**",
+		"coverage/**",
+		"dist/**",
+		"lib/db/migrations/**",
+		"node_modules/**",
+		"package-lock.json",
+		"playwright-report/**",
+		"public/sdk*.js",
+		"test-results/**"
+	],
+	"overrides": [
+		{
+			"files": ["**/*.json", "**/*.jsonc"],
+			"options": {
+				"trailingComma": "none"
+			}
+		}
+	]
+}

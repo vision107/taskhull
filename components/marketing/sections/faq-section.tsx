@@ -3,6 +3,7 @@
 import { MinusIcon, PlusIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
+
 import { cn } from "@/lib/utils";
 
 interface FaqItem {
@@ -44,7 +45,7 @@ function FaqAccordionItem({
 						transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
 						className="overflow-hidden"
 					>
-						<div className="pt-1 pb-6 pr-12 text-sm leading-7 text-marketing-fg-muted">
+						<div className="pt-1 pr-12 pb-6 text-sm leading-7 text-marketing-fg-muted">
 							{item.answer}
 						</div>
 					</motion.div>
@@ -64,13 +65,13 @@ export function FaqSection({
 	const [openIndex, setOpenIndex] = useState<number | null>(null);
 
 	return (
-		<section id="faq" className="py-16 scroll-mt-14">
+		<section id="faq" className="scroll-mt-14 py-16">
 			<div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-2 gap-y-16 px-6 md:max-w-3xl lg:max-w-7xl lg:grid-cols-2 lg:px-10">
 				{/* Header */}
 				<div className="flex flex-col gap-6">
 					<h2
 						className={cn(
-							"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+							"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 							"text-marketing-fg",
 							"sm:text-5xl sm:leading-14",
 						)}

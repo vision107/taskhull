@@ -1,4 +1,5 @@
 import { type CreateEmailResponse, Resend } from "resend";
+
 import { env } from "@/lib/env";
 import { LoggerFactory } from "@/lib/logger/factory";
 

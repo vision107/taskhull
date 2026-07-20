@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type * as React from "react";
+
 import { ResetPasswordCard } from "@/components/auth/reset-password-card";
 
 export const dynamic = "force-dynamic";

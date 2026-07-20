@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type * as React from "react";
+
 import { OnboardingCard } from "@/components/onboarding/onboarding-card";
 import { getSession } from "@/lib/auth/server";
 

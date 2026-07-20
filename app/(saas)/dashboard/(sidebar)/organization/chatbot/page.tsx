@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type { JSX } from "react";
+
 import { AiChat } from "@/components/ai/ai-chat";
 import {
 	Page,

@@ -4,6 +4,7 @@ import { LockIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type * as React from "react";
+
 import { PasswordFormMessage } from "@/components/auth/password-form-message";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -146,7 +147,7 @@ export function ResetPasswordCard(): React.JSX.Element {
 				)}
 			</CardContent>
 			{!methods.formState.isSubmitSuccessful && (
-				<CardFooter className="flex justify-center gap-1 text-muted-foreground text-sm">
+				<CardFooter className="flex justify-center gap-1 text-sm text-muted-foreground">
 					<span>Remember your password?</span>
 					<Link className="text-foreground underline" href="/auth/sign-in">
 						Sign in

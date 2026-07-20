@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+
 import { BlogSection } from "@/components/marketing/sections/blog-section";
 import { getAllPosts } from "@/lib/marketing/blog/posts";
 

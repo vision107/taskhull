@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type * as React from "react";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,7 +75,7 @@ export function BannedCard({
 
 				<div className="space-y-4">
 					<div>
-						<p className="font-medium text-sm text-marketing-fg-muted">
+						<p className="text-sm font-medium text-marketing-fg-muted">
 							Reason for suspension:
 						</p>
 						<p className="text-sm text-marketing-fg">
@@ -84,7 +85,7 @@ export function BannedCard({
 
 					{banExpires && (
 						<div>
-							<p className="font-medium text-sm text-marketing-fg-muted">
+							<p className="text-sm font-medium text-marketing-fg-muted">
 								Suspension expires:
 							</p>
 							<p className="text-sm text-marketing-fg">

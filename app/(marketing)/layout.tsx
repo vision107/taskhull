@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
+
 import { CookieBanner } from "@/components/marketing/navigation/cookie-banner";
 import { Footer } from "@/components/marketing/navigation/footer";
 import { Header } from "@/components/marketing/navigation/header";
 import { ThemeToggle } from "@/components/ui/custom/theme-toggle";
+
 import { MarketingProviders } from "./providers";
 
 /**
@@ -13,7 +15,7 @@ import { MarketingProviders } from "./providers";
 export default function MarketingLayout({ children }: { children: ReactNode }) {
 	return (
 		<MarketingProviders>
-			<div className="bg-marketing-bg text-marketing-fg font-display-headings">
+			<div className="font-display-headings bg-marketing-bg text-marketing-fg">
 				<Header />
 				<main className="min-h-screen">{children}</main>
 				<Footer />

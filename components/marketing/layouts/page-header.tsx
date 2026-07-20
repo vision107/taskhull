@@ -18,7 +18,7 @@ export function PageHeader({
 	return (
 		<div
 			className={cn(
-				"border-border/40 border-b pt-28 pb-6 xl:pt-32 xl:pb-8 2xl:pb-10",
+				"border-b border-border/40 pt-28 pb-6 xl:pt-32 xl:pb-8 2xl:pb-10",
 				className,
 			)}
 		>
@@ -32,7 +32,7 @@ export function PageHeader({
 					{title}
 				</h1>
 
-				<h2 className="text-lg text-muted-foreground tracking-tight 2xl:text-2xl">
+				<h2 className="text-lg tracking-tight text-muted-foreground 2xl:text-2xl">
 					{subtitle}
 				</h2>
 			</div>

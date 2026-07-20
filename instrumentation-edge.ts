@@ -1,4 +1,5 @@
 import { init } from "@sentry/nextjs";
+
 import { env } from "@/lib/env";
 
 const enableSentry = process.env.NODE_ENV !== "development";

@@ -1,6 +1,6 @@
 import "server-only";
-
 import type Stripe from "stripe";
+
 import { getStripe } from "./stripe";
 import type { CreatePortalParams } from "./types";
 

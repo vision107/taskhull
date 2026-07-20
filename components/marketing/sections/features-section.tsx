@@ -2,6 +2,7 @@
 
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
+
 import { GradientCard } from "@/components/marketing/primitives/gradient-card";
 import { cn } from "@/lib/utils";
 
@@ -35,14 +36,14 @@ function FeatureCard({ feature }: { feature: Feature }) {
 						alt={feature.title}
 						width={feature.image.width}
 						height={feature.image.height}
-						className="dark:hidden w-full h-auto"
+						className="h-auto w-full dark:hidden"
 					/>
 					<img
 						src={feature.image.dark}
 						alt={feature.title}
 						width={feature.image.width}
 						height={feature.image.height}
-						className="hidden dark:block w-full h-auto"
+						className="hidden h-auto w-full dark:block"
 					/>
 				</GradientCard>
 			</div>
@@ -50,7 +51,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
 			{/* Content */}
 			<div className="flex flex-col gap-4 p-6 sm:p-10 lg:p-6">
 				<div>
-					<h3 className="text-base font-medium leading-8 text-marketing-fg">
+					<h3 className="text-base leading-8 font-medium text-marketing-fg">
 						{feature.title}
 					</h3>
 					<div className="mt-2 flex flex-col gap-4 text-sm leading-7 text-marketing-fg-muted">
@@ -104,17 +105,17 @@ export function FeaturesSection() {
 	];
 
 	return (
-		<section id="features" className="py-16 scroll-mt-14">
+		<section id="features" className="scroll-mt-14 py-16">
 			<div className="mx-auto flex max-w-2xl flex-col gap-10 px-6 md:max-w-3xl lg:max-w-7xl lg:gap-16 lg:px-10">
 				{/* Header */}
 				<div className="flex max-w-2xl flex-col gap-6">
 					<div className="flex flex-col gap-2">
-						<div className="text-sm font-semibold leading-7 text-marketing-fg-muted">
+						<div className="text-sm leading-7 font-semibold text-marketing-fg-muted">
 							Powerful Features
 						</div>
 						<h2
 							className={cn(
-								"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+								"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 								"text-marketing-fg",
 								"sm:text-5xl sm:leading-14",
 							)}
@@ -122,7 +123,7 @@ export function FeaturesSection() {
 							The complete SaaS foundation
 						</h2>
 					</div>
-					<div className="text-base leading-7 text-marketing-fg-muted text-pretty">
+					<div className="text-base leading-7 text-pretty text-marketing-fg-muted">
 						<p>
 							Everything you need to build a production-ready application. From
 							authentication to payments, it's all included.

@@ -12,6 +12,7 @@ import {
 	LineChart,
 	XAxis,
 } from "recharts";
+
 import { Badge } from "@/components/ui/badge";
 import {
 	Card,
@@ -35,7 +36,7 @@ export default function DashboardDemo() {
 	const bounceRate = useMemo(() => generateSampleMetrics(), []);
 
 	return (
-		<div className="fade-in flex animate-in flex-col space-y-4 duration-500">
+		<div className="flex animate-in flex-col space-y-4 duration-500 fade-in">
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
 				<Card>
 					<CardHeader>
@@ -198,7 +199,7 @@ function KpiSparkline(
 
 function MetricFigure(props: React.PropsWithChildren) {
 	return (
-		<div className="font-heading font-semibold text-2xl">{props.children}</div>
+		<div className="font-heading text-2xl font-semibold">{props.children}</div>
 	);
 }
 
@@ -432,10 +433,10 @@ export function EmailsSentChart() {
 			<CardFooter>
 				<div className="flex w-full items-start gap-2 text-sm">
 					<div className="grid gap-2">
-						<div className="flex items-center gap-2 font-medium leading-none">
+						<div className="flex items-center gap-2 leading-none font-medium">
 							Up 4.8% from last quarter <TrendingUp className="h-4 w-4" />
 						</div>
-						<div className="flex items-center gap-2 text-muted-foreground leading-none">
+						<div className="flex items-center gap-2 leading-none text-muted-foreground">
 							October - December 2025
 						</div>
 					</div>
@@ -576,10 +577,10 @@ export function EmailPerformanceChart() {
 								className="relative z-30 flex flex-1 cursor-pointer flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-muted/50 sm:border-t-0 sm:border-l sm:px-8 sm:py-6"
 								onClick={() => setSelectedMetric(chart)}
 							>
-								<span className="text-muted-foreground text-xs">
+								<span className="text-xs text-muted-foreground">
 									{chartConfig[chart].label}
 								</span>
-								<span className="font-bold text-base leading-none sm:text-xl">
+								<span className="text-base leading-none font-bold sm:text-xl">
 									{averages[key as keyof typeof averages].toFixed(1)}%
 								</span>
 							</button>

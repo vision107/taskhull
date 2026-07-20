@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type * as React from "react";
+
 import { OrganizationSettingsTabs } from "@/components/organization/organization-settings-tabs";
 import {
 	Page,

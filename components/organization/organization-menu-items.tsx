@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import * as React from "react";
+
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -143,7 +144,7 @@ export function OrganizationMenuItems(): React.JSX.Element {
 
 	return (
 		<ScrollArea
-			className="[&>[data-radix-scroll-area-viewport]>div]:flex! h-full [&>[data-radix-scroll-area-viewport]>div]:h-full [&>[data-radix-scroll-area-viewport]>div]:flex-col [&>[data-radix-scroll-area-viewport]>div]:-space-y-1"
+			className="h-full [&>[data-radix-scroll-area-viewport]>div]:flex! [&>[data-radix-scroll-area-viewport]>div]:h-full [&>[data-radix-scroll-area-viewport]>div]:flex-col [&>[data-radix-scroll-area-viewport]>div]:-space-y-1"
 			/* Overriding the hardcoded { disply:table } to get full flex height */
 			verticalScrollBar
 		>
@@ -261,7 +262,7 @@ export function OrganizationMenuItems(): React.JSX.Element {
 								<SidebarMenuItem>
 									<CollapsibleTrigger asChild>
 										<SidebarMenuButton
-											className="flex w-full items-center justify-between px-2 font-medium text-sidebar-foreground/70 text-xs"
+											className="flex w-full items-center justify-between px-2 text-xs font-medium text-sidebar-foreground/70"
 											tooltip={group.label}
 										>
 											<span>{group.label}</span>

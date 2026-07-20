@@ -4,6 +4,7 @@ import { MenuIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+
 import { Logo } from "@/components/logo";
 import {
 	NavigationMenu,
@@ -198,7 +199,7 @@ export function Header() {
 									href="/dashboard"
 									className={cn(
 										"inline-flex shrink-0 items-center justify-center gap-1 rounded-full px-3 py-1 text-sm font-medium",
-										"bg-marketing-accent text-marketing-accent-fg hover:bg-marketing-accent-hover transition-colors",
+										"bg-marketing-accent text-marketing-accent-fg transition-colors hover:bg-marketing-accent-hover",
 									)}
 								>
 									Dashboard
@@ -209,7 +210,7 @@ export function Header() {
 										href="/auth/sign-in"
 										className={cn(
 											"inline-flex shrink-0 items-center justify-center rounded-full px-3 py-1 text-sm font-medium",
-											"text-marketing-fg hover:bg-marketing-card-hover transition-colors",
+											"text-marketing-fg transition-colors hover:bg-marketing-card-hover",
 										)}
 									>
 										Log in
@@ -218,7 +219,7 @@ export function Header() {
 										href="/auth/sign-up"
 										className={cn(
 											"inline-flex shrink-0 items-center justify-center gap-1 rounded-full px-3 py-1 text-sm font-medium",
-											"bg-marketing-accent text-marketing-accent-fg hover:bg-marketing-accent-hover transition-colors",
+											"bg-marketing-accent text-marketing-accent-fg transition-colors hover:bg-marketing-accent-hover",
 										)}
 									>
 										Get started
@@ -250,7 +251,7 @@ export function Header() {
 				{/* Mobile Menu */}
 				{menuOpen && (
 					<div
-						className="fixed inset-x-0 top-14 z-50 overflow-y-auto border-t bg-white px-6 py-6 dark:bg-neutral-950 lg:hidden"
+						className="fixed inset-x-0 top-14 z-50 overflow-y-auto border-t bg-white px-6 py-6 lg:hidden dark:bg-neutral-950"
 						style={{ height: "calc(100dvh - 3.5rem)" }}
 					>
 						<div className="flex flex-col gap-8 pb-20">
@@ -295,7 +296,7 @@ export function Header() {
 										key={link.title}
 										href={link.href}
 										onClick={() => setMenuOpen(false)}
-										className="inline-flex rounded-full px-4 -mx-4 py-2 text-3xl font-medium text-marketing-fg hover:bg-marketing-card-hover transition-colors"
+										className="-mx-4 inline-flex rounded-full px-4 py-2 text-3xl font-medium text-marketing-fg transition-colors hover:bg-marketing-card-hover"
 									>
 										{link.title}
 									</Link>
@@ -303,7 +304,7 @@ export function Header() {
 								<Link
 									href="/pricing"
 									onClick={() => setMenuOpen(false)}
-									className="inline-flex rounded-full px-4 -mx-4 py-2 text-3xl font-medium text-marketing-fg hover:bg-marketing-card-hover transition-colors"
+									className="-mx-4 inline-flex rounded-full px-4 py-2 text-3xl font-medium text-marketing-fg transition-colors hover:bg-marketing-card-hover"
 								>
 									Pricing
 								</Link>
@@ -318,7 +319,7 @@ export function Header() {
 										key={link.title}
 										href={link.href}
 										onClick={() => setMenuOpen(false)}
-										className="inline-flex rounded-full px-4 -mx-4 py-2 text-3xl font-medium text-marketing-fg hover:bg-marketing-card-hover transition-colors"
+										className="-mx-4 inline-flex rounded-full px-4 py-2 text-3xl font-medium text-marketing-fg transition-colors hover:bg-marketing-card-hover"
 									>
 										{link.title}
 									</Link>
@@ -334,7 +335,7 @@ export function Header() {
 										key={link.title}
 										href={link.href}
 										onClick={() => setMenuOpen(false)}
-										className="inline-flex rounded-full px-4 -mx-4 py-2 text-3xl font-medium text-marketing-fg hover:bg-marketing-card-hover transition-colors"
+										className="-mx-4 inline-flex rounded-full px-4 py-2 text-3xl font-medium text-marketing-fg transition-colors hover:bg-marketing-card-hover"
 									>
 										{link.title}
 									</Link>
@@ -361,12 +362,12 @@ function ListItem({
 				<Link
 					href={href}
 					className={cn(
-						"block select-none space-y-1 rounded-lg p-3 leading-none no-underline outline-none transition-colors hover:bg-marketing-card-hover hover:text-marketing-fg focus:bg-marketing-card-hover focus:text-marketing-fg",
+						"block space-y-1 rounded-lg p-3 leading-none no-underline transition-colors outline-none select-none hover:bg-marketing-card-hover hover:text-marketing-fg focus:bg-marketing-card-hover focus:text-marketing-fg",
 						className,
 					)}
 					{...props}
 				>
-					<div className="text-sm font-medium leading-none text-marketing-fg">
+					<div className="text-sm leading-none font-medium text-marketing-fg">
 						{title}
 					</div>
 					<p className="line-clamp-2 text-sm leading-snug text-marketing-fg-muted">

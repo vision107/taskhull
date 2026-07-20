@@ -4,6 +4,7 @@ import NiceModal from "@ebay/nice-modal-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type * as React from "react";
 import { toast } from "sonner";
+
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,8 +73,8 @@ export function DeleteOrganizationCard(): React.JSX.Element | null {
 			<CardContent>
 				<div className="flex flex-col space-y-4">
 					<div className="flex flex-col space-y-1">
-						<span className="font-medium text-sm">Delete Organization</span>
-						<p className="text-muted-foreground text-sm">
+						<span className="text-sm font-medium">Delete Organization</span>
+						<p className="text-sm text-muted-foreground">
 							This action cannot be undone. All data associated with this
 							organization will be deleted.
 						</p>

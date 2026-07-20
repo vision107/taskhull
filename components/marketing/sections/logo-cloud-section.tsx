@@ -48,7 +48,7 @@ const logos = [
 
 export function LogoCloudSection() {
 	return (
-		<section className="overflow-hidden border-border/50 border-t">
+		<section className="overflow-hidden border-t border-border/50">
 			<div className="group relative mx-auto max-w-screen-2xl px-4 sm:px-6 md:px-12">
 				<div className="relative w-full py-6">
 					<InfiniteSlider speedOnHover={20} speed={40} gap={112}>

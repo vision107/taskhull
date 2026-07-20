@@ -12,7 +12,7 @@ Fumadocs is fully compatible with Next.js static export, allowing you to export 
  * @type {import('next').NextConfig}
  */
 const nextConfig = {
-  output: 'export',
+	output: "export",
 };
 ```
 
@@ -29,25 +29,25 @@ The default search config of Orama Search uses route handlers, which is not supp
 Instead, you can build the search indexes statically and enable static mode on search client from Root Provider:
 
 ```tsx title="app/layout.tsx"
-import { RootProvider } from 'fumadocs-ui/provider';
-import type { ReactNode } from 'react';
+import { RootProvider } from "fumadocs-ui/provider";
+import type { ReactNode } from "react";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
-        <RootProvider
-          search={{
-            options: {
-              type: 'static',
-            },
-          }}
-        >
-          {children}
-        </RootProvider>
-      </body>
-    </html>
-  );
+	return (
+		<html lang="en" suppressHydrationWarning>
+			<body>
+				<RootProvider
+					search={{
+						options: {
+							type: "static",
+						},
+					}}
+				>
+					{children}
+				</RootProvider>
+			</body>
+		</html>
+	);
 }
 ```
 

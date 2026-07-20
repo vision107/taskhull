@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod/v4";
+
 import { appConfig } from "@/config/app.config";
 import { db } from "@/lib/db";
 import { aiChatTable } from "@/lib/db/schema";

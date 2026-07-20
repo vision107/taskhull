@@ -5,6 +5,7 @@ import { CheckIcon, CopyIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes } from "react";
 import { memo, useCallback, useState } from "react";
 import { Streamdown } from "streamdown";
+
 import { Button } from "@/components/ui/button";
 import {
 	Tooltip,

@@ -1,4 +1,5 @@
 import pino, { type Logger as PinoLogger } from "pino";
+
 import { env } from "@/lib/env";
 
 // Dynamically import context to avoid client-side issues and support edge runtime
@@ -12,7 +13,7 @@ if (typeof window === "undefined") {
 		getFilteredRequestContext = () => ({});
 	} else {
 		try {
-			// biome-ignore lint/security/noGlobalEval: Required for conditional server-side module loading
+			// oxlint-disable-next-line no-eval -- Required for conditional server-side module loading
 			const contextModule = eval("require")("@/lib/logger/context");
 			getFilteredRequestContext = contextModule.getFilteredRequestContext;
 		} catch {

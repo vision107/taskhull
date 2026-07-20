@@ -6,6 +6,7 @@ import * as React from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { v4 as uuid } from "uuid";
+
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { CropImageModal } from "@/components/crop-image-modal";
 import { OrganizationLogo } from "@/components/organization/organization-logo";
@@ -131,7 +132,7 @@ export function OrganizationLogoCard(): React.JSX.Element | null {
 				<div className="flex flex-row items-center gap-4">
 					<div
 						className={cn(
-							"relative size-20 rounded-md transition-colors shrink-0",
+							"relative size-20 shrink-0 rounded-md transition-colors",
 							!organization?.logo &&
 								"cursor-pointer border border-border hover:border-primary",
 						)}

@@ -2,6 +2,7 @@
 
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import * as React from "react";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -60,7 +61,7 @@ const InputSpinner = ({
 	return (
 		<div
 			className={cn(
-				"flex h-[34px] flex-col divide-y rounded-r-md border-l bg-bg-accent",
+				"bg-bg-accent flex h-[34px] flex-col divide-y rounded-r-md border-l",
 				className,
 			)}
 			role="spinbutton"
@@ -230,14 +231,14 @@ const InputNumber = ({
 						: undefined
 				}
 				className={cn(
-					"col-start-1 row-start-1 h-9 w-full border-0 bg-transparent py-1 text-sm focus-visible:outline-none focus-visible:ring-0",
+					"col-start-1 row-start-1 h-9 w-full border-0 bg-transparent py-1 text-sm focus-visible:ring-0 focus-visible:outline-none",
 					unit ? "pl-3" : "px-3",
 					className,
 				)}
 				{...props}
 			/>
 			{unit && (
-				<div className="col-start-2 row-start-1 flex items-center justify-center pr-3 pl-1 text-fg-muted text-sm">
+				<div className="text-fg-muted col-start-2 row-start-1 flex items-center justify-center pr-3 pl-1 text-sm">
 					{unit}
 				</div>
 			)}

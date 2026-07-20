@@ -2,6 +2,7 @@
 
 import { captureException } from "@sentry/nextjs";
 import * as React from "react";
+
 import { ErrorPage } from "@/components/error-page";
 
 export default function AppErrorPage({

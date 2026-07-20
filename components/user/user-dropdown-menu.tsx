@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
+
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -213,7 +214,7 @@ export function UserDropDownMenu(
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<SidebarMenuButton
-							className="group-data-[collapsible=icon]:!p-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:-ml-[1px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full"
+							className="group-data-[collapsible=icon]:-ml-[1px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:!p-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 							size="lg"
 						>
 							{sidebarState === "collapsed" ? (
@@ -239,7 +240,7 @@ export function UserDropDownMenu(
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<SidebarMenuButton
-								className="group-data-[collapsible=icon]:!p-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:-ml-[1px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full"
+								className="group-data-[collapsible=icon]:-ml-[1px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:!p-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 								size="lg"
 							>
 								<UserAvatar
@@ -248,10 +249,10 @@ export function UserDropDownMenu(
 									src={user.image ?? undefined}
 								/>
 								<div className="flex w-full flex-col truncate text-left group-data-[collapsible=icon]:hidden">
-									<p className="truncate font-medium text-sm leading-none">
+									<p className="truncate text-sm leading-none font-medium">
 										{user.name}
 									</p>
-									<p className="text-muted-foreground text-xs leading-none">
+									<p className="text-xs leading-none text-muted-foreground">
 										{user.email}
 									</p>
 								</div>
@@ -261,10 +262,10 @@ export function UserDropDownMenu(
 						<DropdownMenuContent align="start" className="w-60" forceMount>
 							<DropdownMenuLabel className="font-normal">
 								<div className="flex flex-col space-y-1">
-									<p className="truncate font-medium text-sm leading-none">
+									<p className="truncate text-sm leading-none font-medium">
 										{user.name}
 									</p>
-									<p className="text-muted-foreground text-xs leading-none">
+									<p className="text-xs leading-none text-muted-foreground">
 										{user.email}
 									</p>
 								</div>

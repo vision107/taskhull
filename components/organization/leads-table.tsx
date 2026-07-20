@@ -17,6 +17,7 @@ import {
 } from "nuqs";
 import * as React from "react";
 import { toast } from "sonner";
+
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { LeadsBulkActions } from "@/components/organization/leads-bulk-actions";
 import { LeadsModal } from "@/components/organization/leads-modal";
@@ -329,7 +330,7 @@ export function LeadsTable(): React.JSX.Element {
 			cell: ({ row }) => (
 				<Badge
 					className={cn(
-						"border-none px-2 py-0.5 font-medium text-foreground text-xs shadow-none",
+						"border-none px-2 py-0.5 text-xs font-medium text-foreground shadow-none",
 						statusColors[row.original.status] || "bg-gray-100 dark:bg-gray-800",
 					)}
 					variant="outline"

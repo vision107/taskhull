@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+
 import { PricingTable } from "@/components/billing/pricing-table";
 import { appConfig } from "@/config/app.config";
 import {

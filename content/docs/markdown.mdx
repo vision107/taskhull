@@ -25,7 +25,7 @@ We use GFM (GitHub Flavored Markdown), a superset of Markdown (CommonMark). See 
 Hello World, **Bold**, _Italic_, ~~Hidden~~
 
 ```js
-console.log('Hello World');
+console.log("Hello World");
 ```
 
 1. First
@@ -61,7 +61,7 @@ This also works: https://github.github.com/gfm.
 MDX is a superset of Markdown, with support of JSX syntax. It allows you to import components, and use them right in the document, or even export values.
 
 ```mdx
-import { Component } from './component';
+import { Component } from "./component";
 
 <Component name="Hello" />
 ```
@@ -74,31 +74,31 @@ Useful for adding links, it is included by default.
 
 ```mdx
 <Cards>
-  <Card
-    href="https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating"
-    title="Fetching, Caching, and Revalidating"
-  >
-    Learn more about caching in Next.js
-  </Card>
+	<Card
+		href="https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating"
+		title="Fetching, Caching, and Revalidating"
+	>
+		Learn more about caching in Next.js
+	</Card>
 </Cards>
 ```
 
 <Cards>
-  <Card
-    href="https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating"
-    title="Fetching, Caching, and Revalidating"
-  >
-    Learn more about caching in Next.js
-  </Card>
+	<Card
+		href="https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating"
+		title="Fetching, Caching, and Revalidating"
+	>
+		Learn more about caching in Next.js
+	</Card>
 </Cards>
 
 #### Without href
 
 ```mdx
 <Cards>
-  <Card title="Fetching, Caching, and Revalidating">
-    Learn more about `fetch` in Next.js.
-  </Card>
+	<Card title="Fetching, Caching, and Revalidating">
+		Learn more about `fetch` in Next.js.
+	</Card>
 </Cards>
 ```
 
@@ -132,12 +132,12 @@ You can specify the type of callout.
 
 ```mdx
 <Callout title="Title" type="error">
-  Hello World
+	Hello World
 </Callout>
 ```
 
 <Callout title="Title" type="error">
-  Hello World
+	Hello World
 </Callout>
 
 ### Customise Components
@@ -180,7 +180,7 @@ Syntax Highlighting is supported by default using Rehype Code.
 
 ````md
 ```js
-console.log('Hello World');
+console.log("Hello World");
 ```
 ````
 
@@ -188,7 +188,7 @@ You can add a title to the codeblock.
 
 ````md
 ```js title="My Title"
-console.log('Hello World');
+console.log("Hello World");
 ```
 ````
 
@@ -213,7 +213,7 @@ You can highlight a specific word by adding `[!code word:<match>]`.
 ```js
 // [!code word:config]
 const config = {
-  reactStrictMode: true,
+	reactStrictMode: true,
 };
 ```
 ````
@@ -222,8 +222,8 @@ const config = {
 
 ````md
 ```ts
-console.log('hewwo'); // [!code --]
-console.log('hello'); // [!code ++]
+console.log("hewwo"); // [!code --]
+console.log("hello"); // [!code ++]
 ```
 ````
 
@@ -233,13 +233,9 @@ You can use code blocks with the `Tab` component to organize content in tabs.
 
 Note that you can add MDX components instead of importing them in MDX files.
 
-<Tabs items={['Tab 1', 'Tab 2']}>
-  <Tab value='Tab 1'>
-    Content for Tab 1: `console.log('A');`
-  </Tab>
-  <Tab value='Tab 2'>
-    Content for Tab 2: `console.log('B');`
-  </Tab>
+<Tabs items={["Tab 1", "Tab 2"]}>
+	<Tab value="Tab 1">Content for Tab 1: `console.log('A');`</Tab>
+	<Tab value="Tab 2">Content for Tab 2: `console.log('B');`</Tab>
 </Tabs>
 
 ## Images

@@ -2,6 +2,7 @@
 
 import { MoonIcon, SunIcon } from "lucide-react";
 import type * as React from "react";
+
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { appConfig } from "@/config/app.config";
 import { useTheme } from "@/hooks/use-theme";
@@ -35,11 +36,11 @@ function ThemeToggle({
 			{...props}
 		>
 			<SunIcon
-				className="size-5 shrink-0 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+				className="size-5 shrink-0 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"
 				aria-hidden="true"
 			/>
 			<MoonIcon
-				className="absolute size-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+				className="absolute size-5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"
 				aria-hidden="true"
 			/>
 			<span className="sr-only">Toggle theme</span>

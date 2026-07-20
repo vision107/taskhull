@@ -2,6 +2,7 @@
 
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
+
 import { appConfig } from "@/config/app.config";
 import { billingConfig } from "@/config/billing.config";
 import type { PlanDisplay } from "@/lib/billing/types";

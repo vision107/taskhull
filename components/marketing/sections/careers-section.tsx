@@ -2,6 +2,7 @@
 
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
+
 import { cn } from "@/lib/utils";
 
 const benefits = [
@@ -65,7 +66,7 @@ export function CareersBenefitsSection() {
 				<div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 md:max-w-3xl lg:max-w-7xl lg:px-10">
 					<h1
 						className={cn(
-							"text-balance font-display text-5xl leading-12 tracking-tight",
+							"font-display text-5xl leading-12 tracking-tight text-balance",
 							"text-marketing-fg",
 							"sm:text-[5rem] sm:leading-20",
 						)}
@@ -88,7 +89,7 @@ export function CareersBenefitsSection() {
 						<div className="flex flex-col gap-2">
 							<h2
 								className={cn(
-									"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+									"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 									"text-marketing-fg",
 									"sm:text-5xl sm:leading-14",
 								)}
@@ -132,7 +133,7 @@ export function CareersPositionsSection() {
 						<div className="flex flex-col gap-2">
 							<h2
 								className={cn(
-									"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+									"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 									"text-marketing-fg",
 									"sm:text-5xl sm:leading-14",
 								)}
@@ -152,7 +153,7 @@ export function CareersPositionsSection() {
 										<h3 className="font-semibold text-marketing-fg">
 											{position.title}
 										</h3>
-										<span className="inline-flex rounded-full bg-marketing-card-hover px-2 py-0.5 text-xs font-medium text-marketing-fg-hover">
+										<span className="text-marketing-fg-hover inline-flex rounded-full bg-marketing-card-hover px-2 py-0.5 text-xs font-medium">
 											{position.department}
 										</span>
 									</div>
@@ -189,7 +190,7 @@ export function CareersPositionsSection() {
 						<div className="flex max-w-4xl flex-col gap-2">
 							<h2
 								className={cn(
-									"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+									"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 									"text-marketing-fg",
 									"sm:text-5xl sm:leading-14",
 								)}
@@ -197,7 +198,7 @@ export function CareersPositionsSection() {
 								Don't see the right role?
 							</h2>
 						</div>
-						<div className="max-w-3xl text-base leading-7 text-marketing-fg-muted text-pretty">
+						<div className="max-w-3xl text-base leading-7 text-pretty text-marketing-fg-muted">
 							<p>
 								We're always looking for talented people. Send us your resume
 								and tell us how you'd like to contribute.

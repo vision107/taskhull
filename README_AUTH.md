@@ -125,8 +125,8 @@ import { getSession } from "@/lib/auth/server";
 const session = await getSession();
 
 if (session) {
-  console.log(session.user.email);
-  console.log(session.user.role);
+	console.log(session.user.email);
+	console.log(session.user.role);
 }
 ```
 
@@ -148,8 +148,8 @@ const orgs = await getOrganizationList();
 import { assertUserIsOrgMember } from "@/lib/auth/server";
 
 const { organization, membership } = await assertUserIsOrgMember(
-  organizationId,
-  userId
+	organizationId,
+	userId,
 );
 // Throws TRPCError if not a member
 ```
@@ -180,8 +180,8 @@ import { authClient } from "@/lib/auth/client";
 
 // Sign in
 await authClient.signIn.email({
-  email: "user@example.com",
-  password: "password",
+	email: "user@example.com",
+	password: "password",
 });
 
 // Sign out
@@ -203,35 +203,35 @@ await authClient.organization.setActive({ organizationId: "..." });
 
 ```typescript
 import {
-  publicProcedure,
-  protectedProcedure,
-  protectedAdminProcedure,
-  protectedOrganizationProcedure,
+	publicProcedure,
+	protectedProcedure,
+	protectedAdminProcedure,
+	protectedOrganizationProcedure,
 } from "@/trpc/init";
 
 export const myRouter = createTRPCRouter({
-  // No auth required
-  publicData: publicProcedure.query(async () => {
-    return { message: "Hello!" };
-  }),
+	// No auth required
+	publicData: publicProcedure.query(async () => {
+		return { message: "Hello!" };
+	}),
 
-  // Requires login
-  userData: protectedProcedure.query(async ({ ctx }) => {
-    // ctx.user is available
-    return { userId: ctx.user.id };
-  }),
+	// Requires login
+	userData: protectedProcedure.query(async ({ ctx }) => {
+		// ctx.user is available
+		return { userId: ctx.user.id };
+	}),
 
-  // Requires platform admin role
-  adminData: protectedAdminProcedure.query(async ({ ctx }) => {
-    // ctx.user.role is guaranteed to be "admin"
-    return { adminOnly: true };
-  }),
+	// Requires platform admin role
+	adminData: protectedAdminProcedure.query(async ({ ctx }) => {
+		// ctx.user.role is guaranteed to be "admin"
+		return { adminOnly: true };
+	}),
 
-  // Requires organization membership
-  orgData: protectedOrganizationProcedure.query(async ({ ctx }) => {
-    // ctx.organization and ctx.membership available
-    return { orgId: ctx.organization.id };
-  }),
+	// Requires organization membership
+	orgData: protectedOrganizationProcedure.query(async ({ ctx }) => {
+		// ctx.organization and ctx.membership available
+		return { orgId: ctx.organization.id };
+	}),
 });
 ```
 
@@ -239,15 +239,15 @@ export const myRouter = createTRPCRouter({
 
 ```typescript
 protectedOrganizationProcedure.mutation(async ({ ctx }) => {
-  // Check if user is owner or admin
-  if (ctx.membership.role !== "owner" && ctx.membership.role !== "admin") {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Only owners and admins can do this",
-    });
-  }
+	// Check if user is owner or admin
+	if (ctx.membership.role !== "owner" && ctx.membership.role !== "admin") {
+		throw new TRPCError({
+			code: "FORBIDDEN",
+			message: "Only owners and admins can do this",
+		});
+	}
 
-  // Proceed with action...
+	// Proceed with action...
 });
 ```
 
@@ -258,7 +258,7 @@ import { isOrganizationAdmin } from "@/lib/auth/utils";
 
 // Returns true if user is platform admin OR organization owner/admin
 if (isOrganizationAdmin(organization, user)) {
-  // User has admin access
+	// User has admin access
 }
 ```
 
@@ -293,9 +293,9 @@ import { userTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 await db
-  .update(userTable)
-  .set({ role: "admin" })
-  .where(eq(userTable.email, "your@email.com"));
+	.update(userTable)
+	.set({ role: "admin" })
+	.where(eq(userTable.email, "your@email.com"));
 ```
 
 ---
@@ -315,9 +315,9 @@ Admins can ban users with optional expiry dates. Banned users:
 ```typescript
 // Via tRPC (admin only)
 await trpc.adminUsers.banUser.mutate({
-  userId: "...",
-  reason: "Violation of terms",
-  expiresAt: new Date("2024-12-31"), // Optional
+	userId: "...",
+	reason: "Violation of terms",
+	expiresAt: new Date("2024-12-31"), // Optional
 });
 ```
 
@@ -325,7 +325,7 @@ await trpc.adminUsers.banUser.mutate({
 
 ```typescript
 await trpc.adminUsers.unbanUser.mutate({
-  userId: "...",
+	userId: "...",
 });
 ```
 
@@ -349,7 +349,7 @@ Platform admins can impersonate users for debugging.
 ```typescript
 // Via Better Auth admin client
 await authClient.admin.impersonateUser({
-  userId: "target-user-id",
+	userId: "target-user-id",
 });
 ```
 
@@ -358,13 +358,13 @@ await authClient.admin.impersonateUser({
 ```typescript
 // Server-side (tRPC)
 if (ctx.isImpersonating) {
-  // Current session is impersonated
+	// Current session is impersonated
 }
 
 // Client-side
 const session = await authClient.getSession();
 if (session?.session.impersonatedBy) {
-  // Impersonated by admin with this ID
+	// Impersonated by admin with this ID
 }
 ```
 
@@ -383,8 +383,8 @@ await authClient.admin.stopImpersonation();
 ```typescript
 // Client-side
 await authClient.organization.create({
-  name: "My Company",
-  slug: "my-company", // Optional, auto-generated if not provided
+	name: "My Company",
+	slug: "my-company", // Optional, auto-generated if not provided
 });
 ```
 
@@ -392,7 +392,7 @@ await authClient.organization.create({
 
 ```typescript
 await authClient.organization.setActive({
-  organizationId: "org-id",
+	organizationId: "org-id",
 });
 ```
 
@@ -400,9 +400,9 @@ await authClient.organization.setActive({
 
 ```typescript
 await authClient.organization.inviteMember({
-  email: "newmember@example.com",
-  role: "member", // or "admin"
-  organizationId: "org-id",
+	email: "newmember@example.com",
+	role: "member", // or "admin"
+	organizationId: "org-id",
 });
 ```
 
@@ -537,8 +537,8 @@ export const oAuthProviders = [
 
 ```typescript
 export const userTable = pgTable("user", {
-  // ... existing fields
-  companyName: text("company_name"),
+	// ... existing fields
+	companyName: text("company_name"),
 });
 ```
 

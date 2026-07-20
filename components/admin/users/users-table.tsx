@@ -23,6 +23,7 @@ import {
 } from "nuqs";
 import * as React from "react";
 import { toast } from "sonner";
+
 import { BanUserModal } from "@/components/admin/users/ban-user-modal";
 import { UserBulkActions } from "@/components/admin/users/user-bulk-actions";
 import { ConfirmationModal } from "@/components/confirmation-modal";
@@ -377,7 +378,7 @@ export function UsersTable(): React.JSX.Element {
 			accessorKey: "emailVerified",
 			enableSorting: false,
 			header: () => (
-				<div className="font-medium text-foreground text-xs">Email Status</div>
+				<div className="text-xs font-medium text-foreground">Email Status</div>
 			),
 			cell: ({ row }) => {
 				const status = row.original.emailVerified
@@ -387,7 +388,7 @@ export function UsersTable(): React.JSX.Element {
 				return (
 					<Badge
 						className={cn(
-							"flex items-center justify-center gap-1.5 border-none px-2 py-0.5 font-medium text-foreground text-xs shadow-none",
+							"flex items-center justify-center gap-1.5 border-none px-2 py-0.5 text-xs font-medium text-foreground shadow-none",
 							status.bgColor,
 						)}
 						variant="outline"
@@ -406,7 +407,7 @@ export function UsersTable(): React.JSX.Element {
 			accessorKey: "banned",
 			enableSorting: false,
 			header: () => (
-				<div className="font-medium text-foreground text-xs">
+				<div className="text-xs font-medium text-foreground">
 					Account Status
 				</div>
 			),
@@ -419,7 +420,7 @@ export function UsersTable(): React.JSX.Element {
 
 					return (
 						<Badge
-							className="flex items-center justify-center gap-1.5 border-none bg-red-100 px-2 py-0.5 font-medium text-foreground text-xs shadow-none dark:bg-red-900"
+							className="flex items-center justify-center gap-1.5 border-none bg-red-100 px-2 py-0.5 text-xs font-medium text-foreground shadow-none dark:bg-red-900"
 							variant="outline"
 						>
 							<BanIcon className="size-3.5" />
@@ -441,7 +442,7 @@ export function UsersTable(): React.JSX.Element {
 				}
 				return (
 					<Badge
-						className="flex items-center justify-center gap-1.5 border-none bg-green-100 px-2 py-0.5 font-medium text-foreground text-xs shadow-none dark:bg-green-900"
+						className="flex items-center justify-center gap-1.5 border-none bg-green-100 px-2 py-0.5 text-xs font-medium text-foreground shadow-none dark:bg-green-900"
 						variant="outline"
 					>
 						<CheckIcon className="size-3.5" />

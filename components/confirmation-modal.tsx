@@ -3,6 +3,7 @@
 import NiceModal, { type NiceModalHocProps } from "@ebay/nice-modal-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
 import {
 	AlertDialog,
 	AlertDialogContent,
@@ -94,7 +95,7 @@ export const ConfirmationModal = NiceModal.create<ConfirmationModalProps>(
 								value={textInput}
 							/>
 							{showError && (
-								<p className="text-destructive-foreground text-sm">
+								<p className="text-sm text-destructive-foreground">
 									Please type "{requiredText}" exactly to confirm.
 								</p>
 							)}

@@ -2,6 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+
 import { creditPackages } from "@/config/billing.config";
 import {
 	billingEventExists,

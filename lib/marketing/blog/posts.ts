@@ -1,4 +1,5 @@
 import { allPosts } from "content-collections";
+
 import type { Post } from "./types";
 
 export async function getAllPosts(): Promise<Post[]> {

@@ -34,29 +34,29 @@ function ContactFormEmail({
 			</Preview>
 			<Tailwind>
 				<Body className="m-auto bg-white px-2 font-sans">
-					<Container className="mx-auto my-[40px] max-w-[465px] rounded-sm border border-[#eaeaea] border-solid p-[20px]">
-						<Heading className="mx-0 my-[30px] p-0 text-center font-normal text-[24px] text-black">
+					<Container className="mx-auto my-[40px] max-w-[465px] rounded-sm border border-solid border-[#eaeaea] p-[20px]">
+						<Heading className="mx-0 my-[30px] p-0 text-center text-[24px] font-normal text-black">
 							New Contact Form Submission
 						</Heading>
-						<Text className="text-[14px] text-black leading-[24px]">
+						<Text className="text-[14px] leading-[24px] text-black">
 							You received a new message from the {appName} contact form.
 						</Text>
-						<Hr className="mx-0 my-[16px] w-full border border-[#eaeaea] border-solid" />
-						<Text className="text-[14px] text-black leading-[24px]">
+						<Hr className="mx-0 my-[16px] w-full border border-solid border-[#eaeaea]" />
+						<Text className="text-[14px] leading-[24px] text-black">
 							<strong>Name:</strong> {firstName} {lastName}
 						</Text>
-						<Text className="text-[14px] text-black leading-[24px]">
+						<Text className="text-[14px] leading-[24px] text-black">
 							<strong>Email:</strong> {email}
 						</Text>
-						<Hr className="mx-0 my-[16px] w-full border border-[#eaeaea] border-solid" />
-						<Text className="text-[14px] text-black leading-[24px]">
+						<Hr className="mx-0 my-[16px] w-full border border-solid border-[#eaeaea]" />
+						<Text className="text-[14px] leading-[24px] text-black">
 							<strong>Message:</strong>
 						</Text>
-						<Text className="whitespace-pre-wrap text-[14px] text-black leading-[24px]">
+						<Text className="text-[14px] leading-[24px] whitespace-pre-wrap text-black">
 							{message}
 						</Text>
-						<Hr className="mx-0 my-[26px] w-full border border-[#eaeaea] border-solid" />
-						<Text className="text-[#666666] text-[12px] leading-[24px]">
+						<Hr className="mx-0 my-[26px] w-full border border-solid border-[#eaeaea]" />
+						<Text className="text-[12px] leading-[24px] text-[#666666]">
 							This email was sent from the contact form on {appName}. Reply
 							directly to this email to respond to {firstName}.
 						</Text>

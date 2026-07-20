@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type * as React from "react";
+
 import { AppConfigTable } from "@/components/admin/app-config/app-config-table";
 import {
 	Page,

@@ -16,6 +16,7 @@ import {
 import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+
 import {
 	Conversation,
 	ConversationContent,
@@ -635,13 +636,13 @@ export function AiChat({ organizationId }: AiChatProps) {
 								</div>
 							)}
 							{!isSearching && isSearchMode && chats.length === 0 && (
-								<div className="px-3 py-4 text-center text-muted-foreground text-sm">
+								<div className="px-3 py-4 text-center text-sm text-muted-foreground">
 									No chats found for "{searchQuery}"
 								</div>
 							)}
 							{!isSearching && isSearchMode && chats.length > 0 && (
 								<div>
-									<div className="mb-1 px-3 py-1 text-muted-foreground text-xs font-medium">
+									<div className="mb-1 px-3 py-1 text-xs font-medium text-muted-foreground">
 										Search Results
 									</div>
 									<div className="space-y-1">
@@ -679,7 +680,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 							{!isSearchMode &&
 								groupedChats.map((group) => (
 									<div key={group.label}>
-										<div className="mb-1 px-3 py-1 text-muted-foreground text-xs font-medium">
+										<div className="mb-1 px-3 py-1 text-xs font-medium text-muted-foreground">
 											{group.label}
 										</div>
 										<div className="space-y-1">
@@ -782,7 +783,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 						) : messages.length === 0 ? (
 							<div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
 								<div className="flex flex-col gap-2">
-									<h2 className="font-semibold text-2xl">
+									<h2 className="text-2xl font-semibold">
 										How can I help you today?
 									</h2>
 									<p className="text-muted-foreground">
@@ -979,7 +980,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 													<div className="flex items-start gap-3 text-left">
 														<div className="flex flex-1 flex-col gap-0.5">
 															<span className="font-medium">{model.name}</span>
-															<span className="flex items-center gap-1 text-muted-foreground text-xs">
+															<span className="flex items-center gap-1 text-xs text-muted-foreground">
 																{model.description}
 																<span className="text-muted-foreground/60">
 																	·
@@ -1018,7 +1019,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 								</div>
 							</PromptInputFooter>
 						</PromptInput>
-						<p className="mt-2 text-center text-muted-foreground text-xs">
+						<p className="mt-2 text-center text-xs text-muted-foreground">
 							AI can make mistakes. Consider checking important information.
 						</p>
 					</div>

@@ -9,12 +9,12 @@
 		"dev": "next dev",
 		"e2e": "npx playwright test --ui",
 		"e2e:ci": "npx playwright install && npx playwright test",
-		"format": "biome format",
-		"format:write": "biome format --write",
-		"lint": "biome lint",
-		"lint:write": "biome lint --write",
-		"check": "biome check",
-		"check:write": "biome check --write --unsafe",
+		"format": "oxfmt --check .",
+		"format:write": "oxfmt .",
+		"lint": "oxlint .",
+		"lint:write": "oxlint --fix .",
+		"check": "npm run lint && npm run format",
+		"check:write": "npm run lint:write && npm run format:write",
 		"start": "next start",
 		"typecheck": "tsc --noEmit",
 		"test": "npm run test:unit",
@@ -154,7 +154,6 @@
 		"zod": "4.4.3"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.3.13",
 		"@next/bundle-analyzer": "16.2.10",
 		"@playwright/test": "1.58.0",
 		"@tailwindcss/postcss": "4.3.3",
@@ -169,6 +168,9 @@
 		"dotenv-cli": "11.0.0",
 		"husky": "9.1.7",
 		"lint-staged": "16.2.7",
+		"oxfmt": "0.59.0",
+		"oxlint": "1.74.0",
+		"oxlint-tsgolint": "0.24.0",
 		"postcss": "8.5.6",
 		"tailwindcss": "4.3.3",
 		"testcontainers": "11.11.0",
@@ -176,11 +178,11 @@
 		"vite": "8.1.5",
 		"vitest": "4.1.10"
 	},
-	"engines": {
-		"node": "22.21.1"
-	},
 	"overrides": {
 		"@types/react": "19.2.17",
 		"@types/react-dom": "19.2.3"
+	},
+	"engines": {
+		"node": "22.21.1"
 	}
 }

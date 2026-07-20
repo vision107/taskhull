@@ -1,4 +1,5 @@
 import type * as React from "react";
+
 import { Spinner, type SpinnerProps } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +16,7 @@ function CenteredSpinner({
 	return (
 		<div
 			className={cn(
-				"pointer-events-none absolute inset-0 flex select-none items-center justify-center opacity-65",
+				"pointer-events-none absolute inset-0 flex items-center justify-center opacity-65 select-none",
 				containerClassName,
 			)}
 		>

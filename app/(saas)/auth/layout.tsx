@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type * as React from "react";
+
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/ui/custom/theme-toggle";
 
@@ -11,7 +12,7 @@ export default function AuthLayout({
 }: React.PropsWithChildren): React.JSX.Element {
 	return (
 		<main className="h-screen bg-neutral-50 px-4 dark:bg-background">
-			<div className="mx-auto w-full min-w-[320px] max-w-sm space-y-6 py-12">
+			<div className="mx-auto w-full max-w-sm min-w-[320px] space-y-6 py-12">
 				<Link className="mx-auto block w-fit" href="/">
 					<Logo />
 				</Link>

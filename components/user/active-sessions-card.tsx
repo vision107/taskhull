@@ -4,6 +4,7 @@ import NiceModal from "@ebay/nice-modal-react";
 import { Loader2Icon, XIcon } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
+
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -91,10 +92,10 @@ export function ActiveSessionsCard(): React.JSX.Element {
 									key={session.id}
 								>
 									<div>
-										<strong className="block font-medium text-sm">
+										<strong className="block text-sm font-medium">
 											{isCurrent ? "Current session" : "Other session"}
 										</strong>
-										<small className="block text-foreground/60 text-xs leading-tight">
+										<small className="block text-xs leading-tight text-foreground/60">
 											{session.userAgent} {session.ipAddress}
 										</small>
 									</div>

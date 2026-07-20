@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+
 import { appConfig } from "@/config/app.config";
 
 // Pagination schema for subscription queries

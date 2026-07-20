@@ -3,6 +3,7 @@
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
+
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
@@ -165,8 +166,8 @@ function ItemDescription({
 		<p
 			data-slot="item-description"
 			className={cn(
-				"text-muted-foreground line-clamp-2 text-sm leading-normal font-normal text-balance",
-				"[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
+				"line-clamp-2 text-sm leading-normal font-normal text-balance text-muted-foreground",
+				"[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary",
 				className,
 			)}
 			{...props}

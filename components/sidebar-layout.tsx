@@ -1,6 +1,7 @@
 "use client";
 
 import type * as React from "react";
+
 import { OrganizationSwitcher } from "@/components/organization/organization-switcher";
 import {
 	Sidebar,

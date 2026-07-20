@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/nextjs";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod/v4";
+
 import { assertUserIsOrgMember, getSession } from "@/lib/auth/server";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
@@ -162,8 +163,8 @@ export const protectedProcedure = t.procedure
 
 		const isImpersonating = Boolean(
 			"session" in session &&
-				"impersonatedBy" in session.session &&
-				session.session.impersonatedBy,
+			"impersonatedBy" in session.session &&
+			session.session.impersonatedBy,
 		);
 
 		return next({

@@ -3,6 +3,7 @@
 import { format } from "date-fns";
 import { AlertCircle, CheckCircle2, CreditCard, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+
 import { SubscriptionStatusBadge } from "@/components/billing/subscription-status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -91,27 +92,27 @@ export function CurrentPlanCard({
 				<div className="flex items-center justify-between rounded-lg border p-4">
 					<div>
 						<div className="flex items-center gap-2">
-							<h3 className="font-semibold text-lg">{activePlan?.planName}</h3>
+							<h3 className="text-lg font-semibold">{activePlan?.planName}</h3>
 							{activePlan?.isLifetime && (
-								<span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary text-xs">
+								<span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
 									Lifetime
 								</span>
 							)}
 						</div>
 						{isFreePlan && (
-							<p className="text-muted-foreground text-sm">
+							<p className="text-sm text-muted-foreground">
 								Upgrade to unlock more features
 							</p>
 						)}
 						{isTrialing && subscription?.trialEnd && (
-							<p className="text-muted-foreground text-sm">
+							<p className="text-sm text-muted-foreground">
 								Trial ends {format(new Date(subscription.trialEnd), "PPP")}
 							</p>
 						)}
 						{!isFreePlan &&
 							!activePlan?.isLifetime &&
 							subscription?.currentPeriodEnd && (
-								<p className="text-muted-foreground text-sm">
+								<p className="text-sm text-muted-foreground">
 									{isCanceling ? "Access until" : "Renews"}{" "}
 									{format(new Date(subscription.currentPeriodEnd), "PPP")}
 								</p>
@@ -177,19 +178,19 @@ export function CurrentPlanCard({
 				{/* Features */}
 				{activePlan?.features && activePlan.features.length > 0 && (
 					<div>
-						<h4 className="mb-2 font-medium text-sm">Included features</h4>
+						<h4 className="mb-2 text-sm font-medium">Included features</h4>
 						<ul className="space-y-1.5">
 							{activePlan.features.slice(0, 4).map((feature) => (
 								<li
 									key={feature}
-									className="flex items-center gap-2 text-muted-foreground text-sm"
+									className="flex items-center gap-2 text-sm text-muted-foreground"
 								>
 									<CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
 									{feature}
 								</li>
 							))}
 							{activePlan.features.length > 4 && (
-								<li className="pl-6 text-muted-foreground text-sm">
+								<li className="pl-6 text-sm text-muted-foreground">
 									+{activePlan.features.length - 4} more features
 								</li>
 							)}

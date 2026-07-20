@@ -4,6 +4,7 @@ import NiceModal from "@ebay/nice-modal-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, UsersIcon } from "lucide-react";
 import * as React from "react";
+
 import { CreateOrganizationModal } from "@/components/organization/create-organization-modal";
 import { OrganizationLogo } from "@/components/organization/organization-logo";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -56,7 +57,7 @@ export function OrganizationsGrid(): React.JSX.Element {
 	if (isPending) {
 		return (
 			<div className="@container">
-				<div className="grid @8xl:grid-cols-5 @7xl:grid-cols-4 @3xl:grid-cols-3 @xl:grid-cols-2 grid-cols-1 gap-4">
+				<div className="@8xl:grid-cols-5 grid grid-cols-1 gap-4 @xl:grid-cols-2 @3xl:grid-cols-3 @7xl:grid-cols-4">
 					{[...new Array(3)].map((_, i) => (
 						<div
 							className={cn(
@@ -113,7 +114,7 @@ export function OrganizationsGrid(): React.JSX.Element {
 
 	return (
 		<div className="@container">
-			<div className="grid @8xl:grid-cols-5 @7xl:grid-cols-4 @3xl:grid-cols-3 @xl:grid-cols-2 grid-cols-1 gap-4 animate-in fade-in duration-300">
+			<div className="@8xl:grid-cols-5 grid animate-in grid-cols-1 gap-4 duration-300 fade-in @xl:grid-cols-2 @3xl:grid-cols-3 @7xl:grid-cols-4">
 				{/* Existing Organization Cards */}
 				{allOrganizations?.map((organization) => (
 					<button
@@ -133,7 +134,7 @@ export function OrganizationsGrid(): React.JSX.Element {
 							<CardContent className="flex flex-row items-center justify-between px-4">
 								<div className="flex flex-row items-center gap-2 align-super text-sm transition-colors group-hover:text-secondary-foreground">
 									<OrganizationLogo
-										className="pointer-events-none size-6 select-none outline-none! ring-0!"
+										className="pointer-events-none size-6 ring-0! outline-none! select-none"
 										name={organization.name}
 										src={organization.logo}
 									/>
@@ -143,7 +144,7 @@ export function OrganizationsGrid(): React.JSX.Element {
 								</div>
 							</CardContent>
 							<CardFooter className="mt-auto flex items-center justify-between border-t px-4 py-2!">
-								<div className="flex flex-row items-center gap-2 text-muted-foreground text-xs">
+								<div className="flex flex-row items-center gap-2 text-xs text-muted-foreground">
 									<UsersIcon className="size-3" />
 									{organization.membersCount
 										? `${organization.membersCount} ${organization.membersCount === 1 ? "member" : "members"}`
@@ -169,7 +170,7 @@ export function OrganizationsGrid(): React.JSX.Element {
 					>
 						<div className="flex flex-row items-center gap-2 text-center">
 							<PlusIcon className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-secondary-foreground" />
-							<span className="font-medium text-muted-foreground text-sm transition-colors group-hover:text-secondary-foreground">
+							<span className="text-sm font-medium text-muted-foreground transition-colors group-hover:text-secondary-foreground">
 								Create an Organization
 							</span>
 						</div>

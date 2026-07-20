@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import * as React from "react";
+
 import { Button } from "@/components/ui/button";
 
 const KEY = "cookie_consent";

@@ -38,12 +38,12 @@ export function StatsSection() {
 				{/* Header */}
 				<div className="flex max-w-2xl flex-col gap-6">
 					<div className="flex flex-col gap-2">
-						<div className="text-sm font-semibold leading-7 text-marketing-fg-muted">
+						<div className="text-sm leading-7 font-semibold text-marketing-fg-muted">
 							By the numbers
 						</div>
 						<h2
 							className={cn(
-								"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+								"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 								"text-marketing-fg",
 								"sm:text-5xl sm:leading-14",
 							)}
@@ -51,7 +51,7 @@ export function StatsSection() {
 							Trusted by teams worldwide
 						</h2>
 					</div>
-					<div className="text-base leading-7 text-marketing-fg-muted text-pretty">
+					<div className="text-base leading-7 text-pretty text-marketing-fg-muted">
 						<p>
 							Join thousands of companies that rely on our platform to power
 							their business every day.

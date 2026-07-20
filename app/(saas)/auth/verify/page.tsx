@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type * as React from "react";
+
 import { OtpCard } from "@/components/auth/otp-card";
 
 export const dynamic = "force-dynamic";

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type * as React from "react";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -137,7 +138,7 @@ export function OtpCard(): React.JSX.Element {
 					</form>
 				</Form>
 			</CardContent>
-			<CardFooter className="flex justify-center gap-1 text-muted-foreground text-sm">
+			<CardFooter className="flex justify-center gap-1 text-sm text-muted-foreground">
 				<Link className="text-foreground underline" href="/auth/sign-in">
 					Go to login page
 				</Link>

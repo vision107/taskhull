@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type * as React from "react";
+
 import { OrganizationInvitationCard } from "@/components/invitations/organization-invitation-card";
 import {
 	Card,
@@ -75,7 +76,7 @@ export default async function OrganizationInvitationPage({
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-col items-center gap-4">
-						<p className="text-muted-foreground text-center text-sm">
+						<p className="text-center text-sm text-muted-foreground">
 							You are currently signed in as{" "}
 							<span className="font-medium">{session?.user?.email}</span>.
 						</p>

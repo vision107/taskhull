@@ -316,12 +316,12 @@ Edit `config/app.config.ts`:
 
 ```typescript
 export const appConfig = {
-  appName: "Your App Name",
-  description: "Your app description",
-  contact: {
-    phone: "(123) 456-7890",
-    address: "Your Address",
-  },
+	appName: "Your App Name",
+	description: "Your app description",
+	contact: {
+		phone: "(123) 456-7890",
+		address: "Your Address",
+	},
 };
 ```
 

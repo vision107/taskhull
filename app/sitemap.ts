@@ -1,4 +1,5 @@
 import { allPosts } from "content-collections";
+
 import { getAllLegalPages } from "@/lib/marketing/legal/pages";
 import { getBaseUrl } from "@/lib/utils";
 

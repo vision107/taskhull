@@ -27,6 +27,7 @@ import {
 	PlusCircleIcon,
 } from "lucide-react";
 import * as React from "react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -410,14 +411,14 @@ export function DataTable<TData>({
 			{/* Pagination */}
 			{enablePagination && (
 				<div className="flex items-center justify-between px-4">
-					<div className="hidden flex-1 text-muted-foreground text-sm lg:flex">
+					<div className="hidden flex-1 text-sm text-muted-foreground lg:flex">
 						{getSelectedRowIds(currentRowSelection).length} of {totalCount}{" "}
 						row(s) selected.
 					</div>
 					<div className="flex w-full items-center gap-8 lg:w-fit">
 						{mounted && (
 							<div className="hidden items-center gap-2 lg:flex">
-								<p className="font-medium text-sm">Rows per page</p>
+								<p className="text-sm font-medium">Rows per page</p>
 								<Select
 									value={`${table.getState().pagination.pageSize}`}
 									onValueChange={(value) => {
@@ -439,7 +440,7 @@ export function DataTable<TData>({
 								</Select>
 							</div>
 						)}
-						<div className="flex w-fit items-center justify-center font-medium text-sm">
+						<div className="flex w-fit items-center justify-center text-sm font-medium">
 							Page {table.getState().pagination.pageIndex + 1} of{" "}
 							{table.getPageCount() || 1}
 						</div>
@@ -600,7 +601,7 @@ export function DataTableBulkActions({
 			)}
 		>
 			<div className="flex w-full max-w-sm items-center justify-between gap-4 rounded-md border bg-background px-4 py-2.5 shadow-md">
-				<span className="font-semibold text-sm">{selectedCount} selected</span>
+				<span className="text-sm font-semibold">{selectedCount} selected</span>
 				<DropdownMenu modal={false}>
 					<DropdownMenuTrigger asChild>
 						<Button
@@ -696,7 +697,7 @@ function DataTableFacetedFilter({
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent
-				className={cn("min-w-[200px] w-fit max-w-[300px] p-0", className)}
+				className={cn("w-fit max-w-[300px] min-w-[200px] p-0", className)}
 				align="start"
 			>
 				<Command>
@@ -757,8 +758,10 @@ function DataTableFacetedFilter({
 	);
 }
 
-interface SortableColumnHeaderProps<TData, TValue>
-	extends React.HTMLAttributes<HTMLDivElement> {
+interface SortableColumnHeaderProps<
+	TData,
+	TValue,
+> extends React.HTMLAttributes<HTMLDivElement> {
 	column: Column<TData, TValue>;
 	title: string;
 }
@@ -774,7 +777,7 @@ export function SortableColumnHeader<TData, TValue>({
 }: SortableColumnHeaderProps<TData, TValue>): React.JSX.Element {
 	if (!column.getCanSort()) {
 		return (
-			<div className={cn("font-medium text-foreground text-xs", className)}>
+			<div className={cn("text-xs font-medium text-foreground", className)}>
 				{title}
 			</div>
 		);
@@ -798,7 +801,7 @@ export function SortableColumnHeader<TData, TValue>({
 		<button
 			type="button"
 			className={cn(
-				"flex cursor-pointer items-center gap-1 font-medium text-foreground text-xs transition-colors hover:text-foreground/80",
+				"flex cursor-pointer items-center gap-1 text-xs font-medium text-foreground transition-colors hover:text-foreground/80",
 				className,
 			)}
 			onClick={handleClick}

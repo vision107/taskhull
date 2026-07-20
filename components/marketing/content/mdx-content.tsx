@@ -1,6 +1,7 @@
 "use client";
 
 import { MDXContent as MDXContentBase } from "@content-collections/mdx/react";
+
 import { mdxComponents } from "@/lib/marketing/blog/mdx-components";
 
 interface MdxContentProps {

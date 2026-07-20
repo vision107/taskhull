@@ -2,6 +2,7 @@
 
 import type * as React from "react";
 import { toast } from "sonner";
+
 import { OrganizationRoleSelect } from "@/components/organization/organization-role-select";
 import { Button } from "@/components/ui/button";
 import {
@@ -100,7 +101,7 @@ export function OrganizationInviteMemberCard(): React.JSX.Element {
 			<CardContent>
 				<Form {...methods}>
 					<form onSubmit={onSubmit} className="@container">
-						<FieldGroup className="flex @md:flex-row flex-col gap-2">
+						<FieldGroup className="flex flex-col gap-2 @md:flex-row">
 							<div className="flex-1">
 								<FormField
 									control={methods.control}

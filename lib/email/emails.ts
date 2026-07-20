@@ -1,4 +1,5 @@
 import { render } from "@react-email/render";
+
 import { sendEmail } from "./resend";
 import type { ConfirmEmailAddressChangeEmailProps } from "./templates/confirm-email-address-change-email";
 import type { ContactFormEmailProps } from "./templates/contact-form-email";
@@ -14,9 +15,8 @@ import type { VerifyEmailAddressEmailProps } from "./templates/verify-email-addr
 export async function sendOrganizationInvitationEmail(
 	input: OrganizationInvitationEmailProps & { recipient: string },
 ): Promise<void> {
-	const { OrganizationInvitationEmail } = await import(
-		"./templates/organization-invitation-email"
-	);
+	const { OrganizationInvitationEmail } =
+		await import("./templates/organization-invitation-email");
 	const component = OrganizationInvitationEmail(input);
 	const html = await render(component);
 	const text = await render(component, { plainText: true });
@@ -32,9 +32,8 @@ export async function sendOrganizationInvitationEmail(
 export async function sendVerifyEmailAddressEmail(
 	input: VerifyEmailAddressEmailProps & { recipient: string },
 ): Promise<void> {
-	const { VerifyEmailAddressEmail } = await import(
-		"./templates/verify-email-address-email"
-	);
+	const { VerifyEmailAddressEmail } =
+		await import("./templates/verify-email-address-email");
 	const component = VerifyEmailAddressEmail(input);
 	const html = await render(component);
 	const text = await render(component, { plainText: true });
@@ -50,9 +49,8 @@ export async function sendVerifyEmailAddressEmail(
 export async function sendPasswordResetEmail(
 	input: PasswordResetEmailProps & { recipient: string },
 ): Promise<void> {
-	const { PasswordResetEmail } = await import(
-		"./templates/password-reset-email"
-	);
+	const { PasswordResetEmail } =
+		await import("./templates/password-reset-email");
 	const component = PasswordResetEmail(input);
 	const html = await render(component);
 	const text = await render(component, { plainText: true });
@@ -68,9 +66,8 @@ export async function sendPasswordResetEmail(
 export async function sendConfirmEmailAddressChangeEmail(
 	input: ConfirmEmailAddressChangeEmailProps & { recipient: string },
 ): Promise<void> {
-	const { ConfirmEmailAddressChangeEmail } = await import(
-		"./templates/confirm-email-address-change-email"
-	);
+	const { ConfirmEmailAddressChangeEmail } =
+		await import("./templates/confirm-email-address-change-email");
 	const component = ConfirmEmailAddressChangeEmail(input);
 	const html = await render(component);
 	const text = await render(component, { plainText: true });
@@ -86,9 +83,8 @@ export async function sendConfirmEmailAddressChangeEmail(
 export async function sendRevokedInvitationEmail(
 	input: RevokedInvitationEmailProps & { recipient: string },
 ): Promise<void> {
-	const { RevokedInvitationEmail } = await import(
-		"./templates/revoked-invitation-email"
-	);
+	const { RevokedInvitationEmail } =
+		await import("./templates/revoked-invitation-email");
 	const component = RevokedInvitationEmail(input);
 	const html = await render(component);
 	const text = await render(component, { plainText: true });
@@ -104,9 +100,8 @@ export async function sendRevokedInvitationEmail(
 export async function sendPaymentFailedEmail(
 	input: PaymentFailedEmailProps & { recipient: string },
 ): Promise<void> {
-	const { PaymentFailedEmail } = await import(
-		"./templates/payment-failed-email"
-	);
+	const { PaymentFailedEmail } =
+		await import("./templates/payment-failed-email");
 	const component = PaymentFailedEmail(input);
 	const html = await render(component);
 	const text = await render(component, { plainText: true });
@@ -122,9 +117,8 @@ export async function sendPaymentFailedEmail(
 export async function sendSubscriptionCanceledEmail(
 	input: SubscriptionCanceledEmailProps & { recipient: string },
 ): Promise<void> {
-	const { SubscriptionCanceledEmail } = await import(
-		"./templates/subscription-canceled-email"
-	);
+	const { SubscriptionCanceledEmail } =
+		await import("./templates/subscription-canceled-email");
 	const component = SubscriptionCanceledEmail(input);
 	const html = await render(component);
 	const text = await render(component, { plainText: true });
@@ -140,9 +134,8 @@ export async function sendSubscriptionCanceledEmail(
 export async function sendTrialEndingSoonEmail(
 	input: TrialEndingSoonEmailProps & { recipient: string },
 ): Promise<void> {
-	const { TrialEndingSoonEmail } = await import(
-		"./templates/trial-ending-soon-email"
-	);
+	const { TrialEndingSoonEmail } =
+		await import("./templates/trial-ending-soon-email");
 	const component = TrialEndingSoonEmail(input);
 	const html = await render(component);
 	const text = await render(component, { plainText: true });
@@ -177,9 +170,8 @@ export async function sendContactFormEmail(
 export async function sendDisputeReceivedEmail(
 	input: DisputeReceivedEmailProps & { recipient: string },
 ): Promise<void> {
-	const { DisputeReceivedEmail } = await import(
-		"./templates/dispute-received-email"
-	);
+	const { DisputeReceivedEmail } =
+		await import("./templates/dispute-received-email");
 	const component = DisputeReceivedEmail(input);
 	const html = await render(component);
 	const text = await render(component, { plainText: true });

@@ -1,7 +1,7 @@
 import "server-only";
-
 import { and, desc, eq, inArray } from "drizzle-orm";
 import type Stripe from "stripe";
+
 import {
 	getPlanByStripePriceId,
 	getPriceByStripePriceId,
@@ -21,6 +21,7 @@ import {
 	PriceType,
 	SubscriptionStatus,
 } from "@/lib/db/schema/enums";
+
 import type { ActivePlanInfo } from "./types";
 
 // ============================================================================

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+
 import { OrganizationInvitationsTable } from "@/components/organization/organization-invitations-table";
 import { OrganizationMembersTable } from "@/components/organization/organization-members-table";
 import {

@@ -4,6 +4,7 @@ import {
 	QueryClient,
 } from "@tanstack/react-query";
 import superjson from "superjson";
+
 import { getOrganizationScope } from "@/trpc/organization-scope";
 
 /**

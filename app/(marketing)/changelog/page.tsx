@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+
 import { ChangelogSection } from "@/components/marketing/sections/changelog-section";
 import { appConfig } from "@/config/app.config";
 

@@ -9,6 +9,7 @@ import {
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import * as React from "react";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	SidebarGroup,
@@ -125,7 +126,7 @@ export function UserMenuItems(): React.JSX.Element {
 
 	return (
 		<ScrollArea
-			className="[&>[data-radix-scroll-area-viewport]>div]:flex! h-full [&>[data-radix-scroll-area-viewport]>div]:h-full [&>[data-radix-scroll-area-viewport]>div]:flex-col"
+			className="h-full [&>[data-radix-scroll-area-viewport]>div]:flex! [&>[data-radix-scroll-area-viewport]>div]:h-full [&>[data-radix-scroll-area-viewport]>div]:flex-col"
 			verticalScrollBar
 		>
 			{menuGroups.map((group, groupIndex) => (

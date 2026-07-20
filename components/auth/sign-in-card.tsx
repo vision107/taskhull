@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import { withQuery } from "ufo";
+
 import { SocialSigninButton } from "@/components/auth/social-signin-button";
 import { OrganizationInvitationAlert } from "@/components/invitations/organization-invitation-alert";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -287,7 +288,7 @@ export function SignInCard(): React.JSX.Element {
 					<>
 						<div className="relative my-1 h-4">
 							<hr className="relative top-2" />
-							<p className="-translate-x-1/2 absolute top-0 left-1/2 mx-auto inline-block h-4 bg-card px-2 text-center font-medium text-foreground/60 text-sm leading-tight">
+							<p className="absolute top-0 left-1/2 mx-auto inline-block h-4 -translate-x-1/2 bg-card px-2 text-center text-sm leading-tight font-medium text-foreground/60">
 								Or continue with
 							</p>
 						</div>
@@ -303,7 +304,7 @@ export function SignInCard(): React.JSX.Element {
 				)}
 			</CardContent>
 			{authConfig.enableSignup && (
-				<CardFooter className="flex justify-center gap-1 text-muted-foreground text-sm">
+				<CardFooter className="flex justify-center gap-1 text-sm text-muted-foreground">
 					<span>Don't have an account?</span>
 					<Link
 						className="text-foreground underline"

@@ -4,6 +4,7 @@ import { Building2Icon, FileCog2Icon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type * as React from "react";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	SidebarGroup,
@@ -61,7 +62,7 @@ export function AdminMenuItems(): React.JSX.Element {
 
 	return (
 		<ScrollArea
-			className="[&>[data-radix-scroll-area-viewport]>div]:flex! h-full [&>[data-radix-scroll-area-viewport]>div]:h-full [&>[data-radix-scroll-area-viewport]>div]:flex-col"
+			className="h-full [&>[data-radix-scroll-area-viewport]>div]:flex! [&>[data-radix-scroll-area-viewport]>div]:h-full [&>[data-radix-scroll-area-viewport]>div]:flex-col"
 			verticalScrollBar
 		>
 			{menuGroups.map((group, groupIndex) => (

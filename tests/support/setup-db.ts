@@ -2,10 +2,12 @@
 
 import fs from "node:fs";
 import path from "node:path";
+
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { GenericContainer } from "testcontainers";
+
 import * as schema from "@/lib/db/schema";
 
 async function waitForDatabase(

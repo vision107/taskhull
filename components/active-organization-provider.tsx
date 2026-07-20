@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+
 import { useSession } from "@/hooks/use-session";
 import { authClient } from "@/lib/auth/client";
 import type { getOrganizationById } from "@/lib/auth/server";

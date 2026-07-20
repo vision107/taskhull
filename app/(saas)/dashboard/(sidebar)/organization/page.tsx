@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type * as React from "react";
+
 import { DashboardDemo } from "@/components/dashboard/dashboard-demo";
 import {
 	Page,

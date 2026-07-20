@@ -4,6 +4,7 @@ import NiceModal from "@ebay/nice-modal-react";
 import NextTopLoader from "nextjs-toploader";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type * as React from "react";
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { appConfig } from "@/config/app.config";

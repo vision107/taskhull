@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+
 import { CenteredSpinner } from "@/components/ui/custom/centered-spinner";
 
 export const DashboardDemo = dynamic(() => import("./dashboard-demo-charts"), {

@@ -13,6 +13,7 @@ import {
 } from "fumadocs-ui/page";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+
 import { source } from "@/lib/marketing/docs/source";
 
 export default async function DocumentationPage(props: {

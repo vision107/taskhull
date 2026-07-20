@@ -1,10 +1,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type * as React from "react";
+
 import { OrganizationMenuItems } from "@/components/organization/organization-menu-items";
 import { SidebarLayout } from "@/components/sidebar-layout";
 import { getOrganizationById, getSession } from "@/lib/auth/server";
 import { shouldRedirectToChoosePlan } from "@/lib/billing/guards";
+
 import { OrganizationProviders } from "./providers";
 
 export type OrganizationLayoutProps = React.PropsWithChildren;

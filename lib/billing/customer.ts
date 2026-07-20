@@ -1,9 +1,10 @@
 import "server-only";
-
 import { and, eq, isNull } from "drizzle-orm";
 import type Stripe from "stripe";
+
 import { db } from "@/lib/db";
 import { organizationTable } from "@/lib/db/schema";
+
 import { getStripe } from "./stripe";
 
 /**

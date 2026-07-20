@@ -29,14 +29,14 @@ export const mdxComponents = {
 		props.src ? (
 			<img
 				{...props}
-				className="rounded-lg shadow w-full h-auto"
+				className="h-auto w-full rounded-lg shadow"
 				alt={props.alt || ""}
 			/>
 		) : null,
 	h1: ({ children, ...rest }: React.HTMLAttributes<HTMLHeadingElement>) => (
 		<h1
 			id={slugifyHeadline(children as string)}
-			className="mb-6 font-bold text-4xl"
+			className="mb-6 text-4xl font-bold"
 			{...rest}
 		>
 			{children}
@@ -45,7 +45,7 @@ export const mdxComponents = {
 	h2: ({ children, ...rest }: React.HTMLAttributes<HTMLHeadingElement>) => (
 		<h2
 			id={slugifyHeadline(children as string)}
-			className="mb-4 font-bold text-2xl"
+			className="mb-4 text-2xl font-bold"
 			{...rest}
 		>
 			{children}
@@ -54,7 +54,7 @@ export const mdxComponents = {
 	h3: ({ children, ...rest }: React.HTMLAttributes<HTMLHeadingElement>) => (
 		<h3
 			id={slugifyHeadline(children as string)}
-			className="mb-4 font-bold text-xl"
+			className="mb-4 text-xl font-bold"
 			{...rest}
 		>
 			{children}
@@ -63,7 +63,7 @@ export const mdxComponents = {
 	h4: ({ children, ...rest }: React.HTMLAttributes<HTMLHeadingElement>) => (
 		<h4
 			id={slugifyHeadline(children as string)}
-			className="mb-4 font-bold text-lg"
+			className="mb-4 text-lg font-bold"
 			{...rest}
 		>
 			{children}
@@ -72,7 +72,7 @@ export const mdxComponents = {
 	h5: ({ children, ...rest }: React.HTMLAttributes<HTMLHeadingElement>) => (
 		<h5
 			id={slugifyHeadline(children as string)}
-			className="mb-4 font-bold text-base"
+			className="mb-4 text-base font-bold"
 			{...rest}
 		>
 			{children}
@@ -81,14 +81,14 @@ export const mdxComponents = {
 	h6: ({ children, ...rest }: React.HTMLAttributes<HTMLHeadingElement>) => (
 		<h6
 			id={slugifyHeadline(children as string)}
-			className="mb-4 font-bold text-sm"
+			className="mb-4 text-sm font-bold"
 			{...rest}
 		>
 			{children}
 		</h6>
 	),
 	p: ({ children, ...rest }: React.HTMLAttributes<HTMLParagraphElement>) => (
-		<p className="mb-6 text-foreground/60 leading-relaxed" {...rest}>
+		<p className="mb-6 leading-relaxed text-foreground/60" {...rest}>
 			{children}
 		</p>
 	),

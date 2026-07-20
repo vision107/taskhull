@@ -13,22 +13,22 @@ Display content in a card format with optional links.
 
 ```mdx
 <Cards>
-  <Card title="Getting Started" href="/docs">
-    Learn how to get started with Fumadocs
-  </Card>
-  <Card title="Components" href="/docs/components">
-    Explore available components
-  </Card>
+	<Card title="Getting Started" href="/docs">
+		Learn how to get started with Fumadocs
+	</Card>
+	<Card title="Components" href="/docs/components">
+		Explore available components
+	</Card>
 </Cards>
 ```
 
 <Cards>
-  <Card title="Getting Started" href="/docs">
-    Learn how to get started with Fumadocs
-  </Card>
-  <Card title="Components" href="/docs/components">
-    Explore available components
-  </Card>
+	<Card title="Getting Started" href="/docs">
+		Learn how to get started with Fumadocs
+	</Card>
+	<Card title="Components" href="/docs/components">
+		Explore available components
+	</Card>
 </Cards>
 
 ### Callout
@@ -54,17 +54,17 @@ Display important information with different severity levels.
 Organize content in tabbed sections.
 
 ```mdx
-<Tabs items={['Tab 1', 'Tab 2', 'Tab 3']}>
-  <Tab value="Tab 1">Content for Tab 1</Tab>
-  <Tab value="Tab 2">Content for Tab 2</Tab>
-  <Tab value="Tab 3">Content for Tab 3</Tab>
+<Tabs items={["Tab 1", "Tab 2", "Tab 3"]}>
+	<Tab value="Tab 1">Content for Tab 1</Tab>
+	<Tab value="Tab 2">Content for Tab 2</Tab>
+	<Tab value="Tab 3">Content for Tab 3</Tab>
 </Tabs>
 ```
 
-<Tabs items={['Tab 1', 'Tab 2', 'Tab 3']}>
-  <Tab value="Tab 1">Content for Tab 1</Tab>
-  <Tab value="Tab 2">Content for Tab 2</Tab>
-  <Tab value="Tab 3">Content for Tab 3</Tab>
+<Tabs items={["Tab 1", "Tab 2", "Tab 3"]}>
+	<Tab value="Tab 1">Content for Tab 1</Tab>
+	<Tab value="Tab 2">Content for Tab 2</Tab>
+	<Tab value="Tab 3">Content for Tab 3</Tab>
 </Tabs>
 
 ### Steps
@@ -77,16 +77,19 @@ Display a series of steps.
 ### First Step
 
 Do this first.
+
 </Step>
 <Step>
 ### Second Step
 
 Then do this.
+
 </Step>
 <Step>
 ### Third Step
 
 Finally, do this.
+
 </Step>
 </Steps>
 ```
@@ -96,16 +99,19 @@ Finally, do this.
 ### First Step
 
 Do this first.
+
 </Step>
 <Step>
 ### Second Step
 
 Then do this.
+
 </Step>
 <Step>
 ### Third Step
 
 Finally, do this.
+
 </Step>
 </Steps>
 
@@ -115,28 +121,28 @@ Display file tree structure.
 
 ```mdx
 <Files>
-  <Folder name="app" defaultOpen>
-    <File name="layout.tsx" />
-    <File name="page.tsx" />
-    <Folder name="docs">
-      <File name="layout.tsx" />
-      <File name="page.tsx" />
-    </Folder>
-  </Folder>
-  <File name="package.json" />
+	<Folder name="app" defaultOpen>
+		<File name="layout.tsx" />
+		<File name="page.tsx" />
+		<Folder name="docs">
+			<File name="layout.tsx" />
+			<File name="page.tsx" />
+		</Folder>
+	</Folder>
+	<File name="package.json" />
 </Files>
 ```
 
 <Files>
-  <Folder name="app" defaultOpen>
-    <File name="layout.tsx" />
-    <File name="page.tsx" />
-    <Folder name="docs">
-      <File name="layout.tsx" />
-      <File name="page.tsx" />
-    </Folder>
-  </Folder>
-  <File name="package.json" />
+	<Folder name="app" defaultOpen>
+		<File name="layout.tsx" />
+		<File name="page.tsx" />
+		<Folder name="docs">
+			<File name="layout.tsx" />
+			<File name="page.tsx" />
+		</Folder>
+	</Folder>
+	<File name="package.json" />
 </Files>
 
 ### Image Zoom
@@ -144,7 +150,7 @@ Display file tree structure.
 Make images zoomable on click.
 
 ```mdx
-import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
+import { ImageZoom } from "fumadocs-ui/components/image-zoom";
 
 <ImageZoom src="/image.png" alt="Description" />
 ```
@@ -154,9 +160,7 @@ import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
 All components accept standard HTML attributes like `className` and `style`, allowing you to customize their appearance:
 
 ```mdx
-<Callout className="bg-blue-100">
-  Custom styled callout
-</Callout>
+<Callout className="bg-blue-100">Custom styled callout</Callout>
 ```
 
 ## Adding Components to MDX
@@ -164,16 +168,16 @@ All components accept standard HTML attributes like `className` and `style`, all
 Components are automatically available in your MDX files when configured in your page component:
 
 ```tsx
-import defaultMdxComponents from 'fumadocs-ui/mdx';
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
-import { Callout } from 'fumadocs-ui/components/callout';
+import defaultMdxComponents from "fumadocs-ui/mdx";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import { Callout } from "fumadocs-ui/components/callout";
 
 <MDX
-  components={{
-    ...defaultMdxComponents,
-    Tabs,
-    Tab,
-    Callout,
-  }}
-/>
+	components={{
+		...defaultMdxComponents,
+		Tabs,
+		Tab,
+		Callout,
+	}}
+/>;
 ```

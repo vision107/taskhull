@@ -2,6 +2,7 @@
 
 import { ArrowRightIcon, ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
+
 import { GradientCard } from "@/components/marketing/primitives/gradient-card";
 import { cn } from "@/lib/utils";
 
@@ -20,14 +21,14 @@ function HeroScreenshot() {
 					alt="App screenshot"
 					width={1328}
 					height={727}
-					className="dark:hidden w-full h-auto"
+					className="h-auto w-full dark:hidden"
 				/>
 				<img
 					src="/marketing/placeholders/placeholder-hero-dark.webp"
 					alt="App screenshot"
 					width={1328}
 					height={727}
-					className="hidden dark:block w-full h-auto"
+					className="hidden h-auto w-full dark:block"
 				/>
 			</GradientCard>
 
@@ -43,14 +44,14 @@ function HeroScreenshot() {
 					alt="App screenshot"
 					width={1328}
 					height={727}
-					className="dark:hidden w-full h-auto"
+					className="h-auto w-full dark:hidden"
 				/>
 				<img
 					src="/marketing/placeholders/placeholder-hero-dark.webp"
 					alt="App screenshot"
 					width={1328}
 					height={727}
-					className="hidden dark:block w-full h-auto"
+					className="hidden h-auto w-full dark:block"
 				/>
 			</GradientCard>
 		</div>
@@ -59,7 +60,7 @@ function HeroScreenshot() {
 
 export function HeroSection() {
 	return (
-		<section id="hero" className="py-16 scroll-mt-14">
+		<section id="hero" className="scroll-mt-14 py-16">
 			<div className="mx-auto flex max-w-2xl flex-col gap-16 px-6 md:max-w-3xl lg:max-w-7xl lg:px-10">
 				<div className="flex flex-col gap-32">
 					<div className="flex flex-col items-start gap-6">
@@ -70,7 +71,7 @@ export function HeroSection() {
 								"relative inline-flex max-w-full items-center gap-3 overflow-hidden rounded-md px-3.5 py-2 text-sm",
 								"bg-marketing-card",
 								"hover:bg-marketing-card-hover",
-								"dark:ring-inset dark:ring-1 dark:ring-white/5",
+								"dark:ring-1 dark:ring-white/5 dark:ring-inset",
 								"sm:flex-row sm:items-center sm:gap-3 sm:rounded-full sm:px-3 sm:py-0.5",
 							)}
 						>
@@ -87,7 +88,7 @@ export function HeroSection() {
 						{/* Headline */}
 						<h1
 							className={cn(
-								"max-w-5xl text-balance font-display text-5xl tracking-display-tight",
+								"tracking-display-tight max-w-5xl font-display text-5xl text-balance",
 								"text-marketing-fg",
 								"sm:text-5xl sm:leading-14",
 								"lg:text-[5rem] lg:leading-20",

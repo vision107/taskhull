@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+
 import { ContactSection } from "@/components/marketing/sections/contact-section";
 import { FaqSection } from "@/components/marketing/sections/faq-section";
 import { appConfig } from "@/config/app.config";

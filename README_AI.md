@@ -38,13 +38,13 @@ Chats are stored in the `ai_chat` table:
 
 ```typescript
 aiChatTable = {
-  id: uuid,
-  organizationId: uuid, // Multi-tenant isolation
-  userId: uuid, // Chat creator
-  title: text, // Optional chat title
-  messages: text, // JSON array of messages
-  createdAt: timestamp,
-  updatedAt: timestamp,
+	id: uuid,
+	organizationId: uuid, // Multi-tenant isolation
+	userId: uuid, // Chat creator
+	title: text, // Optional chat title
+	messages: text, // JSON array of messages
+	createdAt: timestamp,
+	updatedAt: timestamp,
 };
 ```
 
@@ -52,8 +52,8 @@ aiChatTable = {
 
 ```typescript
 interface ChatMessage {
-  role: "user" | "assistant" | "system";
-  content: string;
+	role: "user" | "assistant" | "system";
+	content: string;
 }
 ```
 
@@ -96,9 +96,9 @@ Request:
 
 ```json
 {
-  "messages": [{ "role": "user", "content": "Hello!" }],
-  "chatId": "uuid",
-  "organizationId": "uuid"
+	"messages": [{ "role": "user", "content": "Hello!" }],
+	"chatId": "uuid",
+	"organizationId": "uuid"
 }
 ```
 
@@ -125,9 +125,9 @@ All under `trpc.organization.ai`:
 import { AiChat } from "@/components/ai/ai-chat";
 
 export default function AiPage() {
-  const { organization } = useActiveOrganization();
+	const { organization } = useActiveOrganization();
 
-  return <AiChat organizationId={organization.id} />;
+	return <AiChat organizationId={organization.id} />;
 }
 ```
 
@@ -138,10 +138,10 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 
 const { messages, sendMessage, status } = useChat({
-  transport: new DefaultChatTransport({
-    api: "/api/ai/chat",
-    body: { chatId, organizationId },
-  }),
+	transport: new DefaultChatTransport({
+		api: "/api/ai/chat",
+		body: { chatId, organizationId },
+	}),
 });
 ```
 
@@ -154,14 +154,14 @@ Edit `app/api/ai/chat/route.ts`:
 ```typescript
 // Use GPT-4o for better quality
 const result = streamText({
-  model: openai("gpt-4o"),
-  messages,
+	model: openai("gpt-4o"),
+	messages,
 });
 
 // Or GPT-4 Turbo
 const result = streamText({
-  model: openai("gpt-4-turbo"),
-  messages,
+	model: openai("gpt-4-turbo"),
+	messages,
 });
 ```
 
@@ -169,10 +169,10 @@ const result = streamText({
 
 ```typescript
 const result = streamText({
-  model: openai("gpt-4o-mini"),
-  system: `You are a helpful CRM assistant for ${organizationName}. 
+	model: openai("gpt-4o-mini"),
+	system: `You are a helpful CRM assistant for ${organizationName}. 
            Help users manage their leads, contacts and deals.`,
-  messages,
+	messages,
 });
 ```
 
@@ -196,8 +196,8 @@ ANTHROPIC_API_KEY=sk-ant-...
 import { anthropic } from "@ai-sdk/anthropic";
 
 const result = streamText({
-  model: anthropic("claude-3-sonnet-20240229"),
-  messages,
+	model: anthropic("claude-3-sonnet-20240229"),
+	messages,
 });
 ```
 
@@ -207,27 +207,27 @@ const result = streamText({
 import { z } from "zod/v4";
 
 const result = streamText({
-  model: openai("gpt-4o-mini"),
-  messages,
-  tools: {
-    searchLeads: {
-      description: "Search for leads in the CRM",
-      parameters: z.object({
-        query: z.string().describe("Search query"),
-        status: z.enum(["new", "contacted", "qualified"]).optional(),
-      }),
-      execute: async ({ query, status }) => {
-        const leads = await db.query.leadTable.findMany({
-          where: and(
-            ilike(leadTable.name, `%${query}%`),
-            status ? eq(leadTable.status, status) : undefined
-          ),
-          limit: 5,
-        });
-        return leads;
-      },
-    },
-  },
+	model: openai("gpt-4o-mini"),
+	messages,
+	tools: {
+		searchLeads: {
+			description: "Search for leads in the CRM",
+			parameters: z.object({
+				query: z.string().describe("Search query"),
+				status: z.enum(["new", "contacted", "qualified"]).optional(),
+			}),
+			execute: async ({ query, status }) => {
+				const leads = await db.query.leadTable.findMany({
+					where: and(
+						ilike(leadTable.name, `%${query}%`),
+						status ? eq(leadTable.status, status) : undefined,
+					),
+					limit: 5,
+				});
+				return leads;
+			},
+		},
+	},
 });
 ```
 
@@ -237,20 +237,20 @@ The chat components are modular:
 
 ```tsx
 import {
-  Conversation,
-  ConversationContent,
+	Conversation,
+	ConversationContent,
 } from "@/components/ai/conversation";
 
 import {
-  Message,
-  MessageContent,
-  MessageResponse,
+	Message,
+	MessageContent,
+	MessageResponse,
 } from "@/components/ai/message";
 
 import {
-  PromptInput,
-  PromptInputTextarea,
-  PromptInputSubmit,
+	PromptInput,
+	PromptInputTextarea,
+	PromptInputSubmit,
 } from "@/components/ai/prompt-input";
 ```
 
@@ -306,15 +306,15 @@ Chat input form with submit handling.
 
 ```tsx
 <PromptInput onSubmit={handleSubmit}>
-  <PromptInputTextarea
-    value={input}
-    onValueChange={setInput}
-    placeholder="Ask me anything..."
-  />
-  <PromptInputFooter>
-    <PromptInputTools />
-    <PromptInputSubmit status={chatStatus} />
-  </PromptInputFooter>
+	<PromptInputTextarea
+		value={input}
+		onValueChange={setInput}
+		placeholder="Ask me anything..."
+	/>
+	<PromptInputFooter>
+		<PromptInputTools />
+		<PromptInputSubmit status={chatStatus} />
+	</PromptInputFooter>
 </PromptInput>
 ```
 

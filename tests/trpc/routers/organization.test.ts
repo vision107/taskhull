@@ -1,4 +1,5 @@
 import { describe, expect, inject, it, vi } from "vitest";
+
 import { db, userTable } from "@/lib/db";
 import { createTestTRPCContext } from "@/tests/support/trpc-utils";
 import { createCallerFactory } from "@/trpc/init";

@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import type * as React from "react";
+
 import { OnboardingProfileStep } from "@/components/onboarding/onboarding-profile-step";
 import {
 	Card,
@@ -57,7 +58,7 @@ export function OnboardingCard(): React.JSX.Element {
 				{totalSteps > 1 && (
 					<div className="mb-6 flex items-center gap-3">
 						<Progress className="h-2" value={progress} />
-						<span className="shrink-0 text-foreground/60 text-xs">
+						<span className="shrink-0 text-xs text-foreground/60">
 							{`Step ${onboardingStep} / ${totalSteps}`}
 						</span>
 					</div>

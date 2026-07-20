@@ -10,6 +10,7 @@ import {
 	username,
 } from "better-auth/plugins";
 import { and, eq } from "drizzle-orm";
+
 import { appConfig } from "@/config/app.config";
 import { authConfig } from "@/config/auth.config";
 import { getOrganizationPlanLimits } from "@/lib/billing/guards";

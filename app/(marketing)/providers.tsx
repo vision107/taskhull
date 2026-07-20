@@ -5,6 +5,7 @@ import { RootProvider } from "fumadocs-ui/provider/next";
 import NextTopLoader from "nextjs-toploader";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type * as React from "react";
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { appConfig } from "@/config/app.config";

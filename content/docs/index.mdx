@@ -27,7 +27,7 @@ The source of your content, can be a CMS or local data layers like [Content Coll
 A command line tool to install UI components and automate things, useful for customizing layouts.
 
 <Callout title="Want to learn more?">
-Read our in-depth [What is Fumadocs](/docs/what-is-fumadocs) introduction.
+	Read our in-depth [What is Fumadocs](/docs/what-is-fumadocs) introduction.
 </Callout>
 
 ### Terminology
@@ -39,36 +39,22 @@ Although not required, some basic knowledge of Next.js App Router would be usefu
 ## Automatic Installation
 
 <Callout type="warn">
-A minimum version of Node.js 18 required, note that Node.js 23.1 might have problems with Next.js production build.
+	A minimum version of Node.js 18 required, note that Node.js 23.1 might have
+	problems with Next.js production build.
 </Callout>
 
-<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
-<Tab value="npm">
-```bash
-npm create fumadocs-app
-```
-</Tab>
-<Tab value="pnpm">
-```bash
-pnpm create fumadocs-app
-```
-</Tab>
-<Tab value="yarn">
-```bash
-yarn create fumadocs-app
-```
-</Tab>
-<Tab value="bun">
-```bash
-bun create fumadocs-app
-```
-</Tab>
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+	<Tab value="npm">```bash npm create fumadocs-app ```</Tab>
+	<Tab value="pnpm">```bash pnpm create fumadocs-app ```</Tab>
+	<Tab value="yarn">```bash yarn create fumadocs-app ```</Tab>
+	<Tab value="bun">```bash bun create fumadocs-app ```</Tab>
 </Tabs>
 
 It will ask you the framework and content source to use, a new fumadocs app should be initialized. Now you can start hacking!
 
 <Callout title="From Existing Codebase?">
-You can follow the [Manual Installation](/docs/manual-installation) guide to get started.
+	You can follow the [Manual Installation](/docs/manual-installation) guide to
+	get started.
 </Callout>
 
 ### Enjoy!
@@ -96,20 +82,20 @@ In the project, you can see:
 - `lib/source.ts`: Code for content source adapter, `loader()` provides an interface to interact with your content source, and assigns URL to your pages.
 - `app/layout.config.tsx`: Shared options for layouts, optional but preferred to keep.
 
-| Route | Description |
-|-------|-------------|
-| `app/(home)` | The route group for your landing page and other pages. |
-| `app/docs` | The documentation layout and pages. |
-| `app/api/search/route.ts` | The Route Handler for search. |
+| Route                     | Description                                            |
+| ------------------------- | ------------------------------------------------------ |
+| `app/(home)`              | The route group for your landing page and other pages. |
+| `app/docs`                | The documentation layout and pages.                    |
+| `app/api/search/route.ts` | The Route Handler for search.                          |
 
 ### Writing Content
 
 For authoring docs, make sure to read:
 
 <Cards>
-<Card title="Markdown" href="/docs/markdown">
-Fumadocs has some additional features for authoring content too.
-</Card>
+	<Card title="Markdown" href="/docs/markdown">
+		Fumadocs has some additional features for authoring content too.
+	</Card>
 </Cards>
 
 ### Content Source
@@ -121,6 +107,7 @@ Content source handles all your content, like compiling Markdown files and valid
 Read the [MDX Introduction](/docs/mdx) to learn how it handles your content.
 
 A `source.config.ts` config file has been included, you can customise different options like frontmatter schema.
+
 </Tab>
 <Tab value="Custom Source">
 Fumadocs is not Markdown-exclusive. For other sources like Sanity, you can build a custom content source.
@@ -136,11 +123,12 @@ See [Customisation Guide](/docs/overview).
 Some common questions you may encounter.
 
 <Callout title="How to fix stylings not being applied in Monorepo?">
-Make sure to include the `fumadocs-ui` package in your Tailwind CSS content configuration.
+	Make sure to include the `fumadocs-ui` package in your Tailwind CSS content
+	configuration.
 </Callout>
 
 <Callout title="How to change the base route of /docs?">
-Update the `baseUrl` in your source loader configuration.
+	Update the `baseUrl` in your source loader configuration.
 </Callout>
 
 ## Learn More
@@ -150,16 +138,16 @@ New to here? Don't worry, we are welcome for your questions.
 If you find anything confusing, please give your feedback on [Github Discussion](https://github.com/fuma-nama/fumadocs/discussions)!
 
 <Cards>
-<Card title="Configure Static Export" href="/docs/static-export">
-Learn how to enable static export on your docs
-</Card>
-<Card title="Customise Search" href="/docs/search">
-Learn how to customise document search
-</Card>
-<Card title="Theming" href="/docs/theme">
-Add themes to Fumadocs UI
-</Card>
-<Card title="Components" href="/docs/components">
-See all available components to enhance your docs
-</Card>
+	<Card title="Configure Static Export" href="/docs/static-export">
+		Learn how to enable static export on your docs
+	</Card>
+	<Card title="Customise Search" href="/docs/search">
+		Learn how to customise document search
+	</Card>
+	<Card title="Theming" href="/docs/theme">
+		Add themes to Fumadocs UI
+	</Card>
+	<Card title="Components" href="/docs/components">
+		See all available components to enhance your docs
+	</Card>
 </Cards>

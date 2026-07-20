@@ -4,6 +4,7 @@ import NiceModal, { type NiceModalHocProps } from "@ebay/nice-modal-react";
 import { AlertCircleIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -107,33 +108,33 @@ export const PurchaseCreditsModal = NiceModal.create<PurchaseCreditsModalProps>(
 									tabIndex={0}
 								>
 									{pkg.popular && (
-										<span className="absolute inset-x-0 -top-3 mx-auto flex h-6 w-fit items-center rounded-full bg-linear-to-br from-purple-400 to-amber-300 px-3 py-1 font-medium text-amber-950 text-xs ring-1 ring-white/20 ring-inset ring-offset-1 ring-offset-gray-950/5">
+										<span className="absolute inset-x-0 -top-3 mx-auto flex h-6 w-fit items-center rounded-full bg-linear-to-br from-purple-400 to-amber-300 px-3 py-1 text-xs font-medium text-amber-950 ring-1 ring-white/20 ring-offset-1 ring-offset-gray-950/5 ring-inset">
 											Popular
 										</span>
 									)}
 									<div className="flex items-center justify-between">
 										<div>
-											<h3 className="font-medium text-sm">{pkg.name}</h3>
-											<p className="text-muted-foreground text-xs">
+											<h3 className="text-sm font-medium">{pkg.name}</h3>
+											<p className="text-xs text-muted-foreground">
 												{pkg.description}
 											</p>
 											<div className="mt-1.5">
-												<span className="font-semibold text-lg">
+												<span className="text-lg font-semibold">
 													{pkg.totalCredits.toLocaleString()}
 												</span>
-												<span className="text-muted-foreground text-sm">
+												<span className="text-sm text-muted-foreground">
 													{" "}
 													credits
 												</span>
 												{pkg.bonusCredits > 0 && (
-													<span className="ml-2 text-green-600 text-xs">
+													<span className="ml-2 text-xs text-green-600">
 														(+{pkg.bonusCredits.toLocaleString()} bonus)
 													</span>
 												)}
 											</div>
 										</div>
 										<div className="text-right">
-											<div className="font-semibold text-lg">
+											<div className="text-lg font-semibold">
 												{formatCurrency(pkg.priceAmount, pkg.currency)}
 											</div>
 											<Button
@@ -152,7 +153,7 @@ export const PurchaseCreditsModal = NiceModal.create<PurchaseCreditsModalProps>(
 							))}
 						</div>
 					) : (
-						<p className="py-8 text-center text-muted-foreground text-sm">
+						<p className="py-8 text-center text-sm text-muted-foreground">
 							No credit packages available
 						</p>
 					)}

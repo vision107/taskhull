@@ -2,6 +2,7 @@
 
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
+
 import { cn } from "@/lib/utils";
 
 interface CtaContent {
@@ -43,7 +44,7 @@ export function CtaSection({ centered = false, content }: CtaSectionProps) {
 					>
 						<h2
 							className={cn(
-								"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+								"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 								"text-marketing-fg",
 								"sm:text-5xl sm:leading-14",
 							)}
@@ -51,7 +52,7 @@ export function CtaSection({ centered = false, content }: CtaSectionProps) {
 							{headline}
 						</h2>
 					</div>
-					<div className="max-w-3xl text-base leading-7 text-marketing-fg-muted text-pretty">
+					<div className="max-w-3xl text-base leading-7 text-pretty text-marketing-fg-muted">
 						<p>{description}</p>
 					</div>
 				</div>

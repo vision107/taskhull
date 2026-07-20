@@ -2,6 +2,7 @@ import { ChevronLeftIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
 import { PostContent } from "@/components/marketing/content/post-content";
 import { getAllPosts, getPostBySlug } from "@/lib/marketing/blog/posts";
 import { cn } from "@/lib/utils";
@@ -86,7 +87,7 @@ export default async function BlogPostPage({
 					{/* Post meta */}
 					<div className="flex flex-col gap-6">
 						<div className="flex items-center gap-4 text-sm">
-							<span className="inline-flex rounded-full bg-marketing-card-hover px-2 py-0.5 text-xs font-medium capitalize text-marketing-fg-hover">
+							<span className="text-marketing-fg-hover inline-flex rounded-full bg-marketing-card-hover px-2 py-0.5 text-xs font-medium capitalize">
 								{tags?.[0] ?? "Article"}
 							</span>
 							<time dateTime={date} className="text-marketing-fg-subtle">
@@ -106,7 +107,7 @@ export default async function BlogPostPage({
 						{/* Title */}
 						<h1
 							className={cn(
-								"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+								"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 								"text-marketing-fg",
 								"sm:text-5xl sm:leading-14",
 							)}
@@ -130,7 +131,7 @@ export default async function BlogPostPage({
 										alt={authorName ?? ""}
 										width={40}
 										height={40}
-										className="size-full object-cover bg-white/75 dark:bg-black/75"
+										className="size-full bg-white/75 object-cover dark:bg-black/75"
 									/>
 								</div>
 							)}
@@ -150,7 +151,7 @@ export default async function BlogPostPage({
 			{/* Content Section */}
 			<section className="py-16">
 				<div className="mx-auto max-w-2xl px-6 md:max-w-3xl lg:px-10">
-					<article className="prose dark:prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-p:text-marketing-fg-muted prose-a:text-marketing-fg prose-strong:text-marketing-fg">
+					<article className="dark:prose-invert prose max-w-none prose-headings:font-display prose-headings:tracking-tight prose-p:text-marketing-fg-muted prose-a:text-marketing-fg prose-strong:text-marketing-fg">
 						<PostContent content={body} />
 					</article>
 				</div>

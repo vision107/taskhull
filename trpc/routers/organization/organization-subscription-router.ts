@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
+
 import { appConfig } from "@/config/app.config";
 import { billingConfig } from "@/config/billing.config";
 import {

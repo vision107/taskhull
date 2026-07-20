@@ -32,11 +32,11 @@ In the R2 bucket settings, add CORS rules:
 
 ```json
 [
-  {
-    "AllowedOrigins": ["http://localhost:3000", "https://yourdomain.com"],
-    "AllowedMethods": ["GET", "PUT", "DELETE"],
-    "AllowedHeaders": ["*"]
-  }
+	{
+		"AllowedOrigins": ["http://localhost:3000", "https://yourdomain.com"],
+		"AllowedMethods": ["GET", "PUT", "DELETE"],
+		"AllowedHeaders": ["*"]
+	}
 ]
 ```
 
@@ -87,8 +87,8 @@ import { getSignedUploadUrl } from "@/lib/storage";
 import { storageConfig } from "@/config/storage.config";
 
 const signedUrl = await getSignedUploadUrl(
-  "user123-abc.png", // path
-  storageConfig.bucketNames.images // bucket
+	"user123-abc.png", // path
+	storageConfig.bucketNames.images, // bucket
 );
 // Returns URL valid for 60 seconds
 ```
@@ -99,9 +99,9 @@ const signedUrl = await getSignedUploadUrl(
 import { getSignedUrl } from "@/lib/storage";
 
 const signedUrl = await getSignedUrl(
-  "user123-abc.png", // path
-  storageConfig.bucketNames.images, // bucket
-  60 * 60 // expires in 1 hour
+	"user123-abc.png", // path
+	storageConfig.bucketNames.images, // bucket
+	60 * 60, // expires in 1 hour
 );
 ```
 
@@ -200,15 +200,15 @@ import { OrganizationLogo } from "@/components/organization/organization-logo";
 ```typescript
 // Request
 const { signedUrl } = await trpc.uploads.signedUploadUrl.mutate({
-  bucket: "my-app-images",
-  path: "user123-abc.png",
+	bucket: "my-app-images",
+	path: "user123-abc.png",
 });
 
 // Upload file directly
 await fetch(signedUrl, {
-  method: "PUT",
-  body: file,
-  headers: { "Content-Type": "image/jpeg" },
+	method: "PUT",
+	body: file,
+	headers: { "Content-Type": "image/jpeg" },
 });
 ```
 
@@ -227,15 +227,15 @@ The endpoint:
 ```typescript
 // Good - store path only
 await db
-  .update(userTable)
-  .set({ image: "user123-abc.png" })
-  .where(eq(userTable.id, userId));
+	.update(userTable)
+	.set({ image: "user123-abc.png" })
+	.where(eq(userTable.id, userId));
 
 // Bad - don't store full URLs
 await db
-  .update(userTable)
-  .set({ image: "https://storage.example.com/bucket/user123-abc.png" })
-  .where(eq(userTable.id, userId));
+	.update(userTable)
+	.set({ image: "https://storage.example.com/bucket/user123-abc.png" })
+	.where(eq(userTable.id, userId));
 ```
 
 The `useStorage` hook converts paths to URLs at runtime.
@@ -326,10 +326,10 @@ NEXT_PUBLIC_IMAGES_BUCKET_NAME="my-space"
 ```typescript
 // config/storage.config.ts
 export const storageConfig = {
-  bucketNames: {
-    images: env.NEXT_PUBLIC_IMAGES_BUCKET_NAME ?? "",
-    documents: env.NEXT_PUBLIC_DOCUMENTS_BUCKET_NAME ?? "", // New
-  },
+	bucketNames: {
+		images: env.NEXT_PUBLIC_IMAGES_BUCKET_NAME ?? "",
+		documents: env.NEXT_PUBLIC_DOCUMENTS_BUCKET_NAME ?? "", // New
+	},
 };
 ```
 
@@ -367,12 +367,12 @@ signedUploadUrl: protectedProcedure
 ```typescript
 // app/storage/[...path]/route.ts
 const allowedBuckets = [
-  storageConfig.bucketNames.images,
-  storageConfig.bucketNames.documents,
+	storageConfig.bucketNames.images,
+	storageConfig.bucketNames.documents,
 ];
 
 if (allowedBuckets.includes(bucket)) {
-  // ... generate signed URL
+	// ... generate signed URL
 }
 ```
 
@@ -388,9 +388,9 @@ if (allowedBuckets.includes(bucket)) {
 
 ```json
 {
-  "AllowedOrigins": ["https://yourdomain.com"],
-  "AllowedMethods": ["GET", "PUT"],
-  "AllowedHeaders": ["*"]
+	"AllowedOrigins": ["https://yourdomain.com"],
+	"AllowedMethods": ["GET", "PUT"],
+	"AllowedHeaders": ["*"]
 }
 ```
 

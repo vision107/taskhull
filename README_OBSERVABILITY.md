@@ -38,6 +38,7 @@ That's it! Monitoring is now active.
 ### Error Tracking
 
 Errors are automatically captured across:
+
 - **Client-side**: Browser errors, React errors
 - **Server-side**: API routes, Server Components, tRPC procedures
 - **Edge runtime**: Middleware, edge functions
@@ -95,44 +96,47 @@ logger.error({ error }, "Payment failed");
 
 ### Available Log Levels
 
-| Level | Method | Use Case |
-|-------|--------|----------|
+| Level   | Method           | Use Case                |
+| ------- | ---------------- | ----------------------- |
 | `trace` | `logger.trace()` | Very detailed debugging |
-| `debug` | `logger.debug()` | Development debugging |
-| `info` | `logger.info()` | General information |
-| `warn` | `logger.warn()` | Warning conditions |
-| `error` | `logger.error()` | Error conditions |
-| `fatal` | `logger.fatal()` | System is unusable |
+| `debug` | `logger.debug()` | Development debugging   |
+| `info`  | `logger.info()`  | General information     |
+| `warn`  | `logger.warn()`  | Warning conditions      |
+| `error` | `logger.error()` | Error conditions        |
+| `fatal` | `logger.fatal()` | System is unusable      |
 
 ### Predefined Logger Groups
 
 These groups have predefined colors in the console:
 
-| Group | Color | Use For |
-|-------|-------|---------|
-| `Billing` | Magenta | Payment/subscription logic |
-| `Auth` | Blue | Authentication logic |
-| `Webhook` | Magenta | Webhook handlers |
-| `Database` | Yellow | Database operations |
-| `API` | Green | API endpoints |
-| `Organization` | Cyan | Organization logic |
-| `User` | Yellow | User management |
-| `Email` | Blue | Email sending |
-| `Storage` | Green | File storage |
+| Group          | Color   | Use For                    |
+| -------------- | ------- | -------------------------- |
+| `Billing`      | Magenta | Payment/subscription logic |
+| `Auth`         | Blue    | Authentication logic       |
+| `Webhook`      | Magenta | Webhook handlers           |
+| `Database`     | Yellow  | Database operations        |
+| `API`          | Green   | API endpoints              |
+| `Organization` | Cyan    | Organization logic         |
+| `User`         | Yellow  | User management            |
+| `Email`        | Blue    | Email sending              |
+| `Storage`      | Green   | File storage               |
 
 ### Development vs Production
 
 **Development**:
+
 - Pretty-printed, colorized output
 - Human-readable format
 - All log levels visible
 
 **Production**:
+
 - JSON format (for log aggregation)
 - Structured for parsing
 - Default level: `info`
 
 Configure log level:
+
 ```bash
 NEXT_PUBLIC_LOG_LEVEL="debug"  # trace, debug, info, warn, error, fatal
 ```
@@ -145,19 +149,19 @@ Sentry automatically filters common non-actionable errors:
 
 ### Client-Side Filters
 
-| Error Type | Reason |
-|------------|--------|
-| ChunkLoadError | Network issues, user navigation |
-| Failed to fetch | Network connectivity |
-| ResizeObserver loop | Browser quirk, not a bug |
-| Browser extensions | Third-party code |
+| Error Type          | Reason                          |
+| ------------------- | ------------------------------- |
+| ChunkLoadError      | Network issues, user navigation |
+| Failed to fetch     | Network connectivity            |
+| ResizeObserver loop | Browser quirk, not a bug        |
+| Browser extensions  | Third-party code                |
 
 ### Server-Side Filters
 
-| Error Type | Reason |
-|------------|--------|
-| TRPCError NOT_FOUND | Expected 404s |
-| Network errors | Transient connectivity |
+| Error Type          | Reason                 |
+| ------------------- | ---------------------- |
+| TRPCError NOT_FOUND | Expected 404s          |
+| Network errors      | Transient connectivity |
 
 ### Breadcrumb Filtering
 
@@ -186,9 +190,9 @@ All tRPC procedures are automatically instrumented:
 // Automatically set for each procedure
 scope.setUser({ id: userId, email });
 scope.setContext("trpc", {
-  procedure: "organization.leads.create",
-  type: "mutation",
-  organizationId: "...",
+	procedure: "organization.leads.create",
+	type: "mutation",
+	organizationId: "...",
 });
 scope.setTag("procedure", "organization.leads.create");
 ```
@@ -251,16 +255,16 @@ Sentry.setTag("feature", "checkout");
 
 // Add context (detailed data attached to errors)
 Sentry.setContext("order", {
-  orderId: "123",
-  amount: 9900,
-  currency: "usd",
+	orderId: "123",
+	amount: 9900,
+	currency: "usd",
 });
 
 // Add breadcrumb (trail of events before error)
 Sentry.addBreadcrumb({
-  category: "checkout",
-  message: "User clicked checkout",
-  level: "info",
+	category: "checkout",
+	message: "User clicked checkout",
+	level: "info",
 });
 ```
 
@@ -271,9 +275,9 @@ import { captureException, captureMessage } from "@sentry/nextjs";
 
 // Capture an exception
 try {
-  riskyOperation();
+	riskyOperation();
 } catch (error) {
-  captureException(error);
+	captureException(error);
 }
 
 // Capture a message (non-error event)
@@ -289,15 +293,15 @@ import { runWithRequestContext } from "@/lib/logger/server";
 
 // In an API route or server action
 await runWithRequestContext(
-  {
-    userId: session.user.id,
-    requestId: headers.get("x-request-id"),
-    endpoint: "/api/checkout",
-  },
-  async () => {
-    // All logger calls automatically include this context
-    logger.info("Processing checkout");  // Includes userId, requestId, endpoint
-  }
+	{
+		userId: session.user.id,
+		requestId: headers.get("x-request-id"),
+		endpoint: "/api/checkout",
+	},
+	async () => {
+		// All logger calls automatically include this context
+		logger.info("Processing checkout"); // Includes userId, requestId, endpoint
+	},
 );
 ```
 
@@ -308,6 +312,7 @@ await runWithRequestContext(
 ### Web Analytics
 
 Tracks:
+
 - Page views
 - Unique visitors
 - Top pages
@@ -318,6 +323,7 @@ Tracks:
 ### Speed Insights
 
 Tracks Core Web Vitals:
+
 - **LCP** (Largest Contentful Paint)
 - **FID** (First Input Delay)
 - **CLS** (Cumulative Layout Shift)
@@ -351,21 +357,21 @@ export default function RootLayout({ children }) {
 
 ### Sentry Sample Rates
 
-| Setting | Value | Meaning |
-|---------|-------|---------|
-| `tracesSampleRate` | 0.3 | 30% of transactions traced |
-| `replaysSessionSampleRate` | 0.1 | 10% of sessions recorded |
-| `replaysOnErrorSampleRate` | 1.0 | 100% of error sessions recorded |
+| Setting                    | Value | Meaning                         |
+| -------------------------- | ----- | ------------------------------- |
+| `tracesSampleRate`         | 0.3   | 30% of transactions traced      |
+| `replaysSessionSampleRate` | 0.1   | 10% of sessions recorded        |
+| `replaysOnErrorSampleRate` | 1.0   | 100% of error sessions recorded |
 
 Adjust in instrumentation files for cost/coverage balance.
 
 ### Runtime-Specific Settings
 
-| Setting | Client | Server | Edge |
-|---------|--------|--------|------|
-| Max Breadcrumbs | 30 | 50 | 30 |
-| Send PII | No | Yes | No |
-| Runtime Tag | browser | server | edge |
+| Setting         | Client  | Server | Edge |
+| --------------- | ------- | ------ | ---- |
+| Max Breadcrumbs | 30      | 50     | 30   |
+| Send PII        | No      | Yes    | No   |
+| Runtime Tag     | browser | server | edge |
 
 ---
 
@@ -417,13 +423,16 @@ logger.info(`User ${userId} logged in`);
 
 ```typescript
 // Good - include relevant context
-logger.error({
-  error: err.message,
-  stack: err.stack,
-  userId,
-  orderId,
-  amount,
-}, "Payment processing failed");
+logger.error(
+	{
+		error: err.message,
+		stack: err.stack,
+		userId,
+		orderId,
+		amount,
+	},
+	"Payment processing failed",
+);
 
 // Bad - minimal context
 logger.error("Payment failed");
@@ -455,29 +464,29 @@ logger.info({ email }, "Login attempt");
 
 ## File Reference
 
-| File | Purpose |
-|------|---------|
-| `instrumentation.ts` | Entry point for instrumentation |
-| `instrumentation-client.ts` | Client-side Sentry config |
-| `instrumentation-server.ts` | Server-side Sentry config |
-| `instrumentation-edge.ts` | Edge runtime Sentry config |
-| `lib/logger/index.ts` | Logger export |
-| `lib/logger/logger.ts` | Core Logger class |
-| `lib/logger/factory.ts` | LoggerFactory singleton |
-| `lib/logger/context.ts` | Request context (AsyncLocalStorage) |
-| `app/error.tsx` | App error boundary |
-| `app/global-error.tsx` | Global error boundary |
-| `app/layout.tsx` | Analytics components |
-| `next.config.ts` | Sentry build configuration |
+| File                        | Purpose                             |
+| --------------------------- | ----------------------------------- |
+| `instrumentation.ts`        | Entry point for instrumentation     |
+| `instrumentation-client.ts` | Client-side Sentry config           |
+| `instrumentation-server.ts` | Server-side Sentry config           |
+| `instrumentation-edge.ts`   | Edge runtime Sentry config          |
+| `lib/logger/index.ts`       | Logger export                       |
+| `lib/logger/logger.ts`      | Core Logger class                   |
+| `lib/logger/factory.ts`     | LoggerFactory singleton             |
+| `lib/logger/context.ts`     | Request context (AsyncLocalStorage) |
+| `app/error.tsx`             | App error boundary                  |
+| `app/global-error.tsx`      | Global error boundary               |
+| `app/layout.tsx`            | Analytics components                |
+| `next.config.ts`            | Sentry build configuration          |
 
 ---
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `SENTRY_ORG` | For Sentry | Organization slug |
-| `SENTRY_PROJECT` | For Sentry | Project name |
-| `SENTRY_AUTH_TOKEN` | For Sentry | Auth token for source maps |
-| `NEXT_PUBLIC_SENTRY_DSN` | For Sentry | Data Source Name |
-| `NEXT_PUBLIC_LOG_LEVEL` | No | Log level (default: info) |
+| Variable                 | Required   | Description                |
+| ------------------------ | ---------- | -------------------------- |
+| `SENTRY_ORG`             | For Sentry | Organization slug          |
+| `SENTRY_PROJECT`         | For Sentry | Project name               |
+| `SENTRY_AUTH_TOKEN`      | For Sentry | Auth token for source maps |
+| `NEXT_PUBLIC_SENTRY_DSN` | For Sentry | Data Source Name           |
+| `NEXT_PUBLIC_LOG_LEVEL`  | No         | Log level (default: info)  |

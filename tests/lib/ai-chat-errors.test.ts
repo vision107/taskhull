@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import {
 	AI_CHAT_ERROR_MESSAGES,
 	getSafeAIChatErrorMessage,

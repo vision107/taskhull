@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+
 import type { Post } from "@/lib/marketing/blog/types";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +21,7 @@ export function BlogSection({ posts }: BlogSectionProps) {
 				<div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 md:max-w-3xl lg:max-w-7xl lg:px-10">
 					<h1
 						className={cn(
-							"text-balance font-display text-5xl leading-12 tracking-tight",
+							"font-display text-5xl leading-12 tracking-tight text-balance",
 							"text-marketing-fg",
 							"sm:text-[5rem] sm:leading-20",
 						)}
@@ -50,13 +51,13 @@ export function BlogSection({ posts }: BlogSectionProps) {
 											alt={post.title}
 											width={600}
 											height={400}
-											className="aspect-3/2 w-full object-cover bg-white/75 dark:bg-black/75"
+											className="aspect-3/2 w-full bg-white/75 object-cover dark:bg-black/75"
 										/>
 									</div>
 								)}
 								<div className="flex flex-col gap-2">
 									<div className="flex items-center justify-between text-sm">
-										<span className="inline-flex rounded-full bg-marketing-card-hover px-2 py-0.5 text-xs font-medium capitalize text-marketing-fg-hover">
+										<span className="text-marketing-fg-hover inline-flex rounded-full bg-marketing-card-hover px-2 py-0.5 text-xs font-medium capitalize">
 											{post.tags?.[0] ?? "Article"}
 										</span>
 										<time
@@ -85,7 +86,7 @@ export function BlogSection({ posts }: BlogSectionProps) {
 												alt={post.authorName ?? ""}
 												width={32}
 												height={32}
-												className="size-full object-cover bg-white/75 dark:bg-black/75"
+												className="size-full bg-white/75 object-cover dark:bg-black/75"
 											/>
 										</div>
 									)}

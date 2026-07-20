@@ -5,6 +5,7 @@ import { ImageIcon, TrashIcon } from "lucide-react";
 import * as React from "react";
 import { useDropzone } from "react-dropzone";
 import { v4 as uuid } from "uuid";
+
 import { CropImageModal } from "@/components/crop-image-modal";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -113,7 +114,7 @@ export function UserAvatarUpload({
 			<div className="flex flex-row items-center gap-4">
 				<div
 					className={cn(
-						"relative size-20 rounded-full transition-colors shrink-0",
+						"relative size-20 shrink-0 rounded-full transition-colors",
 						!user?.image &&
 							"cursor-pointer border border-border hover:border-primary",
 					)}

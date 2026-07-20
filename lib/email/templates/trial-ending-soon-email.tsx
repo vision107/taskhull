@@ -42,33 +42,33 @@ function TrialEndingSoonEmail({
 			</Preview>
 			<Tailwind>
 				<Body className="m-auto bg-white px-2 font-sans">
-					<Container className="mx-auto my-[40px] max-w-[465px] rounded-sm border border-[#eaeaea] border-solid p-[20px]">
-						<Heading className="mx-0 my-[30px] p-0 text-center font-normal text-[24px] text-black">
+					<Container className="mx-auto my-[40px] max-w-[465px] rounded-sm border border-solid border-[#eaeaea] p-[20px]">
+						<Heading className="mx-0 my-[30px] p-0 text-center text-[24px] font-normal text-black">
 							Your Trial is Ending Soon
 						</Heading>
-						<Text className="text-[14px] text-black leading-[24px]">
+						<Text className="text-[14px] leading-[24px] text-black">
 							Hello {userName},
 						</Text>
-						<Text className="text-[14px] text-black leading-[24px]">
+						<Text className="text-[14px] leading-[24px] text-black">
 							Your free trial of the <strong>{planName}</strong> plan for{" "}
 							<strong>{organizationName}</strong> will end in{" "}
 							<strong>{daysText}</strong>.
 						</Text>
 
 						{/* Trial Details */}
-						<Section className="my-[24px] rounded-md border border-[#eaeaea] border-solid bg-[#f9f9f9] p-[16px]">
-							<Text className="m-0 text-[14px] text-black leading-[24px]">
+						<Section className="my-[24px] rounded-md border border-solid border-[#eaeaea] bg-[#f9f9f9] p-[16px]">
+							<Text className="m-0 text-[14px] leading-[24px] text-black">
 								<strong>Plan:</strong> {planName}
 							</Text>
-							<Text className="m-0 text-[14px] text-black leading-[24px]">
+							<Text className="m-0 text-[14px] leading-[24px] text-black">
 								<strong>Trial ends:</strong> {trialEndDate}
 							</Text>
-							<Text className="m-0 text-[14px] text-black leading-[24px]">
+							<Text className="m-0 text-[14px] leading-[24px] text-black">
 								<strong>Days remaining:</strong> {daysRemaining}
 							</Text>
 						</Section>
 
-						<Text className="text-[14px] text-black leading-[24px]">
+						<Text className="text-[14px] leading-[24px] text-black">
 							To continue enjoying all the features of {planName} without
 							interruption, please add a payment method before your trial ends.
 							Your subscription will begin automatically once the trial period
@@ -78,24 +78,24 @@ function TrialEndingSoonEmail({
 						<Section className="my-[32px] text-center">
 							<Button
 								href={billingSettingsLink}
-								className="rounded-sm bg-[#000000] px-5 py-3 text-center font-semibold text-[12px] text-white no-underline"
+								className="rounded-sm bg-[#000000] px-5 py-3 text-center text-[12px] font-semibold text-white no-underline"
 							>
 								Add Payment Method
 							</Button>
 						</Section>
 
-						<Text className="text-[14px] text-black leading-[24px]">
+						<Text className="text-[14px] leading-[24px] text-black">
 							If you decide not to continue, no action is needed. Your account
 							will automatically switch to the free plan at the end of your
 							trial.
 						</Text>
 
-						<Text className="text-[14px] text-black leading-[24px]">
+						<Text className="text-[14px] leading-[24px] text-black">
 							Have questions? Reply to this email or contact our support team.
 						</Text>
 
-						<Hr className="mx-0 my-[26px] w-full border border-[#eaeaea] border-solid" />
-						<Text className="text-[#666666] text-[12px] leading-[24px]">
+						<Hr className="mx-0 my-[26px] w-full border border-solid border-[#eaeaea]" />
+						<Text className="text-[12px] leading-[24px] text-[#666666]">
 							You received this email because you are a billing administrator
 							for {organizationName} on {appName}.
 						</Text>

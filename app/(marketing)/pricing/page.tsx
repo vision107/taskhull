@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+
 import { CtaSection } from "@/components/marketing/sections/cta-section";
 import { FaqSection } from "@/components/marketing/sections/faq-section";
 import { PricingSection } from "@/components/marketing/sections/pricing-section";
@@ -58,7 +59,7 @@ export default function PricingPage() {
 				<div className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-6 text-center md:max-w-3xl lg:max-w-7xl lg:px-10">
 					<h1
 						className={cn(
-							"text-balance font-display text-5xl leading-12 tracking-tight",
+							"font-display text-5xl leading-12 tracking-tight text-balance",
 							"text-marketing-fg",
 							"sm:text-[5rem] sm:leading-20",
 						)}

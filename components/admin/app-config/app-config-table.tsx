@@ -4,6 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Copy, InfoIcon } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -92,7 +93,7 @@ function ValueCell({ value, type }: { value: unknown; type: string }) {
 	return (
 		<div className="flex min-w-0 items-center gap-2">
 			<TooltipProvider>
-				<span className="whitespace-pre-line wrap-break-word text-foreground/90">
+				<span className="wrap-break-word whitespace-pre-line text-foreground/90">
 					{Array.isArray(str)
 						? str.map((line, idx) => <div key={idx}>{line}</div>)
 						: str}
@@ -120,10 +121,10 @@ const columns: ColumnDef<ConfigRow>[] = [
 	{
 		accessorKey: "key",
 		header: () => (
-			<div className="font-medium text-foreground text-xs">Key</div>
+			<div className="text-xs font-medium text-foreground">Key</div>
 		),
 		cell: ({ row }) => (
-			<span className="whitespace-nowrap align-top font-mono text-foreground/90">
+			<span className="align-top font-mono whitespace-nowrap text-foreground/90">
 				{row.original.key}
 			</span>
 		),
@@ -131,10 +132,10 @@ const columns: ColumnDef<ConfigRow>[] = [
 	{
 		accessorKey: "type",
 		header: () => (
-			<div className="font-medium text-foreground text-xs">Type</div>
+			<div className="text-xs font-medium text-foreground">Type</div>
 		),
 		cell: ({ row }) => (
-			<Badge className="rounded border-none bg-muted px-2 py-0.5 font-normal text-muted-foreground text-xs">
+			<Badge className="rounded border-none bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
 				{row.original.type}
 			</Badge>
 		),
@@ -142,7 +143,7 @@ const columns: ColumnDef<ConfigRow>[] = [
 	{
 		accessorKey: "value",
 		header: () => (
-			<div className="font-medium text-foreground text-xs">Value</div>
+			<div className="text-xs font-medium text-foreground">Value</div>
 		),
 		cell: ({ row }) => (
 			<ValueCell value={row.original.value} type={row.original.type} />
@@ -231,10 +232,10 @@ export function AppConfigTable(): React.JSX.Element {
 				{configSections.map((section) => (
 					<TabsContent key={section.id} value={section.id}>
 						<div className="mb-4 space-y-1">
-							<p className="text-muted-foreground text-sm">
+							<p className="text-sm text-muted-foreground">
 								{section.description}
 							</p>
-							<p className="font-mono text-muted-foreground/70 text-xs">
+							<p className="font-mono text-xs text-muted-foreground/70">
 								{section.configFile}
 							</p>
 						</div>

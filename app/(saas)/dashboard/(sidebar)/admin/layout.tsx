@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type * as React from "react";
+
 import { AdminMenuItems } from "@/components/admin/admin-menu-items";
 import { SidebarLayout } from "@/components/sidebar-layout";
 import { getSession } from "@/lib/auth/server";

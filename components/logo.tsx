@@ -1,4 +1,5 @@
 import type * as React from "react";
+
 import { appConfig } from "@/config/app.config";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +15,7 @@ export function Logo({
 	return (
 		<span
 			className={cn(
-				"flex items-center font-semibold text-foreground leading-none",
+				"flex items-center leading-none font-semibold text-foreground",
 				className,
 			)}
 		>
@@ -41,7 +42,7 @@ export function Logo({
 				</div>
 			</div>
 			{withLabel && (
-				<span className="ml-2 hidden font-bold text-lg md:block">
+				<span className="ml-2 hidden text-lg font-bold md:block">
 					{appConfig.appName}
 				</span>
 			)}

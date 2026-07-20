@@ -2,6 +2,7 @@
 
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
+
 import { appConfig } from "@/config/app.config";
 import { cn } from "@/lib/utils";
 
@@ -47,7 +48,7 @@ export function AboutSection() {
 						<div className="flex flex-col items-start gap-6">
 							<h1
 								className={cn(
-									"text-balance font-display text-5xl leading-12 tracking-tight",
+									"font-display text-5xl leading-12 tracking-tight text-balance",
 									"text-marketing-fg",
 									"sm:text-[5rem] sm:leading-20",
 								)}
@@ -76,7 +77,7 @@ export function AboutSection() {
 							</div>
 							<h2
 								className={cn(
-									"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+									"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 									"text-marketing-fg",
 									"sm:text-5xl sm:leading-14",
 								)}
@@ -84,7 +85,7 @@ export function AboutSection() {
 								The platform powering teams everywhere.
 							</h2>
 						</div>
-						<div className="text-base leading-7 text-marketing-fg-muted text-pretty">
+						<div className="text-base leading-7 text-pretty text-marketing-fg-muted">
 							<p>
 								{appConfig.appName} helps teams deliver organized, efficient
 								work across the world. From small startups to enterprise teams,
@@ -117,7 +118,7 @@ export function AboutSection() {
 						<div className="flex flex-col gap-2">
 							<h2
 								className={cn(
-									"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+									"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 									"text-marketing-fg",
 									"sm:text-5xl sm:leading-14",
 								)}
@@ -125,7 +126,7 @@ export function AboutSection() {
 								Our Values
 							</h2>
 						</div>
-						<div className="text-base leading-7 text-marketing-fg-muted text-pretty">
+						<div className="text-base leading-7 text-pretty text-marketing-fg-muted">
 							<p>
 								The principles that drive our decisions and define our culture.
 							</p>
@@ -138,7 +139,7 @@ export function AboutSection() {
 									key={value.title}
 									className="relative rounded-lg bg-marketing-card p-6"
 								>
-									<p className="font-semibold text-marketing-fg group-hover:text-marketing-accent transition-colors">
+									<p className="font-semibold text-marketing-fg transition-colors group-hover:text-marketing-accent">
 										{value.title}
 									</p>
 									<p className="mt-2 text-sm text-marketing-fg-muted">
@@ -158,7 +159,7 @@ export function AboutSection() {
 						<div className="flex max-w-4xl flex-col gap-2">
 							<h2
 								className={cn(
-									"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+									"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 									"text-marketing-fg",
 									"sm:text-5xl sm:leading-14",
 								)}
@@ -166,7 +167,7 @@ export function AboutSection() {
 								Ready to get started?
 							</h2>
 						</div>
-						<div className="max-w-3xl text-base leading-7 text-marketing-fg-muted text-pretty">
+						<div className="max-w-3xl text-base leading-7 text-pretty text-marketing-fg-muted">
 							<p>
 								Join thousands of teams already using {appConfig.appName} to
 								work smarter, not harder.

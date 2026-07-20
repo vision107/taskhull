@@ -16,6 +16,7 @@ import {
 import { LogOutIcon, MoreVerticalIcon, TrashIcon } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
+
 import { OrganizationRoleSelect } from "@/components/organization/organization-role-select";
 import { Button } from "@/components/ui/button";
 import {
@@ -107,7 +108,7 @@ export function OrganizationMembersTable({
 							src={row.original.user?.image}
 						/>
 						<div>
-							<strong className="block font-medium leading-none">
+							<strong className="block leading-none font-medium">
 								{row.original.user.name}
 							</strong>
 							<small className="text-foreground/60">
@@ -169,7 +170,7 @@ export function OrganizationMembersTable({
 								</DropdownMenu>
 							</>
 						) : (
-							<span className="font-medium text-foreground/60 text-sm">
+							<span className="text-sm font-medium text-foreground/60">
 								{
 									organizationMemberRoleLabels[
 										row.original

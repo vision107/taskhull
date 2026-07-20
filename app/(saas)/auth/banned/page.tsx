@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type * as React from "react";
+
 import { BannedCard } from "@/components/auth/banned-card";
 import { auth } from "@/lib/auth";
 

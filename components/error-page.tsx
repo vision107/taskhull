@@ -2,6 +2,7 @@
 
 import { ChevronLeftIcon, CopyIcon, RefreshCwIcon } from "lucide-react";
 import * as React from "react";
+
 import { cn } from "@/lib/utils";
 
 export interface ErrorPageProps {
@@ -69,7 +70,7 @@ export function ErrorPage({ error, reset }: ErrorPageProps) {
 							<p className="text-sm font-semibold text-marketing-fg">
 								Error message
 							</p>
-							<p className="mt-1 wrap-break-word font-mono text-sm text-marketing-fg-muted">
+							<p className="mt-1 font-mono text-sm wrap-break-word text-marketing-fg-muted">
 								{error.message || "An unknown error occurred"}
 							</p>
 						</div>

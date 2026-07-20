@@ -1,5 +1,6 @@
 import Link from "next/link";
 import * as React from "react";
+
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -50,7 +51,7 @@ function PagePrimaryBar({
 	return (
 		<div
 			className={cn(
-				"relative flex h-14 flex-row items-center gap-1 border-border/50 border-b px-4 sm:px-6",
+				"relative flex h-14 flex-row items-center gap-1 border-b border-border/50 px-4 sm:px-6",
 				className,
 			)}
 			{...other}
@@ -72,7 +73,7 @@ function PageTitle({
 	...other
 }: PageTitleProps): React.JSX.Element {
 	return (
-		<h1 className={cn("font-bold text-lg sm:text-xl", className)} {...other}>
+		<h1 className={cn("text-lg font-bold sm:text-xl", className)} {...other}>
 			{children}
 		</h1>
 	);

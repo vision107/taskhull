@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+
 import { appConfig } from "@/config/app.config";
 
 export const runtime = "edge";

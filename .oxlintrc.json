@@ -1,0 +1,19 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"plugins": ["typescript", "react", "import", "jsx-a11y", "nextjs", "oxc"],
+	"ignorePatterns": [
+		"**/.content-collections/**",
+		"**/.next/**",
+		"**/.source/**",
+		"**/coverage/**",
+		"**/dist/**",
+		"**/lib/db/migrations/**",
+		"**/node_modules/**",
+		"**/playwright-report/**",
+		"**/test-results/**",
+		"next-env.d.ts"
+	],
+	"options": {
+		"typeAware": true
+	}
+}

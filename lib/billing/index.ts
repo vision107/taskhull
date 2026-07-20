@@ -23,10 +23,7 @@ export {
 	requireSpecificPlan,
 } from "./guards";
 // Customer portal
-export {
-	createCustomerPortalSession,
-	getPortalConfiguration,
-} from "./portal";
+export { createCustomerPortalSession, getPortalConfiguration } from "./portal";
 // Database queries
 export {
 	// Types

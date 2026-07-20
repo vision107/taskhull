@@ -23,6 +23,7 @@ import {
 } from "nuqs";
 import * as React from "react";
 import { toast } from "sonner";
+
 import { AdjustCreditsModal } from "@/components/admin/credits/adjust-credits-modal";
 import { OrganizationBulkActions } from "@/components/admin/organizations/organization-bulk-actions";
 import { ConfirmationModal } from "@/components/confirmation-modal";
@@ -454,14 +455,14 @@ export function OrganizationsTable(): React.JSX.Element {
 			accessorKey: "pendingInvites",
 			enableSorting: false,
 			header: () => (
-				<div className="font-medium text-foreground text-xs">
+				<div className="text-xs font-medium text-foreground">
 					Pending Invites
 				</div>
 			),
 			cell: ({ row }) => {
 				const pendingInvites = row.original.pendingInvites;
 				return (
-					<div className="text-foreground/80 text-xs">{pendingInvites}</div>
+					<div className="text-xs text-foreground/80">{pendingInvites}</div>
 				);
 			},
 		},
@@ -469,12 +470,12 @@ export function OrganizationsTable(): React.JSX.Element {
 			accessorKey: "subscriptionStatus",
 			enableSorting: false,
 			header: () => (
-				<div className="font-medium text-foreground text-xs">Plan</div>
+				<div className="text-xs font-medium text-foreground">Plan</div>
 			),
 			cell: ({ row }) => {
 				const status = row.original.subscriptionStatus;
 				if (!status) {
-					return <span className="text-foreground/80 text-xs">Free</span>;
+					return <span className="text-xs text-foreground/80">Free</span>;
 				}
 
 				const priceId = row.original.subscriptionPlan;
@@ -502,7 +503,7 @@ export function OrganizationsTable(): React.JSX.Element {
 
 				return (
 					<div className="flex items-center gap-2">
-						<span className="text-foreground/80 text-xs">
+						<span className="text-xs text-foreground/80">
 							{planLabel} • {statusLabel}
 						</span>
 
@@ -518,7 +519,7 @@ export function OrganizationsTable(): React.JSX.Element {
 						{isTrialing && trialEnd && (
 							<Tooltip>
 								<TooltipTrigger>
-									<span className="text-[10px] text-muted-foreground whitespace-nowrap">
+									<span className="text-[10px] whitespace-nowrap text-muted-foreground">
 										Trial ends {format(trialEnd, "MMM d")}
 									</span>
 								</TooltipTrigger>
@@ -535,13 +536,13 @@ export function OrganizationsTable(): React.JSX.Element {
 			accessorKey: "credits",
 			enableSorting: false,
 			header: () => (
-				<div className="font-medium text-foreground text-xs">Credits</div>
+				<div className="text-xs font-medium text-foreground">Credits</div>
 			),
 			cell: ({ row }) => {
 				const credits = row.original.credits ?? 0;
 
 				return (
-					<div className="text-foreground/80 text-xs font-medium">
+					<div className="text-xs font-medium text-foreground/80">
 						{credits.toLocaleString()}
 					</div>
 				);

@@ -4,6 +4,7 @@ import NiceModal from "@ebay/nice-modal-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type * as React from "react";
 import { toast } from "sonner";
+
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -78,8 +79,8 @@ export function DeleteAccountCard(): React.JSX.Element {
 			<CardContent>
 				<div className="flex flex-col space-y-4">
 					<div className="flex flex-col space-y-1">
-						<span className="font-medium text-sm">Delete your Account</span>
-						<p className="text-muted-foreground text-sm">
+						<span className="text-sm font-medium">Delete your Account</span>
+						<p className="text-sm text-muted-foreground">
 							This will delete your account and the accounts you own. This
 							action cannot be undone.
 						</p>

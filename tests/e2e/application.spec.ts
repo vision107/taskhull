@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { createHmac } from "node:crypto";
+
 import { expect, type Page, test } from "@playwright/test";
 
 test.describe.configure({ mode: "serial" });
-test.beforeAll(() =>
+test.beforeEach(() =>
 	execFileSync(process.execPath, ["--env-file=.env", "tests/e2e/seed.mjs"]),
 );
 
@@ -30,6 +31,14 @@ function totp(secret: string) {
 	return ((hash.readUInt32BE(offset) & 0x7fffffff) % 1_000_000)
 		.toString()
 		.padStart(6, "0");
+}
+
+async function stableTotp(secret: string) {
+	const elapsed = Date.now() % 30_000;
+	if (elapsed > 15_000) {
+		await new Promise((resolve) => setTimeout(resolve, 30_500 - elapsed));
+	}
+	return totp(secret);
 }
 
 test("owner can navigate account and organization surfaces", async ({
@@ -63,21 +72,23 @@ test("owner can enroll in and authenticate with TOTP", async ({ page }) => {
 		.filter({ hasText: /^[A-Z2-7]{32,}$/ })
 		.textContent();
 	expect(secret).toBeTruthy();
-	await dialog.locator("input").fill(totp(secret!));
+	await dialog.locator("input").fill(await stableTotp(secret!));
 	await dialog.getByRole("button", { name: "Save" }).click();
 	await expect(
 		page.getByText("You have two-factor authentication enabled"),
 	).toBeVisible();
-	await page.request.post("/api/auth/sign-out");
+	await page.request.post("/api/auth/sign-out", {
+		data: {},
+		headers: { Origin: "http://localhost:3000" },
+	});
 	await page.context().clearCookies();
 	await page.goto("/auth/sign-in");
 	await page.getByLabel("Email").fill("owner@e2e.local");
 	await page.getByLabel("Password", { exact: true }).fill("E2e-password-123!");
 	await page.getByRole("button", { name: "Sign in" }).click();
 	await expect(page).toHaveURL(/\/auth\/verify/);
-	await page.getByLabel("One-time password").fill(totp(secret!));
+	await page.getByLabel("One-time password").fill(await stableTotp(secret!));
 	await expect(page).toHaveURL(/\/dashboard/);
-	execFileSync(process.execPath, ["--env-file=.env", "tests/e2e/seed.mjs"]);
 });
 
 test("AI chat enforces organization credits", async ({ page }) => {

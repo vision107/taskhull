@@ -20,15 +20,16 @@ git push -u origin main
 
 Choose a serverless PostgreSQL provider:
 
-| Provider | Free Tier | Best For |
-|----------|-----------|----------|
-| [Neon](https://neon.tech) | 0.5 GB, auto-suspend | Serverless, branching |
-| [Supabase](https://supabase.com) | 500 MB, 2 projects | Full platform |
-| [Railway](https://railway.app) | $5 credit/month | Simple setup |
-| [PlanetScale](https://planetscale.com) | $5/month | Most reliable |
-| [Vercel Postgres](https://vercel.com/storage/postgres) | Via marketplace | Native integration |
+| Provider                                               | Free Tier            | Best For              |
+| ------------------------------------------------------ | -------------------- | --------------------- |
+| [Neon](https://neon.tech)                              | 0.5 GB, auto-suspend | Serverless, branching |
+| [Supabase](https://supabase.com)                       | 500 MB, 2 projects   | Full platform         |
+| [Railway](https://railway.app)                         | $5 credit/month      | Simple setup          |
+| [PlanetScale](https://planetscale.com)                 | $5/month             | Most reliable         |
+| [Vercel Postgres](https://vercel.com/storage/postgres) | Via marketplace      | Native integration    |
 
 **Get your connection string** (looks like):
+
 ```
 postgresql://user:password@host:5432/database?sslmode=require
 ```
@@ -39,10 +40,10 @@ postgresql://user:password@host:5432/database?sslmode=require
 2. Import your GitHub repository
 3. Add environment variables (minimum required):
 
-| Variable | Value |
-|----------|-------|
-| `DATABASE_URL` | Your PostgreSQL connection string |
-| `BETTER_AUTH_SECRET` | Generate with `npx @better-auth/cli secret` |
+| Variable               | Value                                                          |
+| ---------------------- | -------------------------------------------------------------- |
+| `DATABASE_URL`         | Your PostgreSQL connection string                              |
+| `BETTER_AUTH_SECRET`   | Generate with `npx @better-auth/cli secret`                    |
 | `NEXT_PUBLIC_SITE_URL` | `https://your-app.vercel.app` (or leave empty for auto-detect) |
 
 4. Click **Deploy**
@@ -55,10 +56,10 @@ That's it! Your app is live.
 
 ### Required (Minimum)
 
-| Variable | Description | How to Get |
-|----------|-------------|------------|
-| `DATABASE_URL` | PostgreSQL connection string | From your database provider |
-| `BETTER_AUTH_SECRET` | 32+ character secret | `npx @better-auth/cli secret` |
+| Variable             | Description                  | How to Get                    |
+| -------------------- | ---------------------------- | ----------------------------- |
+| `DATABASE_URL`       | PostgreSQL connection string | From your database provider   |
+| `BETTER_AUTH_SECRET` | 32+ character secret         | `npx @better-auth/cli secret` |
 
 > **Note**: `NEXT_PUBLIC_SITE_URL` is auto-detected on Vercel. Only set it if you have a custom domain.
 
@@ -76,6 +77,7 @@ RESEND_API_KEY="re_xxxxx"
 > **Note**: Contact email is configured in `config/app.config.ts`
 
 **Setup**:
+
 1. Create account at [resend.com](https://resend.com)
 2. Add and verify your domain
 3. Create API key with sending access
@@ -92,6 +94,7 @@ NEXT_PUBLIC_SENTRY_DSN="https://xxxxx.ingest.sentry.io/xxxxx"
 ```
 
 **Setup**:
+
 1. Create account at [sentry.io](https://sentry.io)
 2. Create Next.js project
 3. Get DSN from project settings
@@ -107,6 +110,7 @@ GOOGLE_CLIENT_SECRET="GOCSPX-xxxxx"
 ```
 
 **Setup**:
+
 1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
 2. Create OAuth 2.0 Client ID (Web application)
 3. Add redirect URI: `https://yourdomain.com/api/auth/callback/google`
@@ -122,6 +126,7 @@ NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY="price_xxxxx"
 ```
 
 **Setup**:
+
 1. Get keys from [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
 2. Create webhook endpoint (see [Webhook Setup](#stripe-webhook-setup))
 
@@ -136,6 +141,7 @@ NEXT_PUBLIC_IMAGES_BUCKET_NAME="your-bucket"
 ```
 
 **Setup**:
+
 1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com) → R2 Object Storage
 2. Create a bucket
 3. Create R2 API token with Object Read & Write permissions
@@ -263,6 +269,7 @@ NEXT_PUBLIC_SITE_URL="https://app.yourdomain.com"
 ### 3. Update OAuth Redirect URIs
 
 If using Google OAuth:
+
 - Add `https://app.yourdomain.com/api/auth/callback/google` to authorized redirect URIs
 
 ### 4. Update Stripe Webhook
@@ -280,9 +287,9 @@ The app uses a custom build script (`vercel.sh`):
 
 ```bash
 #!/bin/bash
-if [[ $VERCEL_ENV == "production" || $VERCEL_GIT_COMMIT_REF == "staging" ]] ; then 
+if [[ $VERCEL_ENV == "production" || $VERCEL_GIT_COMMIT_REF == "staging" ]] ; then
   npm run deploy    # build + db:migrate
-else 
+else
   npm run build     # build only (preview deployments)
 fi
 ```
@@ -293,6 +300,7 @@ fi
 ### Migration Safety
 
 Migrations only run on:
+
 - Production deployments (`VERCEL_ENV == "production"`)
 - Staging branch deployments (`VERCEL_GIT_COMMIT_REF == "staging"`)
 
@@ -363,6 +371,7 @@ Sentry is only enabled in production (`VERCEL_ENV === "production"`).
 **Solution**: Add the missing variable in Vercel Dashboard → Settings → Environment Variables
 
 **Temporary workaround** (not recommended):
+
 ```bash
 SKIP_ENV_VALIDATION=true
 ```
@@ -372,6 +381,7 @@ SKIP_ENV_VALIDATION=true
 **Error**: `Connection refused` or `ENOTFOUND`
 
 **Solutions**:
+
 1. Check `DATABASE_URL` is correct
 2. Ensure SSL mode is included: `?sslmode=require`
 3. Check database allows connections from Vercel IPs
@@ -381,6 +391,7 @@ SKIP_ENV_VALIDATION=true
 **Error**: Migration errors during deployment
 
 **Solutions**:
+
 1. Test migrations locally first: `npm run db:migrate`
 2. Check migration files in `lib/db/migrations/`
 3. Verify database user has CREATE/ALTER permissions
@@ -390,6 +401,7 @@ SKIP_ENV_VALIDATION=true
 **Error**: `Webhook signature verification failed`
 
 **Solutions**:
+
 1. Use the correct signing secret (from Stripe Dashboard → Webhooks → your endpoint)
 2. For local dev, use `npm run stripe:listen` and its generated secret
 3. Ensure webhook URL matches exactly (including https://)
@@ -399,11 +411,12 @@ SKIP_ENV_VALIDATION=true
 **Error**: CORS policy blocked
 
 **Solution**: Configure CORS on your S3/R2 bucket:
+
 ```json
 {
-  "AllowedOrigins": ["https://yourdomain.com"],
-  "AllowedMethods": ["GET", "PUT", "DELETE"],
-  "AllowedHeaders": ["*"]
+	"AllowedOrigins": ["https://yourdomain.com"],
+	"AllowedMethods": ["GET", "PUT", "DELETE"],
+	"AllowedHeaders": ["*"]
 }
 ```
 

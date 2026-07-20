@@ -23,7 +23,7 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 						alt={testimonial.name}
 						width={160}
 						height={160}
-						className="size-full object-cover bg-white/75 dark:bg-black/75"
+						className="size-full bg-white/75 object-cover dark:bg-black/75"
 					/>
 				</div>
 				<div>
@@ -97,7 +97,7 @@ export function TestimonialsSection() {
 					<div className="flex flex-col gap-2">
 						<h2
 							className={cn(
-								"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+								"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 								"text-marketing-fg",
 								"sm:text-5xl sm:leading-14",
 							)}
@@ -105,7 +105,7 @@ export function TestimonialsSection() {
 							Loved by teams everywhere
 						</h2>
 					</div>
-					<div className="text-base leading-7 text-marketing-fg-muted text-pretty">
+					<div className="text-base leading-7 text-pretty text-marketing-fg-muted">
 						<p>
 							See what our customers have to say about their experience with our
 							platform.

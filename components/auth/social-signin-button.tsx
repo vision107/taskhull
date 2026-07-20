@@ -1,6 +1,7 @@
 "use client";
 
 import { parseAsString, useQueryState } from "nuqs";
+
 import { Button } from "@/components/ui/button";
 import { authConfig } from "@/config/auth.config";
 import { authClient } from "@/lib/auth/client";

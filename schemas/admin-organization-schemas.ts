@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+
 import { appConfig } from "@/config/app.config";
 
 // Sortable fields for organizations

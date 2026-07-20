@@ -2,6 +2,7 @@
 
 import { useInView, useMotionValue, useSpring } from "motion/react";
 import * as React from "react";
+
 import { cn } from "@/lib/utils";
 
 export type NumberTickerProps = Omit<
@@ -55,7 +56,7 @@ export function NumberTicker({
 	return (
 		<span
 			ref={ref}
-			className={cn("inline-block tabular-nums tracking-wider", className)}
+			className={cn("inline-block tracking-wider tabular-nums", className)}
 			{...other}
 		>
 			0

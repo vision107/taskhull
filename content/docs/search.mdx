@@ -20,17 +20,17 @@ When not specified, it uses the Default fetch Search Client powered by Orama.
 Add custom link items to search dialog. They are shown as fallbacks when the query is empty.
 
 ```tsx title="app/layout.tsx"
-import { RootProvider } from 'fumadocs-ui/root-provider';
+import { RootProvider } from "fumadocs-ui/root-provider";
 
 <RootProvider
-  search={{
-    links: [
-      ['Home', '/'],
-      ['Docs', '/docs'],
-    ],
-  }}
+	search={{
+		links: [
+			["Home", "/"],
+			["Docs", "/docs"],
+		],
+	}}
 >
-  {children}
+	{children}
 </RootProvider>;
 ```
 
@@ -39,14 +39,14 @@ import { RootProvider } from 'fumadocs-ui/root-provider';
 To opt-out of document search, disable it from root provider.
 
 ```tsx
-import { RootProvider } from 'fumadocs-ui/root-provider';
+import { RootProvider } from "fumadocs-ui/root-provider";
 
 <RootProvider
-  search={{
-    enabled: false,
-  }}
+	search={{
+		enabled: false,
+	}}
 >
-  {children}
+	{children}
 </RootProvider>;
 ```
 
@@ -55,19 +55,19 @@ import { RootProvider } from 'fumadocs-ui/root-provider';
 Customise the hot keys to trigger search dialog.
 
 ```tsx
-import { RootProvider } from 'fumadocs-ui/root-provider';
+import { RootProvider } from "fumadocs-ui/root-provider";
 
 <RootProvider
-  search={{
-    hotKey: [
-      {
-        display: 'K',
-        key: 'k',
-      },
-    ],
-  }}
+	search={{
+		hotKey: [
+			{
+				display: "K",
+				key: "k",
+			},
+		],
+	}}
 >
-  {children}
+	{children}
 </RootProvider>;
 ```
 
@@ -76,22 +76,22 @@ import { RootProvider } from 'fumadocs-ui/root-provider';
 Add UI to change filters. Make sure to configure Tag Filter on search server first.
 
 ```tsx
-import { RootProvider } from 'fumadocs-ui/root-provider';
+import { RootProvider } from "fumadocs-ui/root-provider";
 
 <RootProvider
-  search={{
-    options: {
-      defaultTag: 'value',
-      tags: [
-        {
-          name: 'Tag Name',
-          value: 'value',
-        },
-      ],
-    },
-  }}
+	search={{
+		options: {
+			defaultTag: "value",
+			tags: [
+				{
+					name: "Tag Name",
+					value: "value",
+				},
+			],
+		},
+	}}
 >
-  {children}
+	{children}
 </RootProvider>;
 ```
 
@@ -100,16 +100,16 @@ import { RootProvider } from 'fumadocs-ui/root-provider';
 Pass options to the search client, like changing the API endpoint for Orama search server:
 
 ```tsx
-import { RootProvider } from 'fumadocs-ui/root-provider';
+import { RootProvider } from "fumadocs-ui/root-provider";
 
 <RootProvider
-  search={{
-    options: {
-      api: '/api/search/docs',
-    },
-  }}
+	search={{
+		options: {
+			api: "/api/search/docs",
+		},
+	}}
 >
-  {children}
+	{children}
 </RootProvider>;
 ```
 
@@ -118,53 +118,53 @@ import { RootProvider } from 'fumadocs-ui/root-provider';
 You can replace the default Search Dialog with:
 
 ```tsx title="components/search.tsx"
-'use client';
-import SearchDialog from 'fumadocs-ui/components/dialog/search-default';
-import type { SharedProps } from 'fumadocs-ui/components/dialog/search';
+"use client";
+import SearchDialog from "fumadocs-ui/components/dialog/search-default";
+import type { SharedProps } from "fumadocs-ui/components/dialog/search";
 
 export default function CustomDialog(props: SharedProps) {
-  // your own logic here
-  return <SearchDialog {...props} />;
+	// your own logic here
+	return <SearchDialog {...props} />;
 }
 ```
 
 To pass it to the Root Provider, you need a wrapper with `use client` directive.
 
 ```tsx title="provider.tsx"
-'use client';
-import { RootProvider } from 'fumadocs-ui/provider';
-import dynamic from 'next/dynamic';
-import type { ReactNode } from 'react';
+"use client";
+import { RootProvider } from "fumadocs-ui/provider";
+import dynamic from "next/dynamic";
+import type { ReactNode } from "react";
 
-const SearchDialog = dynamic(() => import('@/components/search'));
+const SearchDialog = dynamic(() => import("@/components/search"));
 
 export function Provider({ children }: { children: ReactNode }) {
-  return (
-    <RootProvider
-      search={{
-        SearchDialog,
-      }}
-    >
-      {children}
-    </RootProvider>
-  );
+	return (
+		<RootProvider
+			search={{
+				SearchDialog,
+			}}
+		>
+			{children}
+		</RootProvider>
+	);
 }
 ```
 
 Use it instead of your previous Root Provider:
 
 ```tsx title="layout.tsx"
-import { Provider } from './provider';
-import type { ReactNode } from 'react';
+import { Provider } from "./provider";
+import type { ReactNode } from "react";
 
 export default function Layout({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en">
-      <body>
-        <Provider>{children}</Provider>
-      </body>
-    </html>
-  );
+	return (
+		<html lang="en">
+			<body>
+				<Provider>{children}</Provider>
+			</body>
+		</html>
+	);
 }
 ```
 
@@ -175,16 +175,16 @@ export default function Layout({ children }: { children: ReactNode }) {
 While generally we recommend building your own search with their client-side SDK, you can also plug the built-in dialog interface.
 
 ```tsx title="components/search.tsx"
-'use client';
-import algo from 'algoliasearch/lite';
-import type { SharedProps } from 'fumadocs-ui/components/dialog/search';
-import SearchDialog from 'fumadocs-ui/components/dialog/search-algolia';
+"use client";
+import algo from "algoliasearch/lite";
+import type { SharedProps } from "fumadocs-ui/components/dialog/search";
+import SearchDialog from "fumadocs-ui/components/dialog/search-algolia";
 
-const client = algo('appId', 'apiKey');
-const index = client.initIndex('indexName');
+const client = algo("appId", "apiKey");
+const index = client.initIndex("indexName");
 
 export default function CustomSearchDialog(props: SharedProps) {
-  return <SearchDialog index={index} {...props} />;
+	return <SearchDialog index={index} {...props} />;
 }
 ```
 
@@ -194,19 +194,19 @@ export default function CustomSearchDialog(props: SharedProps) {
 ### Orama Cloud
 
 ```tsx title="components/search.tsx"
-'use client';
+"use client";
 
-import { OramaClient } from '@oramacloud/client';
-import type { SharedProps } from 'fumadocs-ui/components/dialog/search';
-import SearchDialog from 'fumadocs-ui/components/dialog/search-orama';
+import { OramaClient } from "@oramacloud/client";
+import type { SharedProps } from "fumadocs-ui/components/dialog/search";
+import SearchDialog from "fumadocs-ui/components/dialog/search-orama";
 
 const client = new OramaClient({
-  endpoint: 'endpoint',
-  api_key: 'apiKey',
+	endpoint: "endpoint",
+	api_key: "apiKey",
 });
 
 export default function CustomSearchDialog(props: SharedProps) {
-  return <SearchDialog {...props} client={client} showOrama />;
+	return <SearchDialog {...props} client={client} showOrama />;
 }
 ```
 
@@ -219,15 +219,15 @@ If you want to use the built-in search dialog UI instead of building your own, y
 
 ```tsx
 import {
-  SearchDialog,
-  type SharedProps,
-} from 'fumadocs-ui/components/dialog/search';
+	SearchDialog,
+	type SharedProps,
+} from "fumadocs-ui/components/dialog/search";
 
 export default function CustomSearchDialog(props: SharedProps) {
-  return <SearchDialog {...props} />;
+	return <SearchDialog {...props} />;
 }
 ```
 
 <Callout type="warn" title="Unstable">
-It is an internal API, might break during iterations.
+	It is an internal API, might break during iterations.
 </Callout>

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+
 import { NoiseOverlay } from "@/components/marketing/primitives/noise-overlay";
 import { cn } from "@/lib/utils";
 

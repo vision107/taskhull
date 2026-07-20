@@ -1,4 +1,5 @@
 import { lazy } from "@trpc/server";
+
 import { createTRPCRouter } from "@/trpc/init";
 
 export const appRouter = createTRPCRouter({

@@ -12,6 +12,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+
 import { PricingTable } from "@/components/billing/pricing-table";
 import { SubscriptionStatusBadge } from "@/components/billing/subscription-status-badge";
 import { ConfirmationModal } from "@/components/confirmation-modal";
@@ -208,29 +209,29 @@ export function SubscriptionSettingsTab({
 					<div className="flex items-center justify-between rounded-lg border p-4">
 						<div>
 							<div className="flex items-center gap-2">
-								<h3 className="font-semibold text-lg">
+								<h3 className="text-lg font-semibold">
 									{activePlan?.planName}
 								</h3>
 								{activePlan?.isLifetime && (
-									<span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary text-xs">
+									<span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
 										Lifetime
 									</span>
 								)}
 							</div>
 							{isFreePlan && (
-								<p className="text-muted-foreground text-sm">
+								<p className="text-sm text-muted-foreground">
 									Upgrade to unlock more features
 								</p>
 							)}
 							{activePlan?.isTrialing && subscription?.trialEnd && (
-								<p className="text-muted-foreground text-sm">
+								<p className="text-sm text-muted-foreground">
 									Trial ends {format(new Date(subscription.trialEnd), "PPP")}
 								</p>
 							)}
 							{!isFreePlan &&
 								!activePlan?.isLifetime &&
 								subscription?.currentPeriodEnd && (
-									<p className="text-muted-foreground text-sm">
+									<p className="text-sm text-muted-foreground">
 										{isCanceling ? "Access until" : "Renews"}{" "}
 										{format(new Date(subscription.currentPeriodEnd), "PPP")}
 									</p>
@@ -277,7 +278,7 @@ export function SubscriptionSettingsTab({
 					{/* Features */}
 					{activePlan?.features && activePlan.features.length > 0 && (
 						<div>
-							<h4 className="mb-2 font-medium text-sm">Included features</h4>
+							<h4 className="mb-2 text-sm font-medium">Included features</h4>
 							<ul className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
 								{activePlan.features.map((feature) => (
 									<li key={feature} className="flex items-center gap-2 text-sm">
@@ -318,8 +319,8 @@ export function SubscriptionSettingsTab({
 			{isFreePlan && (
 				<div className="space-y-4">
 					<div>
-						<h3 className="font-semibold text-lg">Upgrade Your Plan</h3>
-						<p className="text-muted-foreground text-sm">
+						<h3 className="text-lg font-semibold">Upgrade Your Plan</h3>
+						<p className="text-sm text-muted-foreground">
 							Choose a plan that fits your needs
 						</p>
 					</div>
@@ -360,16 +361,16 @@ export function SubscriptionSettingsTab({
 										<div className="flex items-center gap-3">
 											<FileText className="h-4 w-4 text-muted-foreground" />
 											<div>
-												<p className="font-medium text-sm">
+												<p className="text-sm font-medium">
 													{invoice.number ?? invoice.id}
 												</p>
-												<p className="text-muted-foreground text-xs">
+												<p className="text-xs text-muted-foreground">
 													{format(new Date(invoice.createdAt), "PPP")}
 												</p>
 											</div>
 										</div>
 										<div className="flex items-center gap-3">
-											<span className="font-medium text-sm">
+											<span className="text-sm font-medium">
 												{formatCurrency(invoice.amount, invoice.currency)}
 											</span>
 											{invoice.hostedInvoiceUrl && (
@@ -389,7 +390,7 @@ export function SubscriptionSettingsTab({
 								))}
 							</div>
 						) : (
-							<p className="text-muted-foreground text-sm">No invoices yet</p>
+							<p className="text-sm text-muted-foreground">No invoices yet</p>
 						)}
 					</CardContent>
 					{isAdmin && billingStatus.hasStripeCustomer && (

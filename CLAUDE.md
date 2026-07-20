@@ -26,7 +26,7 @@ npm run build         # Production build
 npm run db:migrate    # Run migrations
 npm run db:studio     # Drizzle Studio GUI
 npm run db:generate   # Generate migration
-npm run lint          # Biome linter
+npm run lint          # Oxlint
 npm run typecheck     # Type check
 npm run test          # Unit tests
 npm run e2e           # E2E tests
@@ -72,7 +72,7 @@ Always filter by organization:
 ```typescript
 // ✅ CORRECT
 const leads = await db.query.leadTable.findMany({
-  where: eq(leadTable.organizationId, ctx.organization.id),
+	where: eq(leadTable.organizationId, ctx.organization.id),
 });
 
 // ❌ WRONG - Data leak
@@ -90,7 +90,7 @@ if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
 
 // Org admin
 if (ctx.membership.role !== "owner" && ctx.membership.role !== "admin") {
-  throw new TRPCError({ code: "FORBIDDEN" });
+	throw new TRPCError({ code: "FORBIDDEN" });
 }
 ```
 

@@ -6,7 +6,7 @@ export function PostContent({ content }: { content: string }) {
 	return (
 		<MdxContent
 			content={content}
-			className="prose dark:prose-invert w-full max-w-none"
+			className="dark:prose-invert prose w-full max-w-none"
 		/>
 	);
 }

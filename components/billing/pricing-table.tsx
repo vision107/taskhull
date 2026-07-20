@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+
 import { PricingCard } from "@/components/billing/pricing-card";
 import type { PlanDisplay } from "@/lib/billing/types";
 import { calculateYearlySavingsPercent } from "@/lib/billing/utils";
@@ -55,7 +56,7 @@ export function PricingTable({
 	return (
 		<div
 			className={cn(
-				"flex flex-col space-y-8 animate-in fade-in duration-300",
+				"flex animate-in flex-col space-y-8 duration-300 fade-in",
 				className,
 			)}
 		>
@@ -67,7 +68,7 @@ export function PricingTable({
 							type="button"
 							onClick={() => setSelectedInterval("month")}
 							className={cn(
-								"cursor-pointer rounded-full px-4 py-1 text-sm font-medium leading-7 transition-colors",
+								"cursor-pointer rounded-full px-4 py-1 text-sm leading-7 font-medium transition-colors",
 								selectedInterval === "month"
 									? "bg-background text-foreground shadow-sm"
 									: "text-muted-foreground hover:bg-background/50 hover:text-foreground",
@@ -79,7 +80,7 @@ export function PricingTable({
 							type="button"
 							onClick={() => setSelectedInterval("year")}
 							className={cn(
-								"inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-1 text-sm font-medium leading-7 transition-colors",
+								"inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-1 text-sm leading-7 font-medium transition-colors",
 								selectedInterval === "year"
 									? "bg-background text-foreground shadow-sm"
 									: "text-muted-foreground hover:bg-background/50 hover:text-foreground",
@@ -98,7 +99,7 @@ export function PricingTable({
 
 			{/* Pricing Cards Grid */}
 			{filteredPlans.length === 0 ? (
-				<p className="py-8 text-center text-muted-foreground text-sm">
+				<p className="py-8 text-center text-sm text-muted-foreground">
 					No plans available
 				</p>
 			) : (

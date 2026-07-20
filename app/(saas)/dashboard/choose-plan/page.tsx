@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
 import { PlanSelection } from "@/components/billing/plan-selection";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/ui/custom/theme-toggle";
@@ -100,8 +101,8 @@ export default async function ChoosePlanPage() {
 				</Link>
 
 				<div className="mb-8 flex flex-col items-center text-center">
-					<h1 className="font-bold text-2xl lg:text-3xl">Choose your plan</h1>
-					<p className="mt-2 text-muted-foreground text-sm lg:text-base">
+					<h1 className="text-2xl font-bold lg:text-3xl">Choose your plan</h1>
+					<p className="mt-2 text-sm text-muted-foreground lg:text-base">
 						Select a plan to get started with {appConfig.appName}
 					</p>
 				</div>

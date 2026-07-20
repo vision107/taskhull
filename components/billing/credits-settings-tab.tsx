@@ -10,6 +10,7 @@ import {
 	RefreshCwIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+
 import { PurchaseCreditsModal } from "@/components/billing/purchase-credits-modal";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -146,10 +147,10 @@ export function CreditsSettingsTab({ isAdmin }: CreditsSettingsTabProps) {
 				<CardContent className="space-y-4">
 					{/* Main Balance Display */}
 					<div className="flex items-baseline gap-2">
-						<span className="font-bold text-4xl tabular-nums">
+						<span className="text-4xl font-bold tabular-nums">
 							{balance?.balance.toLocaleString() ?? 0}
 						</span>
-						<span className="text-muted-foreground text-sm">
+						<span className="text-sm text-muted-foreground">
 							credits available
 						</span>
 					</div>
@@ -157,26 +158,26 @@ export function CreditsSettingsTab({ isAdmin }: CreditsSettingsTabProps) {
 					{/* Stats Grid */}
 					<div className="flex flex-wrap gap-x-8 gap-y-2 border-t pt-4">
 						<div className="space-y-0.5">
-							<p className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">
+							<p className="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
 								Purchased
 							</p>
-							<p className="font-semibold tabular-nums text-sm">
+							<p className="text-sm font-semibold tabular-nums">
 								{balance?.lifetimePurchased.toLocaleString() ?? 0}
 							</p>
 						</div>
 						<div className="space-y-0.5">
-							<p className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">
+							<p className="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
 								Bonus
 							</p>
-							<p className="font-semibold tabular-nums text-sm">
+							<p className="text-sm font-semibold tabular-nums">
 								{balance?.lifetimeGranted.toLocaleString() ?? 0}
 							</p>
 						</div>
 						<div className="space-y-0.5">
-							<p className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">
+							<p className="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
 								Used
 							</p>
-							<p className="font-semibold tabular-nums text-sm">
+							<p className="text-sm font-semibold tabular-nums">
 								{balance?.lifetimeUsed.toLocaleString() ?? 0}
 							</p>
 						</div>
@@ -193,7 +194,7 @@ export function CreditsSettingsTab({ isAdmin }: CreditsSettingsTabProps) {
 							<CardDescription>Your credit transaction history</CardDescription>
 						</div>
 						{transactionPage > 0 && (
-							<span className="text-muted-foreground text-sm">
+							<span className="text-sm text-muted-foreground">
 								Page {transactionPage + 1}
 							</span>
 						)}
@@ -241,7 +242,7 @@ export function CreditsSettingsTab({ isAdmin }: CreditsSettingsTabProps) {
 									),
 								).map(([group, groupTxs]) => (
 									<div key={group} className="space-y-2">
-										<h3 className="text-muted-foreground text-xs font-medium px-1">
+										<h3 className="px-1 text-xs font-medium text-muted-foreground">
 											{group}
 										</h3>
 										<div className="divide-y rounded-lg border">
@@ -260,27 +261,27 @@ export function CreditsSettingsTab({ isAdmin }: CreditsSettingsTabProps) {
 													>
 														<div className="min-w-0 flex-1">
 															<div className="flex items-center gap-2">
-																<p className="truncate font-medium text-sm">
+																<p className="truncate text-sm font-medium">
 																	{tx.description ?? "Credit transaction"}
 																</p>
 																<Badge
 																	variant="secondary"
 																	className={cn(
-																		"shrink-0 border-none px-1.5 py-0 text-[10px] font-normal uppercase tracking-wider",
+																		"shrink-0 border-none px-1.5 py-0 text-[10px] font-normal tracking-wider uppercase",
 																		typeConfig.className,
 																	)}
 																>
 																	{typeConfig.label}
 																</Badge>
 															</div>
-															<p className="text-muted-foreground text-[11px]">
+															<p className="text-[11px] text-muted-foreground">
 																{format(new Date(tx.createdAt), "h:mm a")}
 															</p>
 														</div>
-														<div className="text-right ml-4">
+														<div className="ml-4 text-right">
 															<span
 																className={cn(
-																	"font-semibold tabular-nums text-sm",
+																	"text-sm font-semibold tabular-nums",
 																	isPositive
 																		? "text-emerald-600 dark:text-emerald-400"
 																		: "text-foreground",
@@ -309,7 +310,7 @@ export function CreditsSettingsTab({ isAdmin }: CreditsSettingsTabProps) {
 									<ChevronLeftIcon className="mr-1 size-4" />
 									Previous
 								</Button>
-								<span className="text-muted-foreground text-sm tabular-nums">
+								<span className="text-sm text-muted-foreground tabular-nums">
 									{transactionPage * TRANSACTIONS_PER_PAGE + 1}–
 									{transactionPage * TRANSACTIONS_PER_PAGE +
 										transactions.transactions.length}{" "}

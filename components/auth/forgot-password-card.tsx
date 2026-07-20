@@ -3,6 +3,7 @@
 import { MailIcon } from "lucide-react";
 import Link from "next/link";
 import type * as React from "react";
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -142,7 +143,7 @@ export function ForgotPasswordCard(): React.JSX.Element {
 					</Form>
 				)}
 			</CardContent>
-			<CardFooter className="flex justify-center gap-1 text-muted-foreground text-sm">
+			<CardFooter className="flex justify-center gap-1 text-sm text-muted-foreground">
 				<span>Remembered your password?</span>
 				<Link className="text-foreground underline" href="/auth/sign-in">
 					Sign in

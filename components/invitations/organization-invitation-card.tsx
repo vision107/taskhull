@@ -3,6 +3,7 @@
 import { CheckIcon, XIcon } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
+
 import { OrganizationLogo } from "@/components/organization/organization-logo";
 import { Button } from "@/components/ui/button";
 import {
@@ -89,8 +90,8 @@ export function OrganizationInvitationCard({
 						src={logoUrl}
 					/>
 					<div>
-						<p className="font-semibold text-sm">{organizationName}</p>
-						<p className="text-muted-foreground text-xs">Organization</p>
+						<p className="text-sm font-semibold">{organizationName}</p>
+						<p className="text-xs text-muted-foreground">Organization</p>
 					</div>
 				</div>
 

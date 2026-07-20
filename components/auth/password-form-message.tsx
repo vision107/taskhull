@@ -2,6 +2,7 @@
 
 import { CircleCheck, XCircleIcon } from "lucide-react";
 import type * as React from "react";
+
 import { useFormField } from "@/components/ui/form";
 import { authConfig } from "@/config/auth.config";
 import { passwordValidator } from "@/lib/auth/utils";
@@ -53,7 +54,7 @@ export function PasswordFormMessage({
 	return (
 		<div
 			className={cn(
-				"flex items-center gap-1.5 px-1 font-medium text-[0.8rem]",
+				"flex items-center gap-1.5 px-1 text-[0.8rem] font-medium",
 				requirement.met
 					? "text-green-500"
 					: error

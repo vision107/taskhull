@@ -49,12 +49,12 @@ DATABASE_URL="postgresql://postgres:password@localhost:5432/database"
 ```typescript
 // drizzle.config.ts
 export default defineConfig({
-  dialect: "postgresql",
-  schema: "./lib/db/schema/index.ts",
-  out: "./lib/db/migrations",
-  dbCredentials: {
-    url: process.env.DATABASE_URL,
-  },
+	dialect: "postgresql",
+	schema: "./lib/db/schema/index.ts",
+	out: "./lib/db/migrations",
+	dbCredentials: {
+		url: process.env.DATABASE_URL,
+	},
 });
 ```
 
@@ -128,15 +128,15 @@ import { db, userTable, leadTable, LeadStatus } from "@/lib/db";
 ```typescript
 // Platform role (user.role)
 export const UserRole = {
-  user: "user",
-  admin: "admin",
+	user: "user",
+	admin: "admin",
 } as const;
 
 // Organization role (member.role)
 export const MemberRole = {
-  owner: "owner",
-  admin: "admin",
-  member: "member",
+	owner: "owner",
+	admin: "admin",
+	member: "member",
 } as const;
 ```
 
@@ -145,22 +145,22 @@ export const MemberRole = {
 ```typescript
 // Lead pipeline stages
 export const LeadStatus = {
-  new: "new",
-  contacted: "contacted",
-  qualified: "qualified",
-  proposal: "proposal",
-  negotiation: "negotiation",
-  won: "won",
-  lost: "lost",
+	new: "new",
+	contacted: "contacted",
+	qualified: "qualified",
+	proposal: "proposal",
+	negotiation: "negotiation",
+	won: "won",
+	lost: "lost",
 } as const;
 
 // Subscription status (matches Stripe)
 export const SubscriptionStatus = {
-  active: "active",
-  canceled: "canceled",
-  trialing: "trialing",
-  past_due: "past_due",
-  // ... more
+	active: "active",
+	canceled: "canceled",
+	trialing: "trialing",
+	past_due: "past_due",
+	// ... more
 } as const;
 ```
 
@@ -188,14 +188,14 @@ import { eq, and, or, desc, asc, count, ilike, inArray } from "drizzle-orm";
 
 // Find one
 const user = await db.query.userTable.findFirst({
-  where: eq(userTable.email, "user@example.com"),
+	where: eq(userTable.email, "user@example.com"),
 });
 
 // Find many with ordering
 const leads = await db.query.leadTable.findMany({
-  where: eq(leadTable.organizationId, orgId),
-  orderBy: [desc(leadTable.createdAt)],
-  limit: 50,
+	where: eq(leadTable.organizationId, orgId),
+	orderBy: [desc(leadTable.createdAt)],
+	limit: 50,
 });
 ```
 
@@ -204,26 +204,26 @@ const leads = await db.query.leadTable.findMany({
 ```typescript
 // Load lead with assigned user
 const lead = await db.query.leadTable.findFirst({
-  where: eq(leadTable.id, leadId),
-  with: {
-    assignedTo: {
-      columns: { id: true, name: true, email: true, image: true },
-    },
-  },
+	where: eq(leadTable.id, leadId),
+	with: {
+		assignedTo: {
+			columns: { id: true, name: true, email: true, image: true },
+		},
+	},
 });
 
 // Load organization with members
 const org = await db.query.organizationTable.findFirst({
-  where: eq(organizationTable.id, orgId),
-  with: {
-    members: {
-      with: {
-        user: {
-          columns: { id: true, name: true, email: true },
-        },
-      },
-    },
-  },
+	where: eq(organizationTable.id, orgId),
+	with: {
+		members: {
+			with: {
+				user: {
+					columns: { id: true, name: true, email: true },
+				},
+			},
+		},
+	},
 });
 ```
 
@@ -256,28 +256,28 @@ const leads = await db
 ```typescript
 // Update with returning
 const [updated] = await db
-  .update(leadTable)
-  .set({
-    status: LeadStatus.qualified,
-    updatedAt: new Date(),
-  })
-  .where(eq(leadTable.id, leadId))
-  .returning();
+	.update(leadTable)
+	.set({
+		status: LeadStatus.qualified,
+		updatedAt: new Date(),
+	})
+	.where(eq(leadTable.id, leadId))
+	.returning();
 
 // Multi-tenant safe update (atomic check)
 const [updated] = await db
-  .update(leadTable)
-  .set(data)
-  .where(
-    and(
-      eq(leadTable.id, leadId),
-      eq(leadTable.organizationId, ctx.organization.id)
-    )
-  )
-  .returning();
+	.update(leadTable)
+	.set(data)
+	.where(
+		and(
+			eq(leadTable.id, leadId),
+			eq(leadTable.organizationId, ctx.organization.id),
+		),
+	)
+	.returning();
 
 if (!updated) {
-  throw new TRPCError({ code: "NOT_FOUND" });
+	throw new TRPCError({ code: "NOT_FOUND" });
 }
 ```
 
@@ -286,20 +286,20 @@ if (!updated) {
 ```typescript
 // Delete with returning
 const [deleted] = await db
-  .delete(leadTable)
-  .where(eq(leadTable.id, leadId))
-  .returning();
+	.delete(leadTable)
+	.where(eq(leadTable.id, leadId))
+	.returning();
 
 // Bulk delete
 const deleted = await db
-  .delete(leadTable)
-  .where(
-    and(
-      inArray(leadTable.id, ids),
-      eq(leadTable.organizationId, ctx.organization.id)
-    )
-  )
-  .returning({ id: leadTable.id });
+	.delete(leadTable)
+	.where(
+		and(
+			inArray(leadTable.id, ids),
+			eq(leadTable.organizationId, ctx.organization.id),
+		),
+	)
+	.returning({ id: leadTable.id });
 
 console.log(`Deleted ${deleted.length} leads`);
 ```
@@ -309,21 +309,21 @@ console.log(`Deleted ${deleted.length} leads`);
 ```typescript
 // Insert or update on conflict
 const [subscription] = await db
-  .insert(subscriptionTable)
-  .values({
-    id: stripeSubscriptionId,
-    organizationId,
-    status: "active",
-    // ...
-  })
-  .onConflictDoUpdate({
-    target: subscriptionTable.id,
-    set: {
-      status: "active",
-      updatedAt: new Date(),
-    },
-  })
-  .returning();
+	.insert(subscriptionTable)
+	.values({
+		id: stripeSubscriptionId,
+		organizationId,
+		status: "active",
+		// ...
+	})
+	.onConflictDoUpdate({
+		target: subscriptionTable.id,
+		set: {
+			status: "active",
+			updatedAt: new Date(),
+		},
+	})
+	.returning();
 ```
 
 ### Filtering & Search
@@ -334,25 +334,25 @@ const conditions = [eq(leadTable.organizationId, ctx.organization.id)];
 
 // Add search
 if (query) {
-  conditions.push(
-    or(
-      ilike(leadTable.firstName, `%${query}%`),
-      ilike(leadTable.lastName, `%${query}%`),
-      ilike(leadTable.email, `%${query}%`)
-    )!
-  );
+	conditions.push(
+		or(
+			ilike(leadTable.firstName, `%${query}%`),
+			ilike(leadTable.lastName, `%${query}%`),
+			ilike(leadTable.email, `%${query}%`),
+		)!,
+	);
 }
 
 // Add status filter
 if (statusFilter?.length) {
-  conditions.push(inArray(leadTable.status, statusFilter));
+	conditions.push(inArray(leadTable.status, statusFilter));
 }
 
 const leads = await db.query.leadTable.findMany({
-  where: and(...conditions),
-  orderBy: [desc(leadTable.createdAt)],
-  limit: 50,
-  offset: page * 50,
+	where: and(...conditions),
+	orderBy: [desc(leadTable.createdAt)],
+	limit: 50,
+	offset: page * 50,
 });
 ```
 
@@ -361,39 +361,39 @@ const leads = await db.query.leadTable.findMany({
 ```typescript
 // Count
 const [{ count: total }] = await db
-  .select({ count: count() })
-  .from(leadTable)
-  .where(eq(leadTable.organizationId, orgId));
+	.select({ count: count() })
+	.from(leadTable)
+	.where(eq(leadTable.organizationId, orgId));
 
 // Select specific columns
 const leads = await db
-  .select({
-    id: leadTable.id,
-    name: sql`${leadTable.firstName} || ' ' || ${leadTable.lastName}`,
-    email: leadTable.email,
-  })
-  .from(leadTable)
-  .where(eq(leadTable.organizationId, orgId));
+	.select({
+		id: leadTable.id,
+		name: sql`${leadTable.firstName} || ' ' || ${leadTable.lastName}`,
+		email: leadTable.email,
+	})
+	.from(leadTable)
+	.where(eq(leadTable.organizationId, orgId));
 ```
 
 ### Transactions
 
 ```typescript
 const result = await db.transaction(async (tx) => {
-  // All operations in this block are atomic
+	// All operations in this block are atomic
 
-  // Delete old items
-  await tx
-    .delete(subscriptionItemTable)
-    .where(eq(subscriptionItemTable.subscriptionId, subId));
+	// Delete old items
+	await tx
+		.delete(subscriptionItemTable)
+		.where(eq(subscriptionItemTable.subscriptionId, subId));
 
-  // Insert new items
-  const items = await tx
-    .insert(subscriptionItemTable)
-    .values(newItems)
-    .returning();
+	// Insert new items
+	const items = await tx
+		.insert(subscriptionItemTable)
+		.values(newItems)
+		.returning();
 
-  return items;
+	return items;
 });
 ```
 
@@ -407,27 +407,27 @@ const result = await db.transaction(async (tx) => {
 // lib/db/schema/tables.ts
 
 export const widgetTable = pgTable(
-  "widget",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    organizationId: uuid("organization_id")
-      .notNull()
-      .references(() => organizationTable.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    description: text("description"),
-    isActive: boolean("is_active").notNull().default(true),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-  },
-  (table) => [
-    index("widget_organization_id_idx").on(table.organizationId),
-    index("widget_is_active_idx").on(table.isActive),
-  ]
+	"widget",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		organizationId: uuid("organization_id")
+			.notNull()
+			.references(() => organizationTable.id, { onDelete: "cascade" }),
+		name: text("name").notNull(),
+		description: text("description"),
+		isActive: boolean("is_active").notNull().default(true),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.notNull()
+			.defaultNow()
+			.$onUpdate(() => new Date()),
+	},
+	(table) => [
+		index("widget_organization_id_idx").on(table.organizationId),
+		index("widget_is_active_idx").on(table.isActive),
+	],
 );
 ```
 
@@ -437,19 +437,19 @@ export const widgetTable = pgTable(
 // lib/db/schema/relations.ts
 
 export const widgetRelations = relations(widgetTable, ({ one }) => ({
-  organization: one(organizationTable, {
-    fields: [widgetTable.organizationId],
-    references: [organizationTable.id],
-  }),
+	organization: one(organizationTable, {
+		fields: [widgetTable.organizationId],
+		references: [organizationTable.id],
+	}),
 }));
 
 // Add to organization relations
 export const organizationRelations = relations(
-  organizationTable,
-  ({ many }) => ({
-    // ... existing relations
-    widgets: many(widgetTable),
-  })
+	organizationTable,
+	({ many }) => ({
+		// ... existing relations
+		widgets: many(widgetTable),
+	}),
 );
 ```
 
@@ -482,9 +482,9 @@ npm run db:migrate
 // lib/db/schema/enums.ts
 
 export const WidgetType = {
-  chart: "chart",
-  table: "table",
-  metric: "metric",
+	chart: "chart",
+	table: "table",
+	metric: "metric",
 } as const;
 
 export type WidgetType = (typeof WidgetType)[keyof typeof WidgetType];
@@ -520,10 +520,10 @@ type LeadSelect = typeof leadTable.$inferSelect;
 
 ```typescript
 export async function createLead(
-  data: typeof leadTable.$inferInsert
+	data: typeof leadTable.$inferInsert,
 ): Promise<typeof leadTable.$inferSelect> {
-  const [lead] = await db.insert(leadTable).values(data).returning();
-  return lead;
+	const [lead] = await db.insert(leadTable).values(data).returning();
+	return lead;
 }
 ```
 
@@ -536,7 +536,7 @@ export async function createLead(
 ```typescript
 // CORRECT - Data isolated per organization
 const leads = await db.query.leadTable.findMany({
-  where: eq(leadTable.organizationId, ctx.organization.id),
+	where: eq(leadTable.organizationId, ctx.organization.id),
 });
 
 // WRONG - Data leak across tenants!
@@ -548,18 +548,18 @@ const leads = await db.query.leadTable.findMany();
 ```typescript
 // Atomic operation - checks org ownership in same query
 const [updated] = await db
-  .update(leadTable)
-  .set(data)
-  .where(
-    and(
-      eq(leadTable.id, leadId),
-      eq(leadTable.organizationId, ctx.organization.id) // Security check
-    )
-  )
-  .returning();
+	.update(leadTable)
+	.set(data)
+	.where(
+		and(
+			eq(leadTable.id, leadId),
+			eq(leadTable.organizationId, ctx.organization.id), // Security check
+		),
+	)
+	.returning();
 
 if (!updated) {
-  throw new TRPCError({ code: "NOT_FOUND" });
+	throw new TRPCError({ code: "NOT_FOUND" });
 }
 ```
 
@@ -633,12 +633,12 @@ npm run docker:down   # Stop PostgreSQL
 
 ### Recommended Providers
 
-| Provider                               | Best For                      | Free Tier    |
-| -------------------------------------- | ----------------------------- | ------------ |
-| [Neon](https://neon.tech)              | Serverless, branching         | 0.5 GB       |
-| [Supabase](https://supabase.com)       | Full platform                 | 500 MB       |
-| [Railway](https://railway.app)         | Simple setup                  | $5/mo credit |
-| [PlanetScale](https://planetscale.com) | Most reliable                 | $5/mo        |
+| Provider                               | Best For              | Free Tier    |
+| -------------------------------------- | --------------------- | ------------ |
+| [Neon](https://neon.tech)              | Serverless, branching | 0.5 GB       |
+| [Supabase](https://supabase.com)       | Full platform         | 500 MB       |
+| [Railway](https://railway.app)         | Simple setup          | $5/mo credit |
+| [PlanetScale](https://planetscale.com) | Most reliable         | $5/mo        |
 
 ### Connection String Format
 
@@ -674,7 +674,7 @@ userId: uuid("user_id")
 
 ```typescript
 (table) => [
-  index("lead_org_status_idx").on(table.organizationId, table.status),
+	index("lead_org_status_idx").on(table.organizationId, table.status),
 ];
 ```
 

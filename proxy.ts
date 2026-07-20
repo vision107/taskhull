@@ -1,6 +1,7 @@
 import { betterFetch } from "@better-fetch/fetch";
 import { type NextRequest, NextResponse } from "next/server";
 import { withQuery } from "ufo";
+
 import { appConfig } from "./config/app.config";
 import { authConfig } from "./config/auth.config";
 import type { Session } from "./types/session";

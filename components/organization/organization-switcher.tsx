@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
+
 import { CreateOrganizationModal } from "@/components/organization/create-organization-modal";
 import { OrganizationLogo } from "@/components/organization/organization-logo";
 import { Button } from "@/components/ui/button";
@@ -202,7 +203,7 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 									<PersonalAccountAvatar className="size-6" />
 								)}
 								<div className="flex flex-1 flex-col items-start gap-0.5 overflow-hidden text-left">
-									<span className="block w-full truncate font-semibold leading-none">
+									<span className="block w-full truncate leading-none font-semibold">
 										{isAdminArea
 											? "Admin Panel"
 											: activeOrganization && isOrganizationArea
@@ -276,7 +277,7 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 									<Separator />
 									<Button
 										asChild
-										className="h-8 w-full justify-start gap-1.5 font-normal text-sm"
+										className="h-8 w-full justify-start gap-1.5 text-sm font-normal"
 										size="sm"
 										variant="ghost"
 									>
@@ -310,7 +311,7 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 								<>
 									<Separator />
 									<Button
-										className="h-8 w-full justify-start gap-1.5 font-normal text-sm"
+										className="h-8 w-full justify-start gap-1.5 text-sm font-normal"
 										onClick={() => {
 											NiceModal.show(CreateOrganizationModal);
 											setOpen(false);

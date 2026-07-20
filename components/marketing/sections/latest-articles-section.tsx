@@ -1,5 +1,6 @@
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
+
 import type { Post } from "@/lib/marketing/blog/types";
 import { cn } from "@/lib/utils";
 
@@ -14,14 +15,14 @@ export function LatestArticlesSection({ posts }: LatestArticlesSectionProps) {
 		.slice(0, 3);
 
 	return (
-		<section className="py-24 scroll-mt-14" id="blog">
+		<section className="scroll-mt-14 py-24" id="blog">
 			<div className="mx-auto max-w-2xl px-6 md:max-w-3xl lg:max-w-7xl lg:px-10">
 				{/* Header */}
 				<div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
 					<div className="flex flex-col gap-2">
 						<h2
 							className={cn(
-								"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+								"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 								"text-marketing-fg",
 								"sm:text-5xl sm:leading-14",
 							)}
@@ -58,13 +59,13 @@ export function LatestArticlesSection({ posts }: LatestArticlesSectionProps) {
 										alt={post.title}
 										width={600}
 										height={400}
-										className="aspect-3/2 w-full object-cover bg-white/75 dark:bg-black/75"
+										className="aspect-3/2 w-full bg-white/75 object-cover dark:bg-black/75"
 									/>
 								</div>
 							)}
 							<div className="flex flex-col gap-2">
 								<div className="flex items-center justify-between text-sm">
-									<span className="inline-flex rounded-full bg-marketing-card-hover px-2 py-0.5 text-xs font-medium capitalize text-marketing-fg-hover">
+									<span className="text-marketing-fg-hover inline-flex rounded-full bg-marketing-card-hover px-2 py-0.5 text-xs font-medium capitalize">
 										{post.tags?.[0] ?? "Article"}
 									</span>
 									<time
@@ -93,7 +94,7 @@ export function LatestArticlesSection({ posts }: LatestArticlesSectionProps) {
 											alt={post.authorName ?? ""}
 											width={32}
 											height={32}
-											className="size-full object-cover bg-white/75 dark:bg-black/75"
+											className="size-full bg-white/75 object-cover dark:bg-black/75"
 										/>
 									</div>
 								)}

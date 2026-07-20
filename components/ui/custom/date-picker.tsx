@@ -4,6 +4,7 @@ import { addDays, format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import type * as React from "react";
 import type { DateRange } from "react-day-picker";
+
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -41,7 +42,7 @@ function DatePicker({
 				<Button
 					variant={variant || "outline"}
 					className={cn(
-						"justify-start whitespace-nowrap text-left font-normal",
+						"justify-start text-left font-normal whitespace-nowrap",
 						!date && "text-muted-foreground",
 						className,
 					)}

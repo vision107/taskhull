@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+
 import { LegalContent } from "@/components/marketing/content/legal-content";
 import {
 	getAllLegalPages,
@@ -55,7 +56,7 @@ export default async function LegalPage({ params }: PageProps) {
 					</div>
 					<h1
 						className={cn(
-							"text-pretty font-display text-[2rem] leading-10 tracking-tight",
+							"font-display text-[2rem] leading-10 tracking-tight text-pretty",
 							"text-marketing-fg",
 							"sm:text-5xl sm:leading-14",
 						)}

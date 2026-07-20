@@ -1,5 +1,7 @@
 import type * as React from "react";
+
 import { ImpersonationBanner } from "@/components/user/impersonate-banner";
+
 import { SaaSProviders } from "./providers";
 
 /**

@@ -48,10 +48,10 @@ Your documentation here...
 
 ```json
 {
-  "pages": [
-    "index",
-    "getting-started"  // Add your page
-  ]
+	"pages": [
+		"index",
+		"getting-started" // Add your page
+	]
 }
 ```
 
@@ -89,21 +89,21 @@ content/
 
 ### Frontmatter Schema
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `title` | string | Yes | Post title |
-| `date` | string | Yes | ISO date (e.g., "2025-01-15") |
-| `authorName` | string | Yes | Author display name |
-| `authorImage` | string | No | Author avatar URL |
-| `authorLink` | string | No | Author profile link |
-| `excerpt` | string | No | Short description |
-| `image` | string | No | Featured image URL |
-| `tags` | string[] | Yes | Array of tags |
-| `published` | boolean | Yes | Publication status |
+| Field         | Type     | Required | Description                   |
+| ------------- | -------- | -------- | ----------------------------- |
+| `title`       | string   | Yes      | Post title                    |
+| `date`        | string   | Yes      | ISO date (e.g., "2025-01-15") |
+| `authorName`  | string   | Yes      | Author display name           |
+| `authorImage` | string   | No       | Author avatar URL             |
+| `authorLink`  | string   | No       | Author profile link           |
+| `excerpt`     | string   | No       | Short description             |
+| `image`       | string   | No       | Featured image URL            |
+| `tags`        | string[] | Yes      | Array of tags                 |
+| `published`   | boolean  | Yes      | Publication status            |
 
 ### Example Post
 
-```mdx
+````mdx
 ---
 title: 5 Ways to Boost Team Productivity
 date: "2025-01-10"
@@ -133,11 +133,13 @@ The right tools can make all the difference...
 // Example code with syntax highlighting
 const productivity = calculateEfficiency(team);
 ```
+````
 
 ## Conclusion
 
 By implementing these strategies...
-```
+
+````
 
 ### Features
 
@@ -162,10 +164,10 @@ const post = await getPostBySlug("my-post-slug");
 const publishedPosts = posts.filter(p => p.published);
 
 // Sort by date
-const sorted = posts.sort((a, b) => 
+const sorted = posts.sort((a, b) =>
   new Date(b.date).getTime() - new Date(a.date).getTime()
 );
-```
+````
 
 ## Documentation System
 
@@ -173,12 +175,12 @@ The documentation system uses [Fumadocs](https://fumadocs.vercel.app/) for a ful
 
 ### Frontmatter Schema
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `title` | string | Yes | Page title |
-| `description` | string | No | Page description |
-| `icon` | string | No | Lucide icon name |
-| `full` | boolean | No | Full-width layout |
+| Field         | Type    | Required | Description       |
+| ------------- | ------- | -------- | ----------------- |
+| `title`       | string  | Yes      | Page title        |
+| `description` | string  | No       | Page description  |
+| `icon`        | string  | No       | Lucide icon name  |
+| `full`        | boolean | No       | Full-width layout |
 
 ### Navigation (meta.json)
 
@@ -186,23 +188,24 @@ Control the sidebar navigation in `content/docs/meta.json`:
 
 ```json
 {
-  "title": "Documentation",
-  "root": true,
-  "pages": [
-    "[House][Homepage](/)",
-    "---Getting Started---",
-    "index",
-    "installation",
-    "---Features---",
-    "authentication",
-    "billing",
-    "---API---",
-    "api-reference"
-  ]
+	"title": "Documentation",
+	"root": true,
+	"pages": [
+		"[House][Homepage](/)",
+		"---Getting Started---",
+		"index",
+		"installation",
+		"---Features---",
+		"authentication",
+		"billing",
+		"---API---",
+		"api-reference"
+	]
 }
 ```
 
 **Syntax:**
+
 - `"page-name"` - Reference to MDX file (without extension)
 - `"---Section Title---"` - Section separator
 - `"[Icon][Label](url)"` - External link with Lucide icon
@@ -213,12 +216,13 @@ Use these components directly in your docs:
 
 #### Tabs
 
-```mdx
+````mdx
 <Tabs items={['npm', 'yarn', 'pnpm']}>
 <Tab value="npm">
 ```bash
 npm install package
-```
+````
+
 </Tab>
 <Tab value="yarn">
 ```bash
@@ -232,30 +236,26 @@ yarn add package
 
 ```mdx
 <Steps>
-<Step>
-### Install Dependencies
-Run `npm install` to install all dependencies.
-</Step>
-<Step>
-### Configure Environment
-Copy `.env.example` to `.env` and fill in values.
-</Step>
+	<Step>
+		### Install Dependencies Run `npm install` to install all dependencies.
+	</Step>
+	<Step>
+		### Configure Environment Copy `.env.example` to `.env` and fill in values.
+	</Step>
 </Steps>
 ```
 
 #### Callouts
 
 ```mdx
-<Callout title="Note">
-This is important information.
-</Callout>
+<Callout title="Note">This is important information.</Callout>
 
 <Callout type="warn" title="Warning">
-Be careful with this action.
+	Be careful with this action.
 </Callout>
 
 <Callout type="error" title="Error">
-This will cause problems.
+	This will cause problems.
 </Callout>
 ```
 
@@ -263,13 +263,13 @@ This will cause problems.
 
 ```mdx
 <Files>
-  <Folder name="src" defaultOpen>
-    <File name="index.ts" />
-    <Folder name="components">
-      <File name="Button.tsx" />
-    </Folder>
-  </Folder>
-  <File name="package.json" />
+	<Folder name="src" defaultOpen>
+		<File name="index.ts" />
+		<Folder name="components">
+			<File name="Button.tsx" />
+		</Folder>
+	</Folder>
+	<File name="package.json" />
 </Files>
 ```
 
@@ -277,12 +277,12 @@ This will cause problems.
 
 ```mdx
 <Cards>
-  <Card title="Getting Started" href="/docs">
-    Learn the basics
-  </Card>
-  <Card title="API Reference" href="/docs/api">
-    Detailed API documentation
-  </Card>
+	<Card title="Getting Started" href="/docs">
+		Learn the basics
+	</Card>
+	<Card title="API Reference" href="/docs/api">
+		Detailed API documentation
+	</Card>
 </Cards>
 ```
 
@@ -299,9 +299,9 @@ Images automatically support click-to-zoom:
 ```typescript
 // Highlight specific lines
 const config = {
-  // [!code highlight]
-  apiKey: process.env.API_KEY,
-  debug: true,
+	// [!code highlight]
+	apiKey: process.env.API_KEY,
+	debug: true,
 };
 
 // Show diffs
@@ -324,9 +324,9 @@ export const config = { ... };
 
 ### Frontmatter Schema
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `title` | string | Yes | Page title |
+| Field   | Type   | Required | Description |
+| ------- | ------ | -------- | ----------- |
+| `title` | string | Yes      | Page title  |
 
 ### Example
 
@@ -351,7 +351,7 @@ If you have questions, contact us at privacy@example.com.
 ### Default Legal Pages
 
 - `/legal/privacy` - Privacy Policy
-- `/legal/terms` - Terms of Service  
+- `/legal/terms` - Terms of Service
 - `/legal/cookies` - Cookie Policy
 
 ## Marketing Pages
@@ -382,23 +382,23 @@ export default async function HomePage() {
 
 Located in `components/marketing/sections/`:
 
-| Component | Purpose |
-|-----------|---------|
-| `HeroSection` | Main hero with CTA buttons |
-| `LogoCloudSection` | Client/partner logos |
-| `FeaturesSection` | Feature highlights |
-| `StatsSection` | Statistics/metrics |
-| `TestimonialsSection` | Customer testimonials |
-| `PricingSection` | Full pricing table |
-| `HomePricingSection` | Compact pricing preview |
-| `FaqSection` | FAQ accordion |
-| `LatestArticlesSection` | Recent blog posts |
-| `CtaSection` | Call-to-action |
-| `AboutSection` | About page content |
-| `ContactSection` | Contact form |
-| `CareersSection` | Job listings |
-| `ChangelogSection` | Version history |
-| `StorySection` | Company story |
+| Component               | Purpose                    |
+| ----------------------- | -------------------------- |
+| `HeroSection`           | Main hero with CTA buttons |
+| `LogoCloudSection`      | Client/partner logos       |
+| `FeaturesSection`       | Feature highlights         |
+| `StatsSection`          | Statistics/metrics         |
+| `TestimonialsSection`   | Customer testimonials      |
+| `PricingSection`        | Full pricing table         |
+| `HomePricingSection`    | Compact pricing preview    |
+| `FaqSection`            | FAQ accordion              |
+| `LatestArticlesSection` | Recent blog posts          |
+| `CtaSection`            | Call-to-action             |
+| `AboutSection`          | About page content         |
+| `ContactSection`        | Contact form               |
+| `CareersSection`        | Job listings               |
+| `ChangelogSection`      | Version history            |
+| `StorySection`          | Company story              |
 
 ### Creating New Pages
 
@@ -421,8 +421,8 @@ export default function FeaturesPage() {
 
 ```typescript
 const BASE_MENU_LINKS = [
-  { title: "Features", href: "/features" },
-  // ...
+	{ title: "Features", href: "/features" },
+	// ...
 ];
 ```
 
@@ -431,6 +431,7 @@ const BASE_MENU_LINKS = [
 ### Header
 
 The header (`components/marketing/navigation/header.tsx`) includes:
+
 - Logo with link to homepage
 - Desktop navigation menu (centered)
 - Mobile hamburger menu
@@ -440,6 +441,7 @@ The header (`components/marketing/navigation/header.tsx`) includes:
 ### Footer
 
 The footer (`components/marketing/navigation/footer.tsx`) includes:
+
 - Logo and description
 - Four link columns (Product, Resources, Company, Legal)
 - Social media links
@@ -450,14 +452,14 @@ To add footer links:
 
 ```typescript
 const footerLinks = [
-  {
-    group: "Product",
-    items: [
-      { title: "Features", href: "/features" },
-      { title: "New Link", href: "/new-page" },
-    ],
-  },
-  // ...
+	{
+		group: "Product",
+		items: [
+			{ title: "Features", href: "/features" },
+			{ title: "New Link", href: "/new-page" },
+		],
+	},
+	// ...
 ];
 ```
 
@@ -469,13 +471,13 @@ Edit `config/app.config.ts`:
 
 ```typescript
 export const appConfig = {
-  appName: "Your App",
-  description: "Your app description",
-  contact: {
-    enabled: true,  // Show contact page and footer link
-    phone: "(123) 456-7890",
-    address: "123 Main St, City, State",
-  },
+	appName: "Your App",
+	description: "Your app description",
+	contact: {
+		enabled: true, // Show contact page and footer link
+		phone: "(123) 456-7890",
+		address: "123 Main St, City, State",
+	},
 };
 ```
 
@@ -531,27 +533,27 @@ Edit `app/docs/[[...slug]]/page.tsx`:
 Blog and legal pages use Tailwind's `prose` classes. Customize in content components:
 
 ```typescript
-className="prose prose-gray dark:prose-invert 
-  prose-headings:font-semibold 
+className="prose prose-gray dark:prose-invert
+  prose-headings:font-semibold
   prose-a:text-primary"
 ```
 
 ## File Reference
 
-| File | Purpose |
-|------|---------|
-| `content-collections.ts` | Collection definitions |
-| `source.config.ts` | Fumadocs config |
-| `content/posts/*.mdx` | Blog posts |
-| `content/docs/*.mdx` | Documentation |
-| `content/docs/meta.json` | Docs navigation |
-| `content/legal/*.mdx` | Legal pages |
-| `lib/marketing/blog/posts.ts` | Blog queries |
-| `lib/marketing/blog/mdx-components.tsx` | Blog MDX components |
-| `lib/marketing/legal/pages.ts` | Legal queries |
-| `lib/marketing/docs/source.ts` | Docs source loader |
-| `app/(marketing)/` | Marketing routes |
-| `app/docs/` | Documentation routes |
-| `components/marketing/sections/` | Page sections |
-| `components/marketing/navigation/` | Header, footer |
-| `components/marketing/content/` | Content renderers |
+| File                                    | Purpose                |
+| --------------------------------------- | ---------------------- |
+| `content-collections.ts`                | Collection definitions |
+| `source.config.ts`                      | Fumadocs config        |
+| `content/posts/*.mdx`                   | Blog posts             |
+| `content/docs/*.mdx`                    | Documentation          |
+| `content/docs/meta.json`                | Docs navigation        |
+| `content/legal/*.mdx`                   | Legal pages            |
+| `lib/marketing/blog/posts.ts`           | Blog queries           |
+| `lib/marketing/blog/mdx-components.tsx` | Blog MDX components    |
+| `lib/marketing/legal/pages.ts`          | Legal queries          |
+| `lib/marketing/docs/source.ts`          | Docs source loader     |
+| `app/(marketing)/`                      | Marketing routes       |
+| `app/docs/`                             | Documentation routes   |
+| `components/marketing/sections/`        | Page sections          |
+| `components/marketing/navigation/`      | Header, footer         |
+| `components/marketing/content/`         | Content renderers      |
