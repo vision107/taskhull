@@ -29,7 +29,7 @@ export function DeleteOrganizationCard(): React.JSX.Element | null {
 	}
 
 	const handleDelete = () => {
-		NiceModal.show(ConfirmationModal, {
+		void NiceModal.show(ConfirmationModal, {
 			title: "Delete Organization",
 			message: `Are you sure you want to delete the organization "${organization.name}"? This action cannot be undone and all data will be permanently deleted.`,
 			destructive: true,

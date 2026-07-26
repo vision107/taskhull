@@ -14,7 +14,9 @@ export function useProgressRouter() {
 
 	const replace = React.useCallback(
 		(href: string, options?: Parameters<typeof router.replace>[1]) => {
-			href !== pathname && NProgress.start();
+			if (href !== pathname) {
+				NProgress.start();
+			}
 			router.replace(href, options);
 		},
 		[router, pathname],
@@ -22,7 +24,9 @@ export function useProgressRouter() {
 
 	const push = React.useCallback(
 		(href: string, options?: Parameters<typeof router.push>[1]) => {
-			href !== pathname && NProgress.start();
+			if (href !== pathname) {
+				NProgress.start();
+			}
 			router.push(href, options);
 		},
 		[router, pathname],

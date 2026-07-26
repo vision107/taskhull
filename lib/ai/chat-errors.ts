@@ -17,7 +17,16 @@ function collectErrorText(error: unknown, depth = 0): string {
 			"cause" in error ? collectErrorText(error.cause, depth + 1) : "";
 		return `${error.name} ${error.message} ${cause}`;
 	}
-	if (typeof error !== "object") return String(error);
+	if (
+		typeof error === "number" ||
+		typeof error === "bigint" ||
+		typeof error === "boolean" ||
+		typeof error === "symbol" ||
+		typeof error === "undefined"
+	) {
+		return String(error);
+	}
+	if (typeof error !== "object") return "";
 
 	const value = error as Record<string, unknown>;
 	return [

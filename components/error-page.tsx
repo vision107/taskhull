@@ -31,7 +31,7 @@ export function ErrorPage({ error, reset }: ErrorPageProps) {
 			.filter(Boolean)
 			.join("\n");
 
-		navigator.clipboard.writeText(details);
+		void navigator.clipboard.writeText(details);
 		setCopied(true);
 	};
 

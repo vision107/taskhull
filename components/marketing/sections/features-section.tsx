@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRightIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { GradientCard } from "@/components/marketing/primitives/gradient-card";
@@ -31,19 +32,19 @@ function FeatureCard({ feature }: { feature: Feature }) {
 					placement={feature.placement}
 					rounded="sm"
 				>
-					<img
+					<Image
 						src={feature.image.light}
 						alt={feature.title}
 						width={feature.image.width}
 						height={feature.image.height}
-						className="h-auto w-full dark:hidden"
+						className="dark:hidden"
 					/>
-					<img
+					<Image
 						src={feature.image.dark}
 						alt={feature.title}
 						width={feature.image.width}
 						height={feature.image.height}
-						className="hidden h-auto w-full dark:block"
+						className="hidden dark:block"
 					/>
 				</GradientCard>
 			</div>

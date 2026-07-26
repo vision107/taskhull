@@ -118,6 +118,7 @@ export function OrganizationsGrid(): React.JSX.Element {
 				{/* Existing Organization Cards */}
 				{allOrganizations?.map((organization) => (
 					<button
+						aria-label={`Open ${organization.name}`}
 						className="group block h-full cursor-pointer text-left"
 						onClick={() => handleSelectOrganization(organization.id)}
 						key={organization.id}

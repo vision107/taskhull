@@ -1,6 +1,5 @@
 import "server-only";
 import { and, eq, inArray } from "drizzle-orm";
-import type Stripe from "stripe";
 
 import { creditPackages } from "@/config/billing.config";
 import { addCredits } from "@/lib/billing/credits";
@@ -17,11 +16,7 @@ import {
 	organizationTable,
 	subscriptionTable,
 } from "@/lib/db/schema";
-import {
-	type BillingInterval,
-	CreditTransactionType,
-	type SubscriptionStatus,
-} from "@/lib/db/schema/enums";
+import { CreditTransactionType } from "@/lib/db/schema/enums";
 import { logger } from "@/lib/logger";
 
 // ============================================================================

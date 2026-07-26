@@ -1,4 +1,6 @@
 import type { MDXComponents } from "mdx/types";
+import type { ImageProps } from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 
 function slugifyHeadline(text: string): string {
@@ -27,9 +29,12 @@ export const mdxComponents = {
 	},
 	img: (props: React.ImgHTMLAttributes<HTMLImageElement>) =>
 		props.src ? (
-			<img
-				{...props}
-				className="h-auto w-full rounded-lg shadow"
+			<Image
+				{...(props as ImageProps)}
+				sizes="100vw"
+				style={{ width: "100%", height: "auto" }}
+				className="rounded-lg shadow"
+				loading="lazy"
 				alt={props.alt || ""}
 			/>
 		) : null,

@@ -138,9 +138,10 @@ export function AiChat({ organizationId }: AiChatProps) {
 		{ enabled: !!chatId, retry: false },
 	);
 
-	const chats = searchQuery
-		? (searchData?.chats ?? [])
-		: (chatsData?.chats ?? []);
+	const chats = useMemo(
+		() => (searchQuery ? (searchData?.chats ?? []) : (chatsData?.chats ?? [])),
+		[searchQuery, searchData?.chats, chatsData?.chats],
+	);
 	const currentChat = currentChatData?.chat ?? null;
 	const isSearchMode = !!searchQuery;
 
@@ -348,7 +349,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 			const result = await createChatMutation.mutateAsync({});
 			await utils.organization.ai.listChats.invalidate();
 			if (result.chat.id) {
-				setChatId(result.chat.id);
+				void setChatId(result.chat.id);
 			}
 			setMessages([]);
 		} catch {
@@ -391,10 +392,10 @@ export function AiChat({ organizationId }: AiChatProps) {
 					setMessages([]);
 
 					if (remainingChats.length > 0 && remainingChats[0]?.id) {
-						setChatId(remainingChats[0].id);
+						void setChatId(remainingChats[0].id);
 					} else {
-						setChatId(null);
-						createNewChat();
+						void setChatId(null);
+						void createNewChat();
 					}
 				}
 				toast.success("Chat deleted");
@@ -416,7 +417,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 	// Delete chat with confirmation
 	const deleteChat = useCallback(
 		(id: string) => {
-			NiceModal.show(ConfirmationModal, {
+			void NiceModal.show(ConfirmationModal, {
 				title: "Delete Chat",
 				message:
 					"Are you sure you want to delete this chat? This action cannot be undone.",
@@ -448,9 +449,9 @@ export function AiChat({ organizationId }: AiChatProps) {
 		}
 
 		if (chats.length > 0 && chats[0]?.id) {
-			setChatId(chats[0].id);
+			void setChatId(chats[0].id);
 		} else {
-			createNewChat();
+			void createNewChat();
 		}
 	}, [chatsStatus, chats, chatId, setChatId, createNewChat]);
 
@@ -459,9 +460,9 @@ export function AiChat({ organizationId }: AiChatProps) {
 		if (currentChatError && chatId && chatsStatus === "success") {
 			// Chat doesn't exist, clear the invalid chatId and select a valid one
 			if (chats.length > 0 && chats[0]?.id) {
-				setChatId(chats[0].id);
+				void setChatId(chats[0].id);
 			} else {
-				setChatId(null);
+				void setChatId(null);
 			}
 		}
 	}, [currentChatError, chatId, chats, chatsStatus, setChatId]);
@@ -535,7 +536,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 					messages: updatedMessages,
 				});
 
-				sendMessage({
+				void sendMessage({
 					role: "user",
 					parts: [{ type: "text", text: text.trim() }],
 				});
@@ -543,7 +544,13 @@ export function AiChat({ organizationId }: AiChatProps) {
 				toast.error("Failed to send message");
 			}
 		},
-		[chatId, messages, updateChatMutation, sendMessage],
+		[
+			chatId,
+			messages,
+			updateChatMutation,
+			sendMessage,
+			getConsolidatedMessages,
+		],
 	);
 
 	const onSubmit = async () => {
@@ -582,14 +589,21 @@ export function AiChat({ organizationId }: AiChatProps) {
 			setMessages(messagesUpToLastUser);
 
 			// Resend the last user message to get a new response
-			sendMessage({
+			void sendMessage({
 				role: "user",
 				parts: [{ type: "text", text: userMessageText }],
 			});
 		} catch {
 			toast.error("Failed to regenerate response");
 		}
-	}, [chatId, messages, setMessages, updateChatMutation, sendMessage]);
+	}, [
+		chatId,
+		messages,
+		setMessages,
+		updateChatMutation,
+		sendMessage,
+		getConsolidatedMessages,
+	]);
 
 	if (chatsStatus === "pending") {
 		return <CenteredSpinner />;
@@ -662,7 +676,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 													<button
 														type="button"
 														onClick={() => {
-															setChatId(chat.id);
+															void setChatId(chat.id);
 															setSearchQuery("");
 														}}
 														className="flex min-w-0 flex-1 cursor-pointer"

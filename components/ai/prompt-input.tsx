@@ -46,7 +46,6 @@ export type PromptInputProps = Omit<
 export const PromptInput = ({
 	className,
 	value,
-	onChange,
 	onSubmit,
 	children,
 	...props
@@ -67,7 +66,7 @@ export const PromptInput = ({
 		const result = onSubmit({ text }, event);
 
 		if (result instanceof Promise) {
-			result.then(() => {
+			void result.then(() => {
 				if (!value) {
 					form.reset();
 				}

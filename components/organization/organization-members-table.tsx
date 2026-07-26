@@ -13,7 +13,7 @@ import {
 	getSortedRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
-import { LogOutIcon, MoreVerticalIcon, TrashIcon } from "lucide-react";
+import { MoreVerticalIcon } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -65,7 +65,7 @@ export function OrganizationMembersTable({
 			{
 				loading: "Updating membership...",
 				success: () => {
-					utils.organization.get.invalidate({ id: organizationId });
+					void utils.organization.get.invalidate({ id: organizationId });
 					return "Membership updated successfully.";
 				},
 				error: "Could not update membership. Please try again.",
@@ -84,7 +84,7 @@ export function OrganizationMembersTable({
 			{
 				loading: "Removing member...",
 				success: () => {
-					utils.organization.get.invalidate({ id: organizationId });
+					void utils.organization.get.invalidate({ id: organizationId });
 					return "Member removed successfully.";
 				},
 				error: "Could not remove member. Please try again.",

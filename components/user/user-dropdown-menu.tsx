@@ -138,15 +138,15 @@ export function UserDropDownMenu(
 		[setTheme, theme],
 	);
 
-	const handleNavigateToProfile = (): void => {
+	const handleNavigateToProfile = React.useCallback((): void => {
 		router.push("/dashboard/settings?tab=profile");
-	};
+	}, [router]);
 
 	const handleShowCommandMenu = (): void => {
-		NiceModal.show(CommandMenu);
+		void NiceModal.show(CommandMenu);
 	};
 
-	const handleSignOut = async () => {
+	const handleSignOut = React.useCallback(async () => {
 		try {
 			await authClient.signOut();
 		} finally {
@@ -171,7 +171,7 @@ export function UserDropDownMenu(
 				window.location.origin,
 			).toString();
 		}
-	};
+	}, [queryClient, router]);
 
 	React.useEffect(() => {
 		const mac = isMac();
@@ -205,7 +205,7 @@ export function UserDropDownMenu(
 
 		document.addEventListener("keydown", handleKeyDown);
 		return () => document.removeEventListener("keydown", handleKeyDown);
-	}, []);
+	}, [handleNavigateToProfile, handleSignOut]);
 
 	// Show skeleton placeholder during SSR and initial hydration
 	if (!mounted || !user) {

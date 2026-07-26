@@ -223,24 +223,30 @@ export function DataTable<TData>({
 						typeof updater === "function"
 							? updater(currentRowSelection)
 							: updater;
-					onRowSelectionChange
-						? onRowSelectionChange(newSelection)
-						: setInternalRowSelection(newSelection);
+					if (onRowSelectionChange) {
+						onRowSelectionChange(newSelection);
+					} else {
+						setInternalRowSelection(newSelection);
+					}
 				}
 			: undefined,
 		onSortingChange: (updater) => {
 			const newSorting =
 				typeof updater === "function" ? updater(currentSorting) : updater;
-			onSortingChange
-				? onSortingChange(newSorting)
-				: setInternalSorting(newSorting);
+			if (onSortingChange) {
+				onSortingChange(newSorting);
+			} else {
+				setInternalSorting(newSorting);
+			}
 		},
 		onColumnFiltersChange: (updater) => {
 			const newFilters =
 				typeof updater === "function" ? updater(currentColumnFilters) : updater;
-			onFiltersChange
-				? onFiltersChange(newFilters)
-				: setInternalColumnFilters(newFilters);
+			if (onFiltersChange) {
+				onFiltersChange(newFilters);
+			} else {
+				setInternalColumnFilters(newFilters);
+			}
 		},
 		onColumnVisibilityChange: setColumnVisibility,
 		onPaginationChange: enablePagination
@@ -284,9 +290,11 @@ export function DataTable<TData>({
 		if (selectedValues.length > 0) {
 			newFilters.push({ id: filterKey, value: selectedValues });
 		}
-		onFiltersChange
-			? onFiltersChange(newFilters)
-			: setInternalColumnFilters(newFilters);
+		if (onFiltersChange) {
+			onFiltersChange(newFilters);
+		} else {
+			setInternalColumnFilters(newFilters);
+		}
 	};
 
 	// Helper to get filter value from columnFilters state

@@ -50,7 +50,7 @@ export function ChangeEmailCard(): React.JSX.Element {
 			"A confirmation link was sent to your current email. Please verify this change.",
 		);
 
-		reloadSession();
+		void reloadSession();
 	});
 
 	return (
@@ -67,7 +67,7 @@ export function ChangeEmailCard(): React.JSX.Element {
 						className="space-y-4"
 						onSubmit={(e) => {
 							e.preventDefault();
-							onSubmit();
+							void onSubmit();
 						}}
 					>
 						<Field data-disabled="true">

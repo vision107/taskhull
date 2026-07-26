@@ -52,7 +52,7 @@ export function UserBulkActions({
 				delimiter === "comma" ? csv : csv.replace(/,/g, delimiterChar);
 			downloadCsv(csvData, "users.csv");
 			toast.success("CSV exported.");
-		} catch (_err) {
+		} catch {
 			toast.error("Failed to export CSV.");
 		}
 	};
@@ -67,7 +67,7 @@ export function UserBulkActions({
 			const base64 = await exportExcel.mutateAsync({ userIds });
 			downloadExcel(base64, "users.xlsx");
 			toast.success("Excel exported.");
-		} catch (_err) {
+		} catch {
 			toast.error("Failed to export Excel.");
 		}
 	};
@@ -76,7 +76,7 @@ export function UserBulkActions({
 		{
 			label: "Export to CSV",
 			onClick: () => {
-				NiceModal.show(CsvDelimiterModal, {
+				void NiceModal.show(CsvDelimiterModal, {
 					onConfirm: handleExportSelectedToCsv,
 				});
 			},

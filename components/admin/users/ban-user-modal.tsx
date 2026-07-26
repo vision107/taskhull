@@ -58,7 +58,7 @@ export const BanUserModal = NiceModal.create(
 		const banUserMutation = trpc.admin.user.banUser.useMutation({
 			onSuccess: () => {
 				toast.success("User has been banned");
-				utils.admin.user.list.invalidate();
+				void utils.admin.user.list.invalidate();
 				modal.handleClose();
 			},
 			onError: (error) => {

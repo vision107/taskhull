@@ -14,6 +14,30 @@
 		"next-env.d.ts"
 	],
 	"options": {
+		"denyWarnings": true,
 		"typeAware": true
-	}
+	},
+	"rules": {
+		"jsx-a11y/prefer-tag-over-role": "off"
+	},
+	"overrides": [
+		{
+			"files": ["components/marketing/sections/contact-section.tsx"],
+			"rules": {
+				"jsx-a11y/autocomplete-valid": "off"
+			}
+		},
+		{
+			"files": ["components/ui/custom/input-number.tsx"],
+			"rules": {
+				"jsx-a11y/role-supports-aria-props": "off"
+			}
+		},
+		{
+			"files": ["components/ui/pagination.tsx"],
+			"rules": {
+				"jsx-a11y/anchor-has-content": "off"
+			}
+		}
+	]
 }

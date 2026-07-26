@@ -73,7 +73,14 @@ function valuePreviewString(value: unknown, type: string): string[] | string {
 	}
 	if (type === "null" || value === null) return "null";
 	if (typeof value === "undefined") return "undefined";
-	return String(value ?? "");
+	if (
+		typeof value === "number" ||
+		typeof value === "bigint" ||
+		typeof value === "symbol"
+	) {
+		return String(value);
+	}
+	return "(unknown)";
 }
 
 function ValueCell({ value, type }: { value: unknown; type: string }) {
@@ -87,7 +94,7 @@ function ValueCell({ value, type }: { value: unknown; type: string }) {
 		} else {
 			copyText = String(value);
 		}
-		navigator.clipboard.writeText(copyText);
+		void navigator.clipboard.writeText(copyText);
 		toast.success("Copied!");
 	};
 	return (

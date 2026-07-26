@@ -313,7 +313,7 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 									<Button
 										className="h-8 w-full justify-start gap-1.5 text-sm font-normal"
 										onClick={() => {
-											NiceModal.show(CreateOrganizationModal);
+											void NiceModal.show(CreateOrganizationModal);
 											setOpen(false);
 										}}
 										size="sm"

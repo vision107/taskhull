@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { InfiniteSlider } from "@/components/marketing/primitives/infinite-slider";
 import { ProgressiveBlur } from "@/components/marketing/primitives/progressive-blur";
 
@@ -54,7 +56,7 @@ export function LogoCloudSection() {
 					<InfiniteSlider speedOnHover={20} speed={40} gap={112}>
 						{logos.map((logo) => (
 							<div key={logo.alt} className="flex">
-								<img
+								<Image
 									className={`mx-auto ${logo.height} w-fit dark:invert`}
 									src={logo.src}
 									alt={logo.alt}

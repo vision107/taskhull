@@ -1,13 +1,12 @@
 "use client";
 
 import NiceModal from "@ebay/nice-modal-react";
-import { ImageIcon, TrashIcon } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 import * as React from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { v4 as uuid } from "uuid";
 
-import { ConfirmationModal } from "@/components/confirmation-modal";
 import { CropImageModal } from "@/components/crop-image-modal";
 import { OrganizationLogo } from "@/components/organization/organization-logo";
 import { Button } from "@/components/ui/button";
@@ -52,8 +51,8 @@ export function OrganizationLogoCard(): React.JSX.Element | null {
 
 			toast.success("Logo was removed successfully");
 			router.refresh();
-			utils.organization.list.invalidate();
-		} catch (_err) {
+			void utils.organization.list.invalidate();
+		} catch {
 			toast.error("Could not remove logo");
 		} finally {
 			setDeleting(false);
@@ -62,7 +61,7 @@ export function OrganizationLogoCard(): React.JSX.Element | null {
 
 	const { getRootProps, getInputProps } = useDropzone({
 		onDrop: (acceptedFiles) => {
-			NiceModal.show(CropImageModal, {
+			void NiceModal.show(CropImageModal, {
 				image: acceptedFiles[0],
 				onCrop: async (croppedImageData: Blob | null) => {
 					if (!(croppedImageData && organization)) {
@@ -103,8 +102,8 @@ export function OrganizationLogoCard(): React.JSX.Element | null {
 						toast.success("Logo was updated successfully");
 
 						router.refresh();
-						utils.organization.list.invalidate();
-					} catch (_err) {
+						void utils.organization.list.invalidate();
+					} catch {
 						toast.error("Could not update logo");
 					} finally {
 						setUploading(false);

@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { cn } from "@/lib/utils";
 
 interface Testimonial {
@@ -18,7 +20,7 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 			</blockquote>
 			<figcaption className="flex items-center gap-4">
 				<div className="flex size-12 overflow-hidden rounded-full outline -outline-offset-1 outline-black/5 dark:outline-white/5">
-					<img
+					<Image
 						src={testimonial.avatar}
 						alt={testimonial.name}
 						width={160}

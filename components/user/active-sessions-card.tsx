@@ -40,7 +40,7 @@ export function ActiveSessionsCard(): React.JSX.Element {
 
 	const revokeSession = (token: string) => {
 		setIsRevoking(token);
-		authClient.revokeSession(
+		void authClient.revokeSession(
 			{
 				token,
 			},

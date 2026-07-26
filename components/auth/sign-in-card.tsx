@@ -134,7 +134,7 @@ export function SignInCard(): React.JSX.Element {
 			) {
 				// Store the full message with special marker for parsing in the UI
 				methods.setError("root", {
-					message: `USER_BANNED|${e.message}`,
+					message: `USER_BANNED|${String(e.message)}`,
 				});
 			} else {
 				methods.setError("root", {

@@ -85,7 +85,7 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 				"Two-factor authentication has been disabled successfully.",
 			);
 
-			reloadSession();
+			void reloadSession();
 		},
 
 		onError: () => {
@@ -108,7 +108,7 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 
 			toast.success("Two-factor authentication has been enabled successfully.");
 
-			reloadSession();
+			void reloadSession();
 			modal.handleClose();
 		},
 	});

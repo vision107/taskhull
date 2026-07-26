@@ -1,5 +1,6 @@
 import { ChevronLeftIcon } from "lucide-react";
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -126,7 +127,7 @@ export default async function BlogPostPage({
 						<div className="flex items-center gap-3 text-sm">
 							{authorImage && (
 								<div className="flex size-10 overflow-hidden rounded-full outline -outline-offset-1 outline-black/5 dark:outline-white/5">
-									<img
+									<Image
 										src={authorImage}
 										alt={authorName ?? ""}
 										width={40}

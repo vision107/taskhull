@@ -71,7 +71,7 @@ export function OrganizationInvitationsTable({
 			{
 				loading: "Revoking invitation...",
 				success: () => {
-					utils.organization.get.invalidate({ id: organizationId });
+					void utils.organization.get.invalidate({ id: organizationId });
 					return "Invitation successfully revoked.";
 				},
 				error: "Failed to revoke invitation. Please try again.",

@@ -41,7 +41,7 @@ export function OnboardingProfileStep({
 		if (user) {
 			methods.setValue("name", user.name ?? "");
 		}
-	}, [user]);
+	}, [methods, user]);
 
 	const onSubmit = methods.handleSubmit(async ({ name }) => {
 		methods.clearErrors("root");
@@ -52,7 +52,7 @@ export function OnboardingProfileStep({
 			});
 
 			onCompleted();
-		} catch (_err) {
+		} catch {
 			methods.setError("root", {
 				type: "server",
 				message:

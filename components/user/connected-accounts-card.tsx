@@ -24,7 +24,7 @@ export function ConnectedAccountsCard(): React.JSX.Element {
 	const connect = (provider: OAuthProvider) => {
 		const callbackURL = window.location.href;
 		if (!isProviderLinked(provider)) {
-			authClient.linkSocial({
+			void authClient.linkSocial({
 				provider,
 				callbackURL,
 			});
@@ -33,7 +33,7 @@ export function ConnectedAccountsCard(): React.JSX.Element {
 
 	const disconnect = (provider: OAuthProvider) => {
 		if (isProviderLinked(provider)) {
-			authClient.unlinkAccount({
+			void authClient.unlinkAccount({
 				providerId: provider,
 			});
 		}

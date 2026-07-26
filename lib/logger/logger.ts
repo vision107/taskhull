@@ -159,8 +159,8 @@ export class Logger {
 										.map(([key, value]) => {
 											const serializedValue =
 												typeof value === "object" && value !== null
-													? JSON.stringify(value)
-													: value;
+													? (JSON.stringify(value) ?? "[unserializable]")
+													: String(value);
 											return `${key}=${serializedValue}`;
 										})
 										.join(" ");
@@ -237,7 +237,7 @@ export class Logger {
 		).child({ group });
 	}
 
-	private mergeWithRequestContext(obj: object | unknown): object {
+	private mergeWithRequestContext(obj: unknown): object {
 		const requestContext = getFilteredRequestContext?.() || {};
 
 		if (typeof obj !== "object" || obj === null) {
@@ -250,11 +250,7 @@ export class Logger {
 	public info<T extends object>(obj: T, msg?: string, ...args: unknown[]): void;
 	public info(obj: unknown, msg?: string, ...args: unknown[]): void;
 	public info(msg: string, ...args: unknown[]): void;
-	public info(
-		objOrMsg: object | unknown | string,
-		msg?: string,
-		...args: unknown[]
-	): void {
+	public info(objOrMsg: unknown, msg?: string, ...args: unknown[]): void {
 		if (typeof objOrMsg === "string") {
 			const contextObj = this.mergeWithRequestContext({});
 			this.logger.info(contextObj, objOrMsg, msg, ...args);
@@ -267,11 +263,7 @@ export class Logger {
 	public warn<T extends object>(obj: T, msg?: string, ...args: unknown[]): void;
 	public warn(obj: unknown, msg?: string, ...args: unknown[]): void;
 	public warn(msg: string, ...args: unknown[]): void;
-	public warn(
-		objOrMsg: object | unknown | string,
-		msg?: string,
-		...args: unknown[]
-	): void {
+	public warn(objOrMsg: unknown, msg?: string, ...args: unknown[]): void {
 		if (typeof objOrMsg === "string") {
 			const contextObj = this.mergeWithRequestContext({});
 			this.logger.warn(contextObj, objOrMsg, msg, ...args);
@@ -288,11 +280,7 @@ export class Logger {
 	): void;
 	public error(obj: unknown, msg?: string, ...args: unknown[]): void;
 	public error(msg: string, ...args: unknown[]): void;
-	public error(
-		objOrMsg: object | unknown | string,
-		msg?: string,
-		...args: unknown[]
-	): void {
+	public error(objOrMsg: unknown, msg?: string, ...args: unknown[]): void {
 		if (typeof objOrMsg === "string") {
 			const contextObj = this.mergeWithRequestContext({});
 			this.logger.error(contextObj, objOrMsg, msg, ...args);
@@ -309,11 +297,7 @@ export class Logger {
 	): void;
 	public debug(obj: unknown, msg?: string, ...args: unknown[]): void;
 	public debug(msg: string, ...args: unknown[]): void;
-	public debug(
-		objOrMsg: object | unknown | string,
-		msg?: string,
-		...args: unknown[]
-	): void {
+	public debug(objOrMsg: unknown, msg?: string, ...args: unknown[]): void {
 		if (typeof objOrMsg === "string") {
 			const contextObj = this.mergeWithRequestContext({});
 			this.logger.debug(contextObj, objOrMsg, msg, ...args);
@@ -330,11 +314,7 @@ export class Logger {
 	): void;
 	public fatal(obj: unknown, msg?: string, ...args: unknown[]): void;
 	public fatal(msg: string, ...args: unknown[]): void;
-	public fatal(
-		objOrMsg: object | unknown | string,
-		msg?: string,
-		...args: unknown[]
-	): void {
+	public fatal(objOrMsg: unknown, msg?: string, ...args: unknown[]): void {
 		if (typeof objOrMsg === "string") {
 			const contextObj = this.mergeWithRequestContext({});
 			this.logger.fatal(contextObj, objOrMsg, msg, ...args);
@@ -351,11 +331,7 @@ export class Logger {
 	): void;
 	public trace(obj: unknown, msg?: string, ...args: unknown[]): void;
 	public trace(msg: string, ...args: unknown[]): void;
-	public trace(
-		objOrMsg: object | unknown | string,
-		msg?: string,
-		...args: unknown[]
-	): void {
+	public trace(objOrMsg: unknown, msg?: string, ...args: unknown[]): void {
 		if (typeof objOrMsg === "string") {
 			const contextObj = this.mergeWithRequestContext({});
 			this.logger.trace(contextObj, objOrMsg, msg, ...args);

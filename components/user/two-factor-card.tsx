@@ -47,7 +47,7 @@ export function TwoFactorCard({
 	}
 
 	const handleShowTwoFactorModal = () => {
-		NiceModal.show(TwoFactorModal);
+		void NiceModal.show(TwoFactorModal);
 	};
 
 	return (

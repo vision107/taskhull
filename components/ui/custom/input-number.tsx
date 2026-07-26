@@ -13,7 +13,6 @@ type InputSpinnerProps = {
 	disabled?: boolean;
 	initialDelay?: number;
 	repeatInterval?: number;
-	ariaValueText?: string;
 };
 
 const InputSpinner = ({
@@ -22,7 +21,6 @@ const InputSpinner = ({
 	disabled = false,
 	initialDelay = 500,
 	repeatInterval = 50,
-	ariaValueText,
 }: InputSpinnerProps) => {
 	const spinTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 	const spinIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -64,8 +62,6 @@ const InputSpinner = ({
 				"bg-bg-accent flex h-[34px] flex-col divide-y rounded-r-md border-l",
 				className,
 			)}
-			role="spinbutton"
-			aria-valuetext={ariaValueText}
 		>
 			<Button
 				tabIndex={-1}
@@ -139,11 +135,16 @@ const InputNumber = ({
 
 	const triggerOnChange = React.useCallback((newValue: number | "") => {
 		if (inputRef.current) {
+			// oxlint-disable-next-line typescript/unbound-method -- invoked below with the input as its explicit receiver
 			const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
 				window.HTMLInputElement.prototype,
 				"value",
 			)?.set;
-			nativeInputValueSetter?.call(inputRef.current, newValue.toString());
+			if (nativeInputValueSetter) {
+				Reflect.apply(nativeInputValueSetter, inputRef.current, [
+					newValue.toString(),
+				]);
+			}
 			const event = new Event("input", { bubbles: true });
 			inputRef.current.dispatchEvent(event);
 		}
@@ -212,6 +213,7 @@ const InputNumber = ({
 			)}
 		>
 			<input
+				{...props}
 				ref={inputRef}
 				type="number"
 				value={internalValue}
@@ -235,7 +237,6 @@ const InputNumber = ({
 					unit ? "pl-3" : "px-3",
 					className,
 				)}
-				{...props}
 			/>
 			{unit && (
 				<div className="text-fg-muted col-start-2 row-start-1 flex items-center justify-center pr-3 pl-1 text-sm">
@@ -246,11 +247,6 @@ const InputNumber = ({
 				onSpin={handleSpin}
 				disabled={props.disabled}
 				className="col-start-3 row-start-1"
-				ariaValueText={
-					typeof internalValue === "number"
-						? `${internalValue}${unit ? ` ${unit}` : ""}`
-						: undefined
-				}
 			/>
 		</div>
 	);

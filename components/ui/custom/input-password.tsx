@@ -41,7 +41,7 @@ const InputPassword = React.forwardRef<HTMLInputElement, InputPasswordProps>(
 					className={undefined}
 					ref={ref}
 				/>
-				{(endAdornment || true) && (
+				{
 					<InputGroupAddon align="inline-end">
 						{endAdornment && <InputGroupText>{endAdornment}</InputGroupText>}
 						<InputGroupButton
@@ -60,7 +60,7 @@ const InputPassword = React.forwardRef<HTMLInputElement, InputPasswordProps>(
 							)}
 						</InputGroupButton>
 					</InputGroupAddon>
-				)}
+				}
 			</InputGroup>
 		);
 	},

@@ -27,7 +27,7 @@ export function SocialSigninButton({
 
 	const onSignin = () => {
 		const callbackURL = new URL(redirectPath, window.location.origin);
-		authClient.signIn.social({
+		void authClient.signIn.social({
 			provider,
 			callbackURL: callbackURL.toString(),
 		});

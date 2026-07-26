@@ -71,7 +71,7 @@ export const LeadsModal = NiceModal.create<LeadsModalProps>(({ lead }) => {
 	const createLeadMutation = trpc.organization.lead.create.useMutation({
 		onSuccess: () => {
 			toast.success("Lead created successfully");
-			utils.organization.lead.list.invalidate();
+			void utils.organization.lead.list.invalidate();
 			modal.handleClose();
 		},
 		onError: (error) => {
@@ -82,7 +82,7 @@ export const LeadsModal = NiceModal.create<LeadsModalProps>(({ lead }) => {
 	const updateLeadMutation = trpc.organization.lead.update.useMutation({
 		onSuccess: () => {
 			toast.success("Lead updated successfully");
-			utils.organization.lead.list.invalidate();
+			void utils.organization.lead.list.invalidate();
 			modal.handleClose();
 		},
 		onError: (error) => {

@@ -543,17 +543,14 @@ export function EmailPerformanceChart() {
 		},
 	} satisfies ChartConfig;
 
-	const averages = useMemo(
-		() => ({
-			openRate:
-				emailPerformanceData.reduce((acc, curr) => acc + curr.openRate, 0) /
-				emailPerformanceData.length,
-			clickRate:
-				emailPerformanceData.reduce((acc, curr) => acc + curr.clickRate, 0) /
-				emailPerformanceData.length,
-		}),
-		[emailPerformanceData],
-	);
+	const averages = {
+		openRate:
+			emailPerformanceData.reduce((acc, curr) => acc + curr.openRate, 0) /
+			emailPerformanceData.length,
+		clickRate:
+			emailPerformanceData.reduce((acc, curr) => acc + curr.clickRate, 0) /
+			emailPerformanceData.length,
+	};
 
 	return (
 		<Card className="py-0">

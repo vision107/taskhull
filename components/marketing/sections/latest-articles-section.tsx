@@ -1,4 +1,5 @@
 import { ArrowRightIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import type { Post } from "@/lib/marketing/blog/types";
@@ -54,7 +55,7 @@ export function LatestArticlesSection({ posts }: LatestArticlesSectionProps) {
 						>
 							{post.image && (
 								<div className="overflow-hidden rounded-sm outline -outline-offset-1 outline-black/5 dark:outline-white/5">
-									<img
+									<Image
 										src={post.image}
 										alt={post.title}
 										width={600}
@@ -89,7 +90,7 @@ export function LatestArticlesSection({ posts }: LatestArticlesSectionProps) {
 							<div className="mt-auto flex items-center gap-3 pt-2 text-sm">
 								{post.authorImage && (
 									<div className="flex size-8 overflow-hidden rounded-full outline -outline-offset-1 outline-black/5 dark:outline-white/5">
-										<img
+										<Image
 											src={post.authorImage}
 											alt={post.authorName ?? ""}
 											width={32}

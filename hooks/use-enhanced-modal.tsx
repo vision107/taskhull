@@ -19,11 +19,11 @@ export function useEnhancedModal(): EnhancedNiceModalHandler {
 			}
 		},
 		handleClose: () => {
-			modal.hide();
+			void modal.hide();
 		},
 		handleOpenChange: (value) => {
 			if (!value) {
-				modal.hide();
+				void modal.hide();
 				modal.resolveHide();
 				if (!(modal.visible || modal.keepMounted)) {
 					modal.remove();

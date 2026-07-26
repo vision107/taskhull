@@ -104,7 +104,7 @@ export function OtpCard(): React.JSX.Element {
 												autoComplete="one-time-code"
 												onChange={(value) => {
 													field.onChange(value);
-													onSubmit();
+													void onSubmit();
 												}}
 											>
 												<InputOTPGroup>

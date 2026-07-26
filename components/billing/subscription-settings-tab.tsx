@@ -57,8 +57,8 @@ export function SubscriptionSettingsTab({
 			});
 
 			// Refresh billing data
-			utils.organization.subscription.getStatus.invalidate();
-			utils.organization.subscription.listInvoices.invalidate();
+			void utils.organization.subscription.getStatus.invalidate();
+			void utils.organization.subscription.listInvoices.invalidate();
 
 			// Clean up URL
 			const url = new URL(window.location.href);
@@ -103,7 +103,7 @@ export function SubscriptionSettingsTab({
 				toast.success(
 					"Subscription will be canceled at the end of the billing period",
 				);
-				utils.organization.subscription.getStatus.invalidate();
+				void utils.organization.subscription.getStatus.invalidate();
 			},
 			onError: (error) => {
 				toast.error(error.message);
@@ -114,7 +114,7 @@ export function SubscriptionSettingsTab({
 		trpc.organization.subscription.reactivateSubscription.useMutation({
 			onSuccess: () => {
 				toast.success("Subscription reactivated");
-				utils.organization.subscription.getStatus.invalidate();
+				void utils.organization.subscription.getStatus.invalidate();
 			},
 			onError: (error) => {
 				toast.error(error.message);
@@ -296,7 +296,7 @@ export function SubscriptionSettingsTab({
 							variant="destructive"
 							size="sm"
 							onClick={() => {
-								NiceModal.show(ConfirmationModal, {
+								void NiceModal.show(ConfirmationModal, {
 									title: "Cancel Subscription",
 									message:
 										"Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your current billing period.",

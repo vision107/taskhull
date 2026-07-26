@@ -9,7 +9,7 @@ import {
 	PlusIcon,
 	RefreshCwIcon,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { PurchaseCreditsModal } from "@/components/billing/purchase-credits-modal";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";

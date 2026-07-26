@@ -49,12 +49,15 @@ export const InputSearch = ({
 				clearTimeout(timeoutRef.current);
 			}
 
+			const target = event.currentTarget;
 			timeoutRef.current = setTimeout(() => {
-				const clonedEvent = {
-					...event,
-					target: { ...event.target, value: newValue },
-					currentTarget: { ...event.currentTarget, value: newValue },
-				} as React.ChangeEvent<HTMLInputElement>;
+				const clonedEvent = Object.create(
+					event,
+				) as React.ChangeEvent<HTMLInputElement>;
+				Object.defineProperties(clonedEvent, {
+					target: { value: target, enumerable: true },
+					currentTarget: { value: target, enumerable: true },
+				});
 				onChange?.(clonedEvent);
 			}, debounceTime);
 		},

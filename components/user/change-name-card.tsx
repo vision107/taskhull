@@ -48,7 +48,7 @@ export function ChangeNameCard(): React.JSX.Element {
 
 		toast.success("Name was updated successfully");
 
-		reloadSession();
+		void reloadSession();
 
 		methods.reset({
 			name,

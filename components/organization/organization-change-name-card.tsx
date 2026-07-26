@@ -59,8 +59,8 @@ export function OrganizationChangeNameCard(): React.JSX.Element {
 			}
 
 			toast.success("Organization name has been updated.");
-			utils.organization.list.invalidate();
-			utils.admin.organization.list.invalidate();
+			void utils.organization.list.invalidate();
+			void utils.admin.organization.list.invalidate();
 			router.refresh();
 		} catch {
 			toast.error(

@@ -73,7 +73,7 @@ export function LeadsBulkActions({
 				delimiter === "comma" ? csv : csv.replace(/,/g, delimiterChar);
 			downloadCsv(csvData, "leads.csv");
 			toast.success("CSV exported.");
-		} catch (_err) {
+		} catch {
 			toast.error("Failed to export CSV.");
 		}
 	};
@@ -88,7 +88,7 @@ export function LeadsBulkActions({
 			const base64 = await exportExcel.mutateAsync({ leadIds });
 			downloadExcel(base64, "leads.xlsx");
 			toast.success("Excel exported.");
-		} catch (_err) {
+		} catch {
 			toast.error("Failed to export Excel.");
 		}
 	};
@@ -100,7 +100,7 @@ export function LeadsBulkActions({
 			return;
 		}
 
-		NiceModal.show(ConfirmationModal, {
+		void NiceModal.show(ConfirmationModal, {
 			title: "Delete leads?",
 			message: `Are you sure you want to delete ${ids.length} lead${ids.length > 1 ? "s" : ""}? This action cannot be undone.`,
 			confirmLabel: "Delete",
@@ -112,8 +112,8 @@ export function LeadsBulkActions({
 						`${ids.length} lead${ids.length > 1 ? "s" : ""} deleted.`,
 					);
 					onClearSelection();
-					utils.organization.lead.list.invalidate();
-				} catch (_err) {
+					void utils.organization.lead.list.invalidate();
+				} catch {
 					toast.error("Failed to delete leads.");
 				}
 			},
@@ -133,8 +133,8 @@ export function LeadsBulkActions({
 				`${ids.length} lead${ids.length > 1 ? "s" : ""} updated to ${statusLabels[status] || capitalize(status)}.`,
 			);
 			onClearSelection();
-			utils.organization.lead.list.invalidate();
-		} catch (_err) {
+			void utils.organization.lead.list.invalidate();
+		} catch {
 			toast.error("Failed to update leads.");
 		}
 	};
@@ -153,7 +153,7 @@ export function LeadsBulkActions({
 			label: "Export to CSV",
 			separator: true,
 			onClick: () => {
-				NiceModal.show(CsvDelimiterModal, {
+				void NiceModal.show(CsvDelimiterModal, {
 					onConfirm: handleExportSelectedToCsv,
 				});
 			},

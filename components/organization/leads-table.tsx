@@ -173,20 +173,20 @@ export function LeadsTable(): React.JSX.Element {
 			return Array.isArray(filter?.value) ? (filter.value as string[]) : [];
 		};
 
-		setStatusFilter(getFilterValue("status"));
-		setSourceFilter(getFilterValue("source"));
-		setCreatedAtFilter(getFilterValue("createdAt"));
+		void setStatusFilter(getFilterValue("status"));
+		void setSourceFilter(getFilterValue("source"));
+		void setCreatedAtFilter(getFilterValue("createdAt"));
 
 		if (pageIndex !== 0) {
-			setPageIndex(0);
+			void setPageIndex(0);
 		}
 	};
 
 	const handleSortingChange = (newSorting: SortingState): void => {
 		// When clearing sort, fall back to default to keep URL and state consistent
-		setSorting(newSorting.length > 0 ? newSorting : DEFAULT_SORTING);
+		void setSorting(newSorting.length > 0 ? newSorting : DEFAULT_SORTING);
 		if (pageIndex !== 0) {
-			setPageIndex(0);
+			void setPageIndex(0);
 		}
 	};
 
@@ -256,7 +256,7 @@ export function LeadsTable(): React.JSX.Element {
 		onSuccess: (_data, variables) => {
 			toast.success("Lead deleted successfully");
 			removeFromSelection([variables.id]);
-			utils.organization.lead.list.invalidate();
+			void utils.organization.lead.list.invalidate();
 		},
 		onError: (error) => {
 			toast.error(error.message || "Failed to delete lead");
@@ -265,9 +265,9 @@ export function LeadsTable(): React.JSX.Element {
 
 	const handleSearchQueryChange = (value: string): void => {
 		if (value !== searchQuery) {
-			setSearchQuery(value);
+			void setSearchQuery(value);
 			if (pageIndex !== 0) {
-				setPageIndex(0);
+				void setPageIndex(0);
 			}
 		}
 	};
@@ -394,7 +394,7 @@ export function LeadsTable(): React.JSX.Element {
 						<DropdownMenuContent align="end">
 							<DropdownMenuItem
 								onClick={() => {
-									NiceModal.show(LeadsModal, { lead: row.original });
+									void NiceModal.show(LeadsModal, { lead: row.original });
 								}}
 							>
 								Edit
@@ -402,7 +402,7 @@ export function LeadsTable(): React.JSX.Element {
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
 								onClick={() => {
-									NiceModal.show(ConfirmationModal, {
+									void NiceModal.show(ConfirmationModal, {
 										title: "Delete lead?",
 										message:
 											"Are you sure you want to delete this lead? This action cannot be undone.",

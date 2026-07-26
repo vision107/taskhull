@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRightIcon, ChevronRightIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { GradientCard } from "@/components/marketing/primitives/gradient-card";
@@ -16,19 +17,21 @@ function HeroScreenshot() {
 				className="lg:hidden"
 				rounded="xl"
 			>
-				<img
+				<Image
 					src="/marketing/placeholders/placeholder-hero-light.webp"
 					alt="App screenshot"
-					width={1328}
-					height={727}
-					className="h-auto w-full dark:hidden"
+					width={2000}
+					height={1408}
+					className="dark:hidden"
+					priority
 				/>
-				<img
+				<Image
 					src="/marketing/placeholders/placeholder-hero-dark.webp"
 					alt="App screenshot"
-					width={1328}
-					height={727}
-					className="hidden h-auto w-full dark:block"
+					width={2000}
+					height={1408}
+					className="hidden dark:block"
+					priority
 				/>
 			</GradientCard>
 
@@ -39,19 +42,21 @@ function HeroScreenshot() {
 				className="hidden lg:block"
 				rounded="2xl"
 			>
-				<img
+				<Image
 					src="/marketing/placeholders/placeholder-hero-light.webp"
 					alt="App screenshot"
 					width={1328}
 					height={727}
-					className="h-auto w-full dark:hidden"
+					className="dark:hidden"
+					priority
 				/>
-				<img
+				<Image
 					src="/marketing/placeholders/placeholder-hero-dark.webp"
 					alt="App screenshot"
 					width={1328}
 					height={727}
-					className="hidden h-auto w-full dark:block"
+					className="hidden dark:block"
+					priority
 				/>
 			</GradientCard>
 		</div>

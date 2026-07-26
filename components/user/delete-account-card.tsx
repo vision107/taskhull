@@ -59,7 +59,7 @@ export function DeleteAccountCard(): React.JSX.Element {
 	});
 
 	const confirmDelete = () => {
-		NiceModal.show(ConfirmationModal, {
+		void NiceModal.show(ConfirmationModal, {
 			title: "Delete account",
 			message: "Are you sure you want to delete your account?",
 			onConfirm: async () => {

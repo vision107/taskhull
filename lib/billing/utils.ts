@@ -90,9 +90,7 @@ export function formatCurrency(amount: number, currency: string): string {
  * @param interval - The billing interval
  * @returns Formatted interval string (e.g., "/mo", "/yr")
  */
-export function formatInterval(
-	interval?: "month" | "year" | "week" | "day" | string | null,
-): string {
+export function formatInterval(interval?: string | null): string {
 	const labels: Record<string, string> = {
 		month: "/mo",
 		year: "/yr",

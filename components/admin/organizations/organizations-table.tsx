@@ -9,8 +9,6 @@ import type {
 import { format } from "date-fns";
 import {
 	AlertTriangleIcon,
-	CoinsIcon,
-	CreditCardIcon,
 	ExternalLinkIcon,
 	MoreHorizontalIcon,
 } from "lucide-react";
@@ -28,7 +26,6 @@ import { AdjustCreditsModal } from "@/components/admin/credits/adjust-credits-mo
 import { OrganizationBulkActions } from "@/components/admin/organizations/organization-bulk-actions";
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { OrganizationLogo } from "@/components/organization/organization-logo";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	createSelectionColumn,
@@ -52,7 +49,6 @@ import { appConfig } from "@/config/app.config";
 import { billingConfig } from "@/config/billing.config";
 import { useTableSelection } from "@/hooks/use-table-selection";
 import { SubscriptionStatus } from "@/lib/db/schema/enums";
-import { cn } from "@/lib/utils";
 import { OrganizationSortField } from "@/schemas/admin-organization-schemas";
 import { trpc } from "@/trpc/client";
 
@@ -274,7 +270,7 @@ export function OrganizationsTable(): React.JSX.Element {
 				}
 			},
 			onSettled: () => {
-				utils.admin.organization.list.invalidate();
+				void utils.admin.organization.list.invalidate();
 			},
 		});
 
@@ -317,21 +313,21 @@ export function OrganizationsTable(): React.JSX.Element {
 			return Array.isArray(filter?.value) ? (filter.value as string[]) : [];
 		};
 
-		setMembersCountFilter(getFilterValue("membersCount"));
-		setCreatedAtFilter(getFilterValue("createdAt"));
-		setSubscriptionStatusFilter(getFilterValue("subscriptionStatus"));
-		setSubscriptionIntervalFilter(getFilterValue("subscriptionInterval"));
-		setBalanceRangeFilter(getFilterValue("balanceRange"));
+		void setMembersCountFilter(getFilterValue("membersCount"));
+		void setCreatedAtFilter(getFilterValue("createdAt"));
+		void setSubscriptionStatusFilter(getFilterValue("subscriptionStatus"));
+		void setSubscriptionIntervalFilter(getFilterValue("subscriptionInterval"));
+		void setBalanceRangeFilter(getFilterValue("balanceRange"));
 
 		if (pageIndex !== 0) {
-			setPageIndex(0);
+			void setPageIndex(0);
 		}
 	};
 
 	const handleSortingChange = (newSorting: SortingState): void => {
-		setSorting(newSorting.length > 0 ? newSorting : DEFAULT_SORTING);
+		void setSorting(newSorting.length > 0 ? newSorting : DEFAULT_SORTING);
 		if (pageIndex !== 0) {
-			setPageIndex(0);
+			void setPageIndex(0);
 		}
 	};
 
@@ -394,9 +390,9 @@ export function OrganizationsTable(): React.JSX.Element {
 
 	const handleSearchQueryChange = (value: string): void => {
 		if (value !== searchQuery) {
-			setSearchQuery(value);
+			void setSearchQuery(value);
 			if (pageIndex !== 0) {
-				setPageIndex(0);
+				void setPageIndex(0);
 			}
 		}
 	};
@@ -634,7 +630,7 @@ export function OrganizationsTable(): React.JSX.Element {
 							<DropdownMenuContent align="end">
 								<DropdownMenuItem
 									onClick={() => {
-										NiceModal.show(ConfirmationModal, {
+										void NiceModal.show(ConfirmationModal, {
 											title: "Sync from Stripe",
 											message: `Sync subscriptions and credit purchases for ${name} from Stripe?`,
 											confirmLabel: "Sync",
@@ -673,7 +669,7 @@ export function OrganizationsTable(): React.JSX.Element {
 																	`Sync completed with issues: ${issues.join(", ")}.`,
 																);
 															}
-															utils.admin.organization.list.invalidate();
+															void utils.admin.organization.list.invalidate();
 														},
 														onError: (error) => {
 															toast.error(`Failed to sync: ${error.message}`);
@@ -689,7 +685,7 @@ export function OrganizationsTable(): React.JSX.Element {
 								<DropdownMenuItem
 									onSelect={(e) => {
 										e.preventDefault();
-										NiceModal.show(AdjustCreditsModal, {
+										void NiceModal.show(AdjustCreditsModal, {
 											organizationId: id,
 											organizationName: name,
 											currentBalance: row.original.credits ?? 0,
@@ -718,7 +714,7 @@ export function OrganizationsTable(): React.JSX.Element {
 													className="text-destructive focus:bg-destructive/10 focus:text-destructive"
 													onSelect={(e) => {
 														e.preventDefault();
-														NiceModal.show(ConfirmationModal, {
+														void NiceModal.show(ConfirmationModal, {
 															title: "Cancel subscription?",
 															message: `Are you sure you want to cancel the subscription for ${name} at the end of the current period?`,
 															confirmText: "Cancel at period end",
@@ -741,7 +737,7 @@ export function OrganizationsTable(): React.JSX.Element {
 								<DropdownMenuSeparator />
 								<DropdownMenuItem
 									onClick={() => {
-										NiceModal.show(ConfirmationModal, {
+										void NiceModal.show(ConfirmationModal, {
 											title: "Delete organization",
 											message:
 												"Are you sure you want to delete this organization? This action cannot be undone.",
@@ -755,9 +751,9 @@ export function OrganizationsTable(): React.JSX.Element {
 															toast.success(
 																"Organization has been deleted successfully!",
 															);
-															utils.organization.get.invalidate();
-															utils.organization.list.invalidate();
-															utils.admin.organization.list.invalidate();
+															void utils.organization.get.invalidate();
+															void utils.organization.list.invalidate();
+															void utils.admin.organization.list.invalidate();
 														},
 														onError: () => {
 															toast.success(

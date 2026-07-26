@@ -58,7 +58,7 @@ export function OrganizationBulkActions({
 				delimiter === "comma" ? csv : csv.replace(/,/g, delimiterChar);
 			downloadCsv(csvData, "organizations.csv");
 			toast.success("CSV exported.");
-		} catch (_err) {
+		} catch {
 			toast.error("Failed to export CSV.");
 		}
 	};
@@ -73,7 +73,7 @@ export function OrganizationBulkActions({
 			const base64 = await exportExcel.mutateAsync({ organizationIds });
 			downloadExcel(base64, "organizations.xlsx");
 			toast.success("Excel exported.");
-		} catch (_err) {
+		} catch {
 			toast.error("Failed to export Excel.");
 		}
 	};
@@ -82,7 +82,7 @@ export function OrganizationBulkActions({
 		{
 			label: "Export to CSV",
 			onClick: () => {
-				NiceModal.show(CsvDelimiterModal, {
+				void NiceModal.show(CsvDelimiterModal, {
 					onConfirm: handleExportSelectedToCsv,
 				});
 			},
@@ -100,7 +100,7 @@ export function OrganizationBulkActions({
 					toast.error("No organizations selected.");
 					return;
 				}
-				NiceModal.show(ConfirmationModal, {
+				void NiceModal.show(ConfirmationModal, {
 					title: "Sync from Stripe",
 					message: `Sync subscriptions and credit purchases for ${organizationIds.length} organization${organizationIds.length !== 1 ? "s" : ""} from Stripe?`,
 					confirmLabel: "Sync",
@@ -135,7 +135,7 @@ export function OrganizationBulkActions({
 											`Sync completed with issues: ${issues.join(", ")}.`,
 										);
 									}
-									utils.admin.organization.list.invalidate();
+									void utils.admin.organization.list.invalidate();
 									onClearSelection();
 								},
 								onError: (error) => {

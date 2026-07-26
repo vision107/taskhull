@@ -1,7 +1,7 @@
 "use client";
 
 import NiceModal from "@ebay/nice-modal-react";
-import { ImageIcon, TrashIcon } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 import * as React from "react";
 import { useDropzone } from "react-dropzone";
 import { v4 as uuid } from "uuid";
@@ -46,7 +46,7 @@ export function UserAvatarUpload({
 
 			await reloadSession();
 			onSuccess();
-		} catch (_err) {
+		} catch {
 			onError();
 		} finally {
 			setDeleting(false);
@@ -55,7 +55,7 @@ export function UserAvatarUpload({
 
 	const { getRootProps, getInputProps } = useDropzone({
 		onDrop: (acceptedFiles) => {
-			NiceModal.show(CropImageModal, {
+			void NiceModal.show(CropImageModal, {
 				image: acceptedFiles[0],
 				onCrop: async (croppedImageData: Blob | null) => {
 					if (!(croppedImageData && user)) {
@@ -93,7 +93,7 @@ export function UserAvatarUpload({
 						await reloadSession();
 
 						onSuccess();
-					} catch (_err) {
+					} catch {
 						onError();
 					} finally {
 						setUploading(false);

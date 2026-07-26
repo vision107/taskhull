@@ -172,20 +172,20 @@ export function UsersTable(): React.JSX.Element {
 			return Array.isArray(filter?.value) ? (filter.value as string[]) : [];
 		};
 
-		setRoleFilter(getFilterValue("role"));
-		setEmailVerifiedFilter(getFilterValue("emailVerified"));
-		setBannedFilter(getFilterValue("banned"));
-		setCreatedAtFilter(getFilterValue("createdAt"));
+		void setRoleFilter(getFilterValue("role"));
+		void setEmailVerifiedFilter(getFilterValue("emailVerified"));
+		void setBannedFilter(getFilterValue("banned"));
+		void setCreatedAtFilter(getFilterValue("createdAt"));
 
 		if (pageIndex !== 0) {
-			setPageIndex(0);
+			void setPageIndex(0);
 		}
 	};
 
 	const handleSortingChange = (newSorting: SortingState): void => {
-		setSorting(newSorting.length > 0 ? newSorting : DEFAULT_SORTING);
+		void setSorting(newSorting.length > 0 ? newSorting : DEFAULT_SORTING);
 		if (pageIndex !== 0) {
-			setPageIndex(0);
+			void setPageIndex(0);
 		}
 	};
 
@@ -254,7 +254,7 @@ export function UsersTable(): React.JSX.Element {
 				"/dashboard",
 				window.location.origin,
 			).toString();
-		} catch (_error) {
+		} catch {
 			toast.dismiss(toastId);
 			toast.error("Failed to impersonate user");
 		}
@@ -305,7 +305,7 @@ export function UsersTable(): React.JSX.Element {
 
 	const unbanUserMutation = trpc.admin.user.unbanUser.useMutation({
 		onSuccess: () => {
-			utils.admin.user.list.invalidate();
+			void utils.admin.user.list.invalidate();
 		},
 	});
 
@@ -324,9 +324,9 @@ export function UsersTable(): React.JSX.Element {
 
 	const handleSearchQueryChange = (value: string): void => {
 		if (value !== searchQuery) {
-			setSearchQuery(value);
+			void setSearchQuery(value);
 			if (pageIndex !== 0) {
-				setPageIndex(0);
+				void setPageIndex(0);
 			}
 		}
 	};
@@ -522,7 +522,7 @@ export function UsersTable(): React.JSX.Element {
 							{!row.original.banned ? (
 								<DropdownMenuItem
 									onClick={() => {
-										NiceModal.show(BanUserModal, {
+										void NiceModal.show(BanUserModal, {
 											userId: row.original.id,
 											userName: row.original.name || row.original.email,
 										});
@@ -538,7 +538,7 @@ export function UsersTable(): React.JSX.Element {
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
 								onClick={() => {
-									NiceModal.show(ConfirmationModal, {
+									void NiceModal.show(ConfirmationModal, {
 										title: "Delete user?",
 										message:
 											"Are you sure you want to delete this user? This action cannot be undone.",

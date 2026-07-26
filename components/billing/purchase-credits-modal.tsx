@@ -85,27 +85,12 @@ export const PurchaseCreditsModal = NiceModal.create<PurchaseCreditsModalProps>(
 								<div
 									key={pkg.id}
 									className={cn(
-										"relative cursor-pointer rounded-lg border bg-neutral-50 p-4 transition-colors hover:border-primary dark:bg-neutral-950",
+										"relative rounded-lg border bg-neutral-50 p-4 transition-colors dark:bg-neutral-950",
 
 										purchaseMutation.isPending &&
 											selectedPackage === pkg.id &&
 											"opacity-70",
 									)}
-									onClick={() => {
-										if (!purchaseMutation.isPending) {
-											handlePurchase(pkg.id);
-										}
-									}}
-									onKeyDown={(e) => {
-										if (
-											(e.key === "Enter" || e.key === " ") &&
-											!purchaseMutation.isPending
-										) {
-											handlePurchase(pkg.id);
-										}
-									}}
-									role="button"
-									tabIndex={0}
 								>
 									{pkg.popular && (
 										<span className="absolute inset-x-0 -top-3 mx-auto flex h-6 w-fit items-center rounded-full bg-linear-to-br from-purple-400 to-amber-300 px-3 py-1 text-xs font-medium text-amber-950 ring-1 ring-white/20 ring-offset-1 ring-offset-gray-950/5 ring-inset">
@@ -141,6 +126,7 @@ export const PurchaseCreditsModal = NiceModal.create<PurchaseCreditsModalProps>(
 												size="sm"
 												className="mt-1.5"
 												disabled={purchaseMutation.isPending}
+												onClick={() => handlePurchase(pkg.id)}
 											>
 												{purchaseMutation.isPending &&
 												selectedPackage === pkg.id

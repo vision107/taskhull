@@ -37,7 +37,7 @@ export const CsvDelimiterModal = NiceModal.create<CsvDelimiterModalProps>(
 
 		const handleConfirm = () => {
 			onConfirm(delimiter);
-			modal.hide();
+			void modal.hide();
 		};
 
 		return (
