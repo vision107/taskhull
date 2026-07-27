@@ -39,6 +39,7 @@ export function ChangeEmailCard(): React.JSX.Element {
 	const onSubmit = methods.handleSubmit(async ({ email }) => {
 		const { error } = await authClient.changeEmail({
 			newEmail: email,
+			callbackURL: "/dashboard/settings?tab=profile",
 		});
 
 		if (error) {

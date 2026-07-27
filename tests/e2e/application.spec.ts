@@ -61,6 +61,10 @@ test("owner can navigate account and organization surfaces", async ({
 });
 
 test("owner can enroll in and authenticate with TOTP", async ({ page }) => {
+	// The preceding navigation test intentionally visits several authenticated
+	// pages in quick succession. Let Better Auth's short in-memory rate-limit
+	// window reset before beginning a separate authentication flow.
+	await page.waitForTimeout(10_500);
 	await signIn(page, "owner@e2e.local");
 	await page.goto("/dashboard/settings?tab=security");
 	await page.getByRole("button", { name: "Set up a new Factor" }).click();
@@ -102,6 +106,9 @@ test("AI chat enforces organization credits", async ({ page }) => {
 });
 
 test("administrator can access every admin surface", async ({ page }) => {
+	// The preceding scenarios use all three credential sign-in attempts allowed
+	// in Better Auth's short protection window.
+	await page.waitForTimeout(10_500);
 	await signIn(page, "admin@e2e.local");
 	for (const [path, heading] of [
 		["users", "Users"],

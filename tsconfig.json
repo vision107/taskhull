@@ -38,5 +38,12 @@
 		".next/types/**/*.ts",
 		".next/dev/types/**/*.ts"
 	],
-	"exclude": ["node_modules", "public", "packages", "tests/e2e/**/*"]
+	"exclude": [
+		"node_modules",
+		"playwright-report",
+		"public",
+		"packages",
+		"test-results",
+		"tests/e2e/**/*"
+	]
 }

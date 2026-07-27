@@ -79,13 +79,12 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 				throw error;
 			}
 
+			await reloadSession();
 			modal.handleClose();
 
 			toast.success(
 				"Two-factor authentication has been disabled successfully.",
 			);
-
-			void reloadSession();
 		},
 
 		onError: () => {
@@ -97,19 +96,21 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 
 	const verifyTwoFactorMutation = useMutation({
 		mutationKey: ["verifyTwoFactor"],
-		mutationFn: async () => {
+		mutationFn: async (code: string) => {
 			const { error } = await authClient.twoFactor.verifyTotp({
-				code: totpCode,
+				code,
 			});
 
 			if (error) {
 				throw error;
 			}
 
-			toast.success("Two-factor authentication has been enabled successfully.");
-
-			void reloadSession();
+			await reloadSession();
 			modal.handleClose();
+			toast.success("Two-factor authentication has been enabled successfully.");
+		},
+		onError: () => {
+			toast.error("Could not verify the one-time password. Please try again.");
 		},
 	});
 
@@ -126,7 +127,9 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 			return;
 		}
 
-		verifyTwoFactorMutation.mutate();
+		const formData = new FormData(e.currentTarget);
+		const code = formData.get("totpCode");
+		verifyTwoFactorMutation.mutate(typeof code === "string" ? code : "");
 	};
 	return (
 		<Dialog open={modal.visible}>
@@ -192,6 +195,7 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 									</Label>
 									<Input
 										autoComplete="one-time-code"
+										name="totpCode"
 										onChange={(e) => setTotpCode(e.target.value)}
 										value={totpCode}
 									/>

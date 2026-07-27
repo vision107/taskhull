@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import type * as React from "react";
+import * as React from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ import { otpSchema } from "@/schemas/auth-schemas";
 
 export function OtpCard(): React.JSX.Element {
 	const searchParams = useSearchParams();
+	const [isVerifying, setIsVerifying] = React.useState(false);
 
 	const invitationId = searchParams.get("invitationId");
 	const redirectTo = searchParams.get("redirectTo");
@@ -52,7 +53,13 @@ export function OtpCard(): React.JSX.Element {
 		},
 	});
 
-	const onSubmit = methods.handleSubmit(async ({ code }) => {
+	const verifyCode = async (code: string) => {
+		if (isVerifying) {
+			return;
+		}
+
+		setIsVerifying(true);
+
 		try {
 			const { error } = await authClient.twoFactor.verifyTotp({
 				code,
@@ -71,8 +78,12 @@ export function OtpCard(): React.JSX.Element {
 						: undefined,
 				),
 			});
+		} finally {
+			setIsVerifying(false);
 		}
-	});
+	};
+
+	const onSubmit = methods.handleSubmit(({ code }) => verifyCode(code));
 
 	return (
 		<Card className="w-full border-transparent px-4 py-8 dark:border-border">
@@ -104,8 +115,8 @@ export function OtpCard(): React.JSX.Element {
 												autoComplete="one-time-code"
 												onChange={(value) => {
 													field.onChange(value);
-													void onSubmit();
 												}}
+												onComplete={(value) => void verifyCode(value)}
 											>
 												<InputOTPGroup>
 													<InputOTPSlot className="size-10 text-lg" index={0} />
@@ -132,7 +143,7 @@ export function OtpCard(): React.JSX.Element {
 								</AlertDescription>
 							</Alert>
 						)}
-						<Button loading={methods.formState.isSubmitting} type="submit">
+						<Button loading={isVerifying} type="submit">
 							Verify
 						</Button>
 					</form>
