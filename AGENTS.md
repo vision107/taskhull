@@ -14,6 +14,8 @@ npm run docker:up     # Start PostgreSQL
 npm run docker:down   # Stop PostgreSQL
 npm run stripe:listen # Forward Stripe webhooks locally
 npm run email:dev     # Preview email templates (port 3001)
+npm run mcp:build     # Compile the local MCP server
+npm run mcp:start     # Start the MCP server over stdio
 npm run test          # Run unit tests
 npm run e2e           # Run E2E tests
 npm run lint          # Run Oxlint
@@ -284,6 +286,10 @@ const leads = await db.query.leadTable.findMany();
 ## UI Components
 
 Use existing components from `@/components/ui/`:
+
+When the local MCP server is connected, use its `list_components` and
+`read_component` tools before creating a component to discover reusable UI and
+feature components.
 
 - `Button`, `Input`, `Textarea`, `Select`
 - `Card`, `Dialog`, `Sheet`, `Drawer`

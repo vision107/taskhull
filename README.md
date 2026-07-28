@@ -39,6 +39,7 @@ Open [http://localhost:3000](http://localhost:3000)
 | [README_TRPC.md](./README_TRPC.md)                   | tRPC API layer and procedures                 |
 | [README_BILLING.md](./README_BILLING.md)             | Stripe billing, subscriptions, webhooks       |
 | [README_EMAIL.md](./README_EMAIL.md)                 | Resend email system and templates             |
+| [README_MCP.md](./README_MCP.md)                     | Local read-only MCP server                    |
 | [README_STORAGE.md](./README_STORAGE.md)             | S3-compatible file storage                    |
 | [README_CONTENT.md](./README_CONTENT.md)             | Blog, docs and marketing pages                |
 | [README_AI.md](./README_AI.md)                       | AI chatbot system                             |
@@ -58,6 +59,8 @@ Open [http://localhost:3000](http://localhost:3000)
 | `npm run db:studio`     | Open Drizzle Studio (DB GUI)    |
 | `npm run docker:up`     | Start PostgreSQL                |
 | `npm run stripe:listen` | Forward Stripe webhooks locally |
+| `npm run mcp:build`     | Compile the local MCP server    |
+| `npm run mcp:start`     | Start the MCP server over stdio |
 | `npm run deps:check`    | Check for dependency updates    |
 | `npm run deps:update`   | Update package.json versions    |
 

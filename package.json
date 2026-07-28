@@ -39,6 +39,8 @@
 		"stripe:listen": "stripe listen --forward-to localhost:3000/api/webhooks/stripe",
 		"stripe:trigger": "stripe trigger",
 		"email:dev": "npx react-email dev --dir lib/email/templates --port 3001",
+		"mcp:build": "tsc -p mcp/tsconfig.json",
+		"mcp:start": "npm run --silent mcp:build && node dist/mcp/index.js",
 		"prepare": "husky",
 		"postinstall": "fumadocs-mdx",
 		"deps:check": "npx npm-check-updates",
@@ -154,6 +156,7 @@
 		"zod": "4.4.3"
 	},
 	"devDependencies": {
+		"@modelcontextprotocol/sdk": "1.30.0",
 		"@next/bundle-analyzer": "16.2.12",
 		"@playwright/test": "1.62.0",
 		"@tailwindcss/postcss": "4.3.3",

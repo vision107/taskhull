@@ -1,0 +1,19 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"allowJs": false,
+		"checkJs": false,
+		"declaration": false,
+		"incremental": false,
+		"isolatedModules": false,
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"noEmit": false,
+		"outDir": "../dist/mcp",
+		"plugins": [],
+		"rootDir": ".",
+		"sourceMap": true,
+		"types": ["node"]
+	},
+	"include": ["**/*.ts"]
+}

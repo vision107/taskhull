@@ -1,0 +1,9 @@
+{
+	"mcpServers": {
+		"achromatic": {
+			"type": "stdio",
+			"command": "npm",
+			"args": ["run", "--silent", "mcp:start"]
+		}
+	}
+}
