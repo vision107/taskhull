@@ -24,10 +24,11 @@ export function SaaSProviders({
 			<NextTopLoader color="var(--color-primary)" />
 			<ThemeProvider
 				attribute="class"
-				defaultTheme={appConfig.theme.default}
+				defaultTheme={appConfig.theme.saas.default}
 				disableTransitionOnChange
 				enableSystem
-				themes={[...appConfig.theme.available]}
+				storageKey={appConfig.theme.saas.storageKey}
+				themes={[...appConfig.theme.saas.available]}
 			>
 				<TooltipProvider>
 					<NiceModal.Provider>{children}</NiceModal.Provider>

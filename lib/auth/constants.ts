@@ -8,6 +8,12 @@ import type { OrganizationMemberRole } from "@/types/organization-member-role";
 export const CAPTCHA_RESPONSE_HEADER = "x-captcha-response";
 
 /**
+ * Header name for passing an organization invitation to the signup endpoint.
+ * The server validates the invitation and submitted email before creating a user.
+ */
+export const ORGANIZATION_INVITATION_ID_HEADER = "x-organization-invitation-id";
+
+/**
  * Human-readable labels for organization member roles.
  */
 export const organizationMemberRoleLabels = {

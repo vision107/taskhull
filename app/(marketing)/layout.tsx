@@ -20,7 +20,10 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
 				<main className="min-h-screen">{children}</main>
 				<Footer />
 			</div>
-			<ThemeToggle className="fixed right-4 bottom-4 z-50 rounded-full" />
+			<ThemeToggle
+				className="fixed right-4 bottom-4 z-50 rounded-full"
+				themeArea="marketing"
+			/>
 			<CookieBanner />
 		</MarketingProviders>
 	);

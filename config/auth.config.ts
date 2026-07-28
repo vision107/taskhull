@@ -45,6 +45,7 @@ export const authConfig = {
 			"Access-Control-Request-Method",
 			"Access-Control-Request-Headers",
 			"X-CSRF-Token",
+			"X-Organization-Invitation-Id",
 			"Accept-Version",
 			"Content-Length",
 			"Content-MD5",

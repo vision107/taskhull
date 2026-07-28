@@ -89,7 +89,7 @@ function isMac(): boolean {
 }
 
 // Build available theme modes from config + system option
-const MODES = ["system", ...appConfig.theme.available];
+const MODES = ["system", ...appConfig.theme.saas.available];
 
 function Icon({ theme }: { theme: string | undefined }) {
 	switch (theme) {
@@ -287,7 +287,7 @@ export function UserDropDownMenu(
 									<DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
 								</DropdownMenuItem>
 								<DropdownMenuSeparator />
-								{appConfig.theme.available.length > 1 && (
+								{appConfig.theme.saas.available.length > 1 && (
 									<>
 										<DropdownMenuSub>
 											<DropdownMenuSubTrigger

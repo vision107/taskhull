@@ -42,6 +42,7 @@ import { authClient } from "@/lib/auth/client";
 import {
 	CAPTCHA_RESPONSE_HEADER,
 	getAuthErrorMessage,
+	ORGANIZATION_INVITATION_ID_HEADER,
 } from "@/lib/auth/constants";
 import { type OAuthProvider, oAuthProviders } from "@/lib/auth/oauth-providers";
 import { signUpSchema } from "@/schemas/auth-schemas";
@@ -83,13 +84,21 @@ export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
 				password,
 				name,
 				callbackURL: redirectPath,
-				fetchOptions: captchaEnabled
-					? {
-							headers: {
-								[CAPTCHA_RESPONSE_HEADER]: captchaToken,
-							},
-						}
-					: undefined,
+				fetchOptions:
+					captchaEnabled || invitationId
+						? {
+								headers: {
+									...(captchaEnabled
+										? { [CAPTCHA_RESPONSE_HEADER]: captchaToken }
+										: {}),
+									...(invitationId
+										? {
+												[ORGANIZATION_INVITATION_ID_HEADER]: invitationId,
+											}
+										: {}),
+								},
+							}
+						: undefined,
 			});
 			if (error) {
 				throw error;

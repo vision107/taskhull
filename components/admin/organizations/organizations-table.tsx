@@ -48,6 +48,11 @@ import {
 import { appConfig } from "@/config/app.config";
 import { billingConfig } from "@/config/billing.config";
 import { useTableSelection } from "@/hooks/use-table-selection";
+import {
+	getSubscriptionSnapshot,
+	optimisticallyCancelSubscription,
+	restoreSubscriptionSnapshot,
+} from "@/lib/billing/optimistic-subscription";
 import { SubscriptionStatus } from "@/lib/db/schema/enums";
 import { OrganizationSortField } from "@/schemas/admin-organization-schemas";
 import { trpc } from "@/trpc/client";
@@ -230,28 +235,24 @@ export function OrganizationsTable(): React.JSX.Element {
 				// Cancel outgoing refetches
 				await utils.admin.organization.list.cancel(queryInput);
 
-				// Snapshot the previous value
 				const previousData = utils.admin.organization.list.getData(queryInput);
+				const previousSubscription = previousData
+					? getSubscriptionSnapshot(previousData.organizations, subscriptionId)
+					: null;
 
 				// Optimistically update to the new value
 				if (previousData) {
 					utils.admin.organization.list.setData(queryInput, {
 						...previousData,
-						organizations: previousData.organizations.map((org) =>
-							org.subscriptionId === subscriptionId
-								? {
-										...org,
-										subscriptionStatus: immediate
-											? SubscriptionStatus.canceled
-											: org.subscriptionStatus,
-										cancelAtPeriodEnd: immediate ? org.cancelAtPeriodEnd : true,
-									}
-								: org,
+						organizations: optimisticallyCancelSubscription(
+							previousData.organizations,
+							subscriptionId,
+							Boolean(immediate),
 						),
 					});
 				}
 
-				return { previousData };
+				return { previousSubscription };
 			},
 			onSuccess: (result) => {
 				toast.success(
@@ -262,10 +263,18 @@ export function OrganizationsTable(): React.JSX.Element {
 			},
 			onError: (error, _variables, context) => {
 				toast.error(`Failed to cancel subscription: ${error.message}`);
-				if (context?.previousData) {
-					utils.admin.organization.list.setData(
-						queryInput,
-						context.previousData,
+				const previousSubscription = context?.previousSubscription;
+				if (previousSubscription) {
+					utils.admin.organization.list.setData(queryInput, (current) =>
+						current
+							? {
+									...current,
+									organizations: restoreSubscriptionSnapshot(
+										current.organizations,
+										previousSubscription,
+									),
+								}
+							: current,
 					);
 				}
 			},

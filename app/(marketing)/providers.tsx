@@ -24,10 +24,11 @@ export function MarketingProviders({
 			<NextTopLoader color="var(--color-primary)" />
 			<ThemeProvider
 				attribute="class"
-				defaultTheme={appConfig.theme.default}
+				defaultTheme={appConfig.theme.marketing.default}
 				disableTransitionOnChange
 				enableSystem
-				themes={[...appConfig.theme.available]}
+				storageKey={appConfig.theme.marketing.storageKey}
+				themes={[...appConfig.theme.marketing.available]}
 			>
 				<TooltipProvider>
 					<NiceModal.Provider>

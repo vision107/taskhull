@@ -1,6 +1,6 @@
 # Deployment Guide
 
-Deploy your SaaS to production on Vercel with a PostgreSQL database.
+Deploy your SaaS to production on Vercel or a self-hosted Node.js server with a PostgreSQL database.
 
 ---
 
@@ -49,6 +49,26 @@ postgresql://user:password@host:5432/database?sslmode=require
 4. Click **Deploy**
 
 That's it! Your app is live.
+
+---
+
+## Self-hosting behind a reverse proxy
+
+The protected-route session check calls Better Auth's server API directly, so it does not make an HTTP request back through your public domain. You do not need an internal API URL for Docker, Nginx or another reverse proxy.
+
+Set `NEXT_PUBLIC_SITE_URL` to the public HTTPS origin and forward the original host and scheme to Next.js. A minimal Nginx location looks like this:
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+```
+
+If Nginx and Next.js run in separate containers, replace `127.0.0.1` with the Next.js service name. Keep the public URL on HTTPS so secure authentication cookies are sent correctly.
 
 ---
 

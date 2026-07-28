@@ -1,31 +1,20 @@
-import { betterFetch } from "@better-fetch/fetch";
 import { type NextRequest, NextResponse } from "next/server";
 import { withQuery } from "ufo";
+
+import { auth } from "@/lib/auth";
 
 import { appConfig } from "./config/app.config";
 import { authConfig } from "./config/auth.config";
 import type { Session } from "./types/session";
 
-async function getSession(req: NextRequest): Promise<Session | null> {
+export async function getSession(req: NextRequest): Promise<Session | null> {
 	try {
-		const { data: session, error } = await betterFetch<Session>(
-			"/api/auth/get-session?disableCookieCache=true",
-			{
-				baseURL: req.nextUrl.origin,
-				headers: {
-					cookie: req.headers.get("cookie") || "",
-				},
+		return await auth.api.getSession({
+			headers: req.headers,
+			query: {
+				disableCookieCache: true,
 			},
-		);
-
-		if (error) {
-			if (process.env.NODE_ENV === "development") {
-				console.error("Session fetch failed:", error);
-			}
-			return null;
-		}
-
-		return session;
+		});
 	} catch (error) {
 		if (process.env.NODE_ENV === "development") {
 			console.error("Error getting session:", error);

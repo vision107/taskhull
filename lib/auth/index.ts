@@ -13,6 +13,8 @@ import { and, eq } from "drizzle-orm";
 
 import { appConfig } from "@/config/app.config";
 import { authConfig } from "@/config/auth.config";
+import { ORGANIZATION_INVITATION_ID_HEADER } from "@/lib/auth/constants";
+import { assertInvitationSignUpAllowed } from "@/lib/auth/invitation-signup";
 import { getOrganizationPlanLimits } from "@/lib/billing/guards";
 import { syncOrganizationSeats } from "@/lib/billing/seat-sync";
 import { db, userTable } from "@/lib/db";
@@ -148,6 +150,9 @@ export const auth = betterAuth({
 			clientId: env.GOOGLE_CLIENT_ID ?? "",
 			clientSecret: env.GOOGLE_CLIENT_SECRET ?? "",
 			scope: ["email", "profile"],
+			// Invitation-only signup uses the verified email/password flow.
+			// Existing Google users can still sign in, but OAuth cannot create users.
+			disableSignUp: !authConfig.enableSignup,
 		},
 	},
 	plugins: [
@@ -332,6 +337,26 @@ export const auth = betterAuth({
 	hooks: {
 		before: createAuthMiddleware(async (ctx) => {
 			if (ctx.path === "/sign-up/email" || ctx.path === "/sign-in/email") {
+				if (ctx.path === "/sign-up/email") {
+					await assertInvitationSignUpAllowed({
+						publicSignupEnabled: authConfig.enableSignup,
+						invitationId: ctx.getHeader(ORGANIZATION_INVITATION_ID_HEADER),
+						email: ctx.body?.email,
+						findInvitation: async (invitationId) => {
+							const invitation = await db.query.invitationTable.findFirst({
+								where: (table, { eq }) => eq(table.id, invitationId),
+								columns: {
+									email: true,
+									status: true,
+									expiresAt: true,
+								},
+							});
+
+							return invitation ?? null;
+						},
+					});
+				}
+
 				// Check if user is banned when signing in
 				if (ctx.path === "/sign-in/email") {
 					const targetUser = await db.query.userTable.findFirst({

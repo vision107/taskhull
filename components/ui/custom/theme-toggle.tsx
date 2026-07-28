@@ -4,16 +4,19 @@ import { MoonIcon, SunIcon } from "lucide-react";
 import type * as React from "react";
 
 import { Button, type ButtonProps } from "@/components/ui/button";
-import { appConfig } from "@/config/app.config";
+import { appConfig, type ThemeConfig } from "@/config/app.config";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 
 export type ThemeToggleElement = React.ComponentRef<typeof Button>;
 export type ThemeToggleProps = React.ComponentPropsWithoutRef<typeof Button> &
-	Omit<ButtonProps, "variant" | "size" | "onClick">;
+	Omit<ButtonProps, "variant" | "size" | "onClick"> & {
+		themeArea?: keyof ThemeConfig;
+	};
 
 function ThemeToggle({
 	className,
+	themeArea = "saas",
 	...props
 }: ThemeToggleProps): React.JSX.Element | null {
 	const { resolvedTheme, setTheme } = useTheme();
@@ -22,7 +25,7 @@ function ThemeToggle({
 	};
 
 	// Don't render if only one theme is available (no toggle needed)
-	if (appConfig.theme.available.length <= 1) {
+	if (appConfig.theme[themeArea].available.length <= 1) {
 		return null;
 	}
 

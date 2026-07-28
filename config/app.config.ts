@@ -26,10 +26,20 @@ export const appConfig = {
 	},
 	// Theme configuration
 	theme: {
-		// Default theme for new users: "light", "dark", or "system"
-		default: "system" as const,
-		// Available themes users can choose from
-		available: ["light", "dark"] as const,
+		marketing: {
+			// Default theme for new visitors: "light", "dark", or "system"
+			default: "system" as const,
+			// Available themes visitors can choose from
+			available: ["light", "dark"] as const,
+			storageKey: "marketing-theme",
+		},
+		saas: {
+			// Default theme for new users: "light", "dark", or "system"
+			default: "system" as const,
+			// Available themes users can choose from
+			available: ["light", "dark"] as const,
+			storageKey: "saas-theme",
+		},
 	},
 	// Organization settings
 	organizations: {
@@ -63,9 +73,15 @@ export type SiteConfig = {
 	};
 };
 
-export type ThemeConfig = {
+export type ThemeAreaConfig = {
 	default: "light" | "dark" | "system";
 	available: readonly ("light" | "dark")[];
+	storageKey: string;
+};
+
+export type ThemeConfig = {
+	marketing: ThemeAreaConfig;
+	saas: ThemeAreaConfig;
 };
 
 export type OrganizationsConfig = {
