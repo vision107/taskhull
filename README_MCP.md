@@ -194,11 +194,11 @@ configuration.
 ## Safety model
 
 Every file-reading tool uses a repository-generated allowlist. Implementation
-reads are limited to `app/`, `config/`, `lib/`, `schemas/`, `trpc/` and selected
-root entry points such as `proxy.ts`. Arbitrary paths, parent-directory
-traversal, symbolic links, oversized files and files such as `.env` are not
-exposed. Database tools only parse checked-in schema and migration files; they
-never connect to PostgreSQL or run Drizzle commands.
+reads are limited to `app/`, `config/`, `hooks/`, `lib/`, `schemas/`, `trpc/`,
+`types/` and selected root entry points such as `proxy.ts`. Arbitrary paths,
+parent-directory traversal, symbolic links, oversized files and files such as
+`.env` are not exposed. Database tools only parse checked-in schema and
+migration files; they never connect to PostgreSQL or run Drizzle commands.
 
 Treat tool output as repository context, not permission to bypass the
 authorization, tenant-isolation, migration-review or validation requirements in
