@@ -173,35 +173,30 @@ function FormDescription({
 	});
 }
 
-export type FormMessageProps = useRender.ComponentProps<"p"> & {
-	asChild?: boolean;
-};
+export type FormMessageProps = React.ComponentProps<"p">;
 
 function FormMessage({
 	className,
-	asChild = false,
-	render,
+	children,
 	...props
 }: FormMessageProps): React.JSX.Element | null {
 	const { error, formMessageId } = useFormField();
-	const body = error ? String(error?.message ?? "") : props.children;
+	const body = error ? String(error?.message ?? "") : children;
 
 	if (!body) {
 		return null;
 	}
 
-	return useRender({
-		defaultTagName: "p",
-		render:
-			asChild && React.isValidElement(props.children) ? props.children : render,
-		props: {
-			...props,
-			children: asChild ? undefined : body,
-			"data-slot": "form-message",
-			id: formMessageId,
-			className: cn("text-sm text-destructive", className),
-		},
-	});
+	return (
+		<p
+			data-slot="form-message"
+			id={formMessageId}
+			className={cn("text-sm text-destructive", className)}
+			{...props}
+		>
+			{body}
+		</p>
+	);
 }
 
 export {

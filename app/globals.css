@@ -350,14 +350,6 @@ input[type="number"] {
 	appearance: textfield;
 }
 
-/* Keep scroll area content sized to its viewport. */
-[data-slot="scroll-area-viewport"] > div {
-	min-width: auto !important;
-	display: block !important;
-	height: inherit;
-	width: inherit;
-}
-
 /* Prevent overscroll/bounce effect */
 html,
 body {

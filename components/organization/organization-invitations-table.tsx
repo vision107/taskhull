@@ -147,6 +147,7 @@ export function OrganizationInvitationsTable({
 										<DropdownMenuItem
 											disabled={!isPending}
 											onClick={() => revokeInvitation(row.original.id)}
+											variant="destructive"
 										>
 											Revoke Invitation
 										</DropdownMenuItem>

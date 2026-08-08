@@ -72,7 +72,7 @@ export function OrganizationInvitationCard({
 	};
 
 	return (
-		<Card className="w-full border-transparent px-4 py-8 dark:border-border">
+		<Card className="w-full border-transparent px-0 py-8 [--card-spacing:--spacing(8)] dark:border-border">
 			<CardHeader>
 				<CardTitle className="text-center text-base lg:text-lg">
 					You've been invited

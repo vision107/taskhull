@@ -61,49 +61,48 @@ export function AdminMenuItems(): React.JSX.Element {
 	};
 
 	return (
-		<ScrollArea
-			className="h-full [&>[data-slot=scroll-area-viewport]>div]:flex! [&>[data-slot=scroll-area-viewport]>div]:h-full [&>[data-slot=scroll-area-viewport]>div]:flex-col"
-			verticalScrollBar
-		>
-			{menuGroups.map((group, groupIndex) => (
-				<SidebarGroup key={groupIndex}>
-					<SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-					<SidebarMenu>
-						{group.items.map((item, itemIndex) => {
-							const isActive = getIsActive(item);
-							return (
-								<SidebarMenuItem key={itemIndex}>
-									<SidebarMenuButton
-										asChild
-										isActive={isActive}
-										tooltip={item.label}
-									>
-										<Link href={item.href}>
-											<item.icon
-												className={cn(
-													"size-4 shrink-0",
-													isActive
-														? "text-foreground"
-														: "text-muted-foreground",
-												)}
-											/>
-											<span
-												className={cn(
-													isActive
-														? "dark:text-foreground"
-														: "dark:text-muted-foreground",
-												)}
-											>
-												{item.label}
-											</span>
-										</Link>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-							);
-						})}
-					</SidebarMenu>
-				</SidebarGroup>
-			))}
+		<ScrollArea className="h-full" verticalScrollBar>
+			<div className="flex min-h-full flex-col">
+				{menuGroups.map((group, groupIndex) => (
+					<SidebarGroup key={groupIndex}>
+						<SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+						<SidebarMenu>
+							{group.items.map((item, itemIndex) => {
+								const isActive = getIsActive(item);
+								return (
+									<SidebarMenuItem key={itemIndex}>
+										<SidebarMenuButton
+											asChild
+											isActive={isActive}
+											tooltip={item.label}
+										>
+											<Link href={item.href}>
+												<item.icon
+													className={cn(
+														"size-4 shrink-0",
+														isActive
+															? "text-foreground"
+															: "text-muted-foreground",
+													)}
+												/>
+												<span
+													className={cn(
+														isActive
+															? "dark:text-foreground"
+															: "dark:text-muted-foreground",
+													)}
+												>
+													{item.label}
+												</span>
+											</Link>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+								);
+							})}
+						</SidebarMenu>
+					</SidebarGroup>
+				))}
+			</div>
 		</ScrollArea>
 	);
 }

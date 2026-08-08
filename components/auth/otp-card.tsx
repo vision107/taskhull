@@ -86,7 +86,7 @@ export function OtpCard(): React.JSX.Element {
 	const onSubmit = methods.handleSubmit(({ code }) => verifyCode(code));
 
 	return (
-		<Card className="w-full border-transparent px-4 py-8 dark:border-border">
+		<Card className="w-full border-transparent px-0 py-8 [--card-spacing:--spacing(8)] dark:border-border">
 			<CardHeader>
 				<CardTitle className="text-base lg:text-lg">
 					Verify your account
@@ -149,7 +149,7 @@ export function OtpCard(): React.JSX.Element {
 					</form>
 				</Form>
 			</CardContent>
-			<CardFooter className="flex justify-center gap-1 text-sm text-muted-foreground">
+			<CardFooter className="flex justify-center gap-1 py-4 text-sm text-muted-foreground">
 				<Link className="text-foreground underline" href="/auth/sign-in">
 					Go to login page
 				</Link>

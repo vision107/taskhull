@@ -143,19 +143,65 @@ export function OrganizationMenuItems(): React.JSX.Element {
 	};
 
 	return (
-		<ScrollArea
-			className="h-full [&>[data-slot=scroll-area-viewport]>div]:flex! [&>[data-slot=scroll-area-viewport]>div]:h-full [&>[data-slot=scroll-area-viewport]>div]:flex-col [&>[data-slot=scroll-area-viewport]>div]:-space-y-1"
-			/* Overriding the hardcoded { disply:table } to get full flex height */
-			verticalScrollBar
-		>
-			{menuGroups.map((group, groupIndex) => {
-				if (!group.collapsible) {
-					return (
-						<React.Fragment key={groupIndex}>
-							<SidebarGroup className="pb-1">
-								{group.label && (
-									<SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-								)}
+		<ScrollArea className="h-full" verticalScrollBar>
+			<div className="flex min-h-full flex-col -space-y-1">
+				{menuGroups.map((group, groupIndex) => {
+					if (!group.collapsible) {
+						return (
+							<React.Fragment key={groupIndex}>
+								<SidebarGroup className="pb-1">
+									{group.label && (
+										<SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+									)}
+									<SidebarMenu>
+										{group.items.map((item, itemIndex) => {
+											const isActive = getIsActive(item);
+											return (
+												<SidebarMenuItem key={itemIndex}>
+													<SidebarMenuButton
+														asChild
+														isActive={isActive}
+														tooltip={item.label}
+													>
+														<Link
+															href={item.href}
+															{...(item.external && {
+																target: "_blank",
+																rel: "noopener noreferrer",
+															})}
+														>
+															<item.icon
+																className={cn(
+																	"size-4 shrink-0",
+																	isActive
+																		? "text-foreground"
+																		: "text-muted-foreground",
+																)}
+															/>
+															<span
+																className={cn(
+																	isActive
+																		? "dark:text-foreground"
+																		: "dark:text-muted-foreground",
+																)}
+															>
+																{item.label}
+															</span>
+														</Link>
+													</SidebarMenuButton>
+												</SidebarMenuItem>
+											);
+										})}
+									</SidebarMenu>
+								</SidebarGroup>
+							</React.Fragment>
+						);
+					}
+
+					// When collapsed, show all items as individual menu buttons
+					if (isCollapsed) {
+						return (
+							<SidebarGroup className="pb-1" key={groupIndex}>
 								<SidebarMenu>
 									{group.items.map((item, itemIndex) => {
 										const isActive = getIsActive(item);
@@ -197,115 +243,69 @@ export function OrganizationMenuItems(): React.JSX.Element {
 									})}
 								</SidebarMenu>
 							</SidebarGroup>
-						</React.Fragment>
-					);
-				}
+						);
+					}
 
-				// When collapsed, show all items as individual menu buttons
-				if (isCollapsed) {
+					// When expanded, show collapsible groups
+					const isOpen = openGroup === group.label;
 					return (
 						<SidebarGroup className="pb-1" key={groupIndex}>
 							<SidebarMenu>
-								{group.items.map((item, itemIndex) => {
-									const isActive = getIsActive(item);
-									return (
-										<SidebarMenuItem key={itemIndex}>
+								<Collapsible
+									className="group/collapsible"
+									onOpenChange={() => handleGroupToggle(group.label)}
+									open={isOpen}
+								>
+									<SidebarMenuItem>
+										<CollapsibleTrigger asChild>
 											<SidebarMenuButton
-												asChild
-												isActive={isActive}
-												tooltip={item.label}
+												className="flex w-full items-center justify-between px-2 text-xs font-medium text-sidebar-foreground/70"
+												tooltip={group.label}
 											>
-												<Link
-													href={item.href}
-													{...(item.external && {
-														target: "_blank",
-														rel: "noopener noreferrer",
-													})}
-												>
-													<item.icon
-														className={cn(
-															"size-4 shrink-0",
-															isActive
-																? "text-foreground"
-																: "text-muted-foreground",
-														)}
-													/>
-													<span
-														className={cn(
-															isActive
-																? "dark:text-foreground"
-																: "dark:text-muted-foreground",
-														)}
-													>
-														{item.label}
-													</span>
-												</Link>
+												<span>{group.label}</span>
+												<ChevronRight className="ml-auto h-4 w-4 shrink-0 transition-transform duration-200 group-data-open/collapsible:rotate-90" />
 											</SidebarMenuButton>
-										</SidebarMenuItem>
-									);
-								})}
+										</CollapsibleTrigger>
+										<CollapsibleContent>
+											<SidebarMenuSub className="ml-0 border-0">
+												{group.items.map((item, itemIndex) => {
+													const isActive = getIsActive(item);
+													return (
+														<SidebarMenuSubItem key={itemIndex}>
+															<SidebarMenuSubButton asChild isActive={isActive}>
+																<Link
+																	href={item.href}
+																	{...(item.external && {
+																		target: "_blank",
+																		rel: "noopener noreferrer",
+																	})}
+																>
+																	<item.icon
+																		className={cn("size-4 shrink-0")}
+																	/>
+																	<span
+																		className={cn(
+																			isActive
+																				? "dark:text-foreground"
+																				: "dark:text-muted-foreground",
+																		)}
+																	>
+																		{item.label}
+																	</span>
+																</Link>
+															</SidebarMenuSubButton>
+														</SidebarMenuSubItem>
+													);
+												})}
+											</SidebarMenuSub>
+										</CollapsibleContent>
+									</SidebarMenuItem>
+								</Collapsible>
 							</SidebarMenu>
 						</SidebarGroup>
 					);
-				}
-
-				// When expanded, show collapsible groups
-				const isOpen = openGroup === group.label;
-				return (
-					<SidebarGroup className="pb-1" key={groupIndex}>
-						<SidebarMenu>
-							<Collapsible
-								className="group/collapsible"
-								onOpenChange={() => handleGroupToggle(group.label)}
-								open={isOpen}
-							>
-								<SidebarMenuItem>
-									<CollapsibleTrigger asChild>
-										<SidebarMenuButton
-											className="flex w-full items-center justify-between px-2 text-xs font-medium text-sidebar-foreground/70"
-											tooltip={group.label}
-										>
-											<span>{group.label}</span>
-											<ChevronRight className="ml-auto h-4 w-4 shrink-0 transition-transform duration-200 group-data-open/collapsible:rotate-90" />
-										</SidebarMenuButton>
-									</CollapsibleTrigger>
-									<CollapsibleContent>
-										<SidebarMenuSub className="ml-0 border-0">
-											{group.items.map((item, itemIndex) => {
-												const isActive = getIsActive(item);
-												return (
-													<SidebarMenuSubItem key={itemIndex}>
-														<SidebarMenuSubButton asChild isActive={isActive}>
-															<Link
-																href={item.href}
-																{...(item.external && {
-																	target: "_blank",
-																	rel: "noopener noreferrer",
-																})}
-															>
-																<item.icon className={cn("size-4 shrink-0")} />
-																<span
-																	className={cn(
-																		isActive
-																			? "dark:text-foreground"
-																			: "dark:text-muted-foreground",
-																	)}
-																>
-																	{item.label}
-																</span>
-															</Link>
-														</SidebarMenuSubButton>
-													</SidebarMenuSubItem>
-												);
-											})}
-										</SidebarMenuSub>
-									</CollapsibleContent>
-								</SidebarMenuItem>
-							</Collapsible>
-						</SidebarMenu>
-					</SidebarGroup>
-				);
-			})}
+				})}
+			</div>
 		</ScrollArea>
 	);
 }

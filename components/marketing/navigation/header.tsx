@@ -120,8 +120,8 @@ export function Header() {
 									<NavigationMenuTrigger className="rounded-full bg-transparent text-marketing-fg hover:bg-marketing-card-hover hover:text-marketing-fg data-popup-open:bg-marketing-card-hover">
 										Product
 									</NavigationMenuTrigger>
-									<NavigationMenuContent>
-										<ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+									<NavigationMenuContent className="w-[600px]! max-w-[calc(100vw-3rem)]!">
+										<ul className="grid w-full gap-3 p-4 md:grid-cols-2">
 											{PRODUCT_LINKS.map((link) => (
 												<ListItem
 													key={link.title}
@@ -153,8 +153,8 @@ export function Header() {
 									<NavigationMenuTrigger className="rounded-full bg-transparent text-marketing-fg hover:bg-marketing-card-hover hover:text-marketing-fg data-popup-open:bg-marketing-card-hover">
 										Resources
 									</NavigationMenuTrigger>
-									<NavigationMenuContent>
-										<ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+									<NavigationMenuContent className="w-[600px]! max-w-[calc(100vw-3rem)]!">
+										<ul className="grid w-full gap-3 p-4 md:grid-cols-2">
 											{RESOURCE_LINKS.map((link) => (
 												<ListItem
 													key={link.title}
@@ -172,8 +172,8 @@ export function Header() {
 									<NavigationMenuTrigger className="rounded-full bg-transparent text-marketing-fg hover:bg-marketing-card-hover hover:text-marketing-fg data-popup-open:bg-marketing-card-hover">
 										Company
 									</NavigationMenuTrigger>
-									<NavigationMenuContent>
-										<ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+									<NavigationMenuContent className="w-[600px]! max-w-[calc(100vw-3rem)]!">
+										<ul className="grid w-full gap-3 p-4 md:grid-cols-2">
 											{companyLinks.map((link) => (
 												<ListItem
 													key={link.title}
@@ -362,7 +362,7 @@ function ListItem({
 				<Link
 					href={href}
 					className={cn(
-						"block space-y-1 rounded-lg p-3 leading-none no-underline transition-colors outline-none select-none hover:bg-marketing-card-hover hover:text-marketing-fg focus:bg-marketing-card-hover focus:text-marketing-fg",
+						"flex! flex-col! items-start! gap-1! rounded-lg p-3 leading-none no-underline transition-colors outline-none select-none hover:bg-marketing-card-hover hover:text-marketing-fg focus:bg-marketing-card-hover focus:text-marketing-fg",
 						className,
 					)}
 					{...props}

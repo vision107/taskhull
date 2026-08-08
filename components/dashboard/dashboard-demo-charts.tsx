@@ -574,7 +574,7 @@ export function EmailPerformanceChart() {
 								className="relative z-30 flex flex-1 cursor-pointer flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-muted/50 sm:border-t-0 sm:border-l sm:px-8 sm:py-6"
 								onClick={() => setSelectedMetric(chart)}
 							>
-								<span className="text-xs text-muted-foreground">
+								<span className="text-xs whitespace-nowrap text-muted-foreground">
 									{chartConfig[chart].label}
 								</span>
 								<span className="text-base leading-none font-bold sm:text-xl">

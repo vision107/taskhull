@@ -20,23 +20,23 @@ export function MarketingProviders({
 	children,
 }: React.PropsWithChildren): React.JSX.Element {
 	return (
-		<NuqsAdapter>
-			<NextTopLoader color="var(--color-primary)" />
-			<ThemeProvider
-				attribute="class"
-				defaultTheme={appConfig.theme.marketing.default}
-				disableTransitionOnChange
-				enableSystem
-				storageKey={appConfig.theme.marketing.storageKey}
-				themes={[...appConfig.theme.marketing.available]}
-			>
+		<ThemeProvider
+			attribute="class"
+			defaultTheme={appConfig.theme.marketing.default}
+			disableTransitionOnChange
+			enableSystem
+			storageKey={appConfig.theme.marketing.storageKey}
+			themes={[...appConfig.theme.marketing.available]}
+		>
+			<NuqsAdapter>
+				<NextTopLoader color="var(--color-primary)" />
 				<TooltipProvider>
 					<NiceModal.Provider>
 						<RootProvider>{children}</RootProvider>
 					</NiceModal.Provider>
 				</TooltipProvider>
-			</ThemeProvider>
-			<Toaster position="top-right" />
-		</NuqsAdapter>
+				<Toaster position="top-right" />
+			</NuqsAdapter>
+		</ThemeProvider>
 	);
 }

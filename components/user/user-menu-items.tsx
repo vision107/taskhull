@@ -125,18 +125,17 @@ export function UserMenuItems(): React.JSX.Element {
 	};
 
 	return (
-		<ScrollArea
-			className="h-full [&>[data-slot=scroll-area-viewport]>div]:flex! [&>[data-slot=scroll-area-viewport]>div]:h-full [&>[data-slot=scroll-area-viewport]>div]:flex-col"
-			verticalScrollBar
-		>
-			{menuGroups.map((group, groupIndex) => (
-				<SidebarGroup key={groupIndex}>
-					<SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-					<SidebarMenu suppressHydrationWarning>
-						{group.items?.map(renderMenuItem)}
-					</SidebarMenu>
-				</SidebarGroup>
-			))}
+		<ScrollArea className="h-full" verticalScrollBar>
+			<div className="flex min-h-full flex-col">
+				{menuGroups.map((group, groupIndex) => (
+					<SidebarGroup key={groupIndex}>
+						<SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+						<SidebarMenu suppressHydrationWarning>
+							{group.items?.map(renderMenuItem)}
+						</SidebarMenu>
+					</SidebarGroup>
+				))}
+			</div>
 		</ScrollArea>
 	);
 }

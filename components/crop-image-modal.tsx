@@ -24,13 +24,20 @@ export const CropImageModal = NiceModal.create<CropImageModalProps>(
 	({ image, onCrop }) => {
 		const modal = useEnhancedModal();
 		const cropperRef = React.useRef<ReactCropperElement>(null);
+		const [cropperReady, setCropperReady] = React.useState(false);
+		const [dialogReady, setDialogReady] = React.useState(false);
+		const [imageSrc, setImageSrc] = React.useState<string | null>(null);
 
 		const getCroppedImage = async () => {
 			const cropper = cropperRef.current?.cropper;
 
+			if (!cropper) {
+				return null;
+			}
+
 			const imageBlob = await new Promise<Blob | null>((resolve) => {
 				cropper
-					?.getCroppedCanvas({
+					.getCroppedCanvas({
 						maxWidth: 256,
 						maxHeight: 256,
 					})
@@ -40,39 +47,44 @@ export const CropImageModal = NiceModal.create<CropImageModalProps>(
 			return imageBlob;
 		};
 
-		const imageSrc = React.useMemo(
-			() => image && URL.createObjectURL(image),
-			[image],
-		);
-
-		// Clean up object URL when component unmounts or image changes
 		React.useEffect(() => {
-			return () => {
-				if (imageSrc) {
-					URL.revokeObjectURL(imageSrc);
-				}
-			};
-		}, [imageSrc]);
+			if (!image) {
+				setImageSrc(null);
+				return;
+			}
+
+			const objectUrl = URL.createObjectURL(image);
+			setImageSrc(objectUrl);
+
+			return () => URL.revokeObjectURL(objectUrl);
+		}, [image]);
 
 		return (
 			<Dialog
 				open={modal.visible}
 				onOpenChange={modal.handleOpenChange}
-				onOpenChangeComplete={modal.handleOpenChangeComplete}
+				onOpenChangeComplete={(open) => {
+					setDialogReady(open);
+					if (!open) {
+						setCropperReady(false);
+					}
+					modal.handleOpenChangeComplete(open);
+				}}
 			>
 				<DialogContent className="max-w-xl">
 					<DialogHeader>
-						<DialogTitle />
+						<DialogTitle>Crop organization logo</DialogTitle>
 					</DialogHeader>
-					<div>
-						{imageSrc && (
+					<div className="h-80 overflow-hidden rounded-lg bg-muted">
+						{dialogReady && imageSrc && (
 							<Cropper
 								aspectRatio={1}
-								guides={true}
+								guides
 								initialAspectRatio={1}
+								onInitialized={() => setCropperReady(true)}
 								ref={cropperRef}
 								src={imageSrc}
-								style={{ width: "100%" }}
+								style={{ height: "100%", width: "100%" }}
 							/>
 						)}
 					</div>
@@ -81,6 +93,7 @@ export const CropImageModal = NiceModal.create<CropImageModalProps>(
 							Cancel
 						</Button>
 						<Button
+							disabled={!cropperReady}
 							onClick={async () => {
 								onCrop(await getCroppedImage());
 								modal.handleClose();

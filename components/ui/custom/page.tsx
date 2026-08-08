@@ -51,7 +51,7 @@ function PagePrimaryBar({
 	return (
 		<div
 			className={cn(
-				"relative flex h-14 flex-row items-center gap-1 border-b border-border/50 px-4 sm:px-6",
+				"relative flex h-14 flex-row items-center gap-1 border-b border-border/50 pr-4 pl-2 sm:pr-6 sm:pl-3",
 				className,
 			)}
 			{...other}

@@ -343,6 +343,7 @@ export type CommandItemProps = Omit<
 	value?: string;
 	keywords?: string[];
 	onSelect?: (value: string) => void;
+	showCheckmark?: boolean;
 };
 
 function CommandItem({
@@ -352,6 +353,7 @@ function CommandItem({
 	keywords = [],
 	onClick,
 	onSelect,
+	showCheckmark = true,
 	...props
 }: CommandItemProps) {
 	const id = React.useId();
@@ -398,7 +400,9 @@ function CommandItem({
 			{...props}
 		>
 			{children}
-			<CheckIcon className="ml-auto opacity-0 group-has-data-[slot=command-shortcut]/command-item:hidden group-data-[checked=true]/command-item:opacity-100" />
+			{showCheckmark && (
+				<CheckIcon className="ml-auto opacity-0 group-has-data-[slot=command-shortcut]/command-item:hidden group-data-[checked=true]/command-item:opacity-100" />
+			)}
 		</AutocompletePrimitive.Item>
 	);
 }

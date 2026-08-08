@@ -69,7 +69,7 @@ export function ForgotPasswordCard(): React.JSX.Element {
 	});
 
 	return (
-		<Card className="w-full border-transparent px-4 py-8 dark:border-border">
+		<Card className="w-full border-transparent px-0 py-8 [--card-spacing:--spacing(8)] dark:border-border">
 			<CardHeader>
 				<CardTitle className="text-base lg:text-lg">
 					Forgot your password?
@@ -143,7 +143,7 @@ export function ForgotPasswordCard(): React.JSX.Element {
 					</Form>
 				)}
 			</CardContent>
-			<CardFooter className="flex justify-center gap-1 text-sm text-muted-foreground">
+			<CardFooter className="flex justify-center gap-1 py-4 text-sm text-muted-foreground">
 				<span>Remembered your password?</span>
 				<Link className="text-foreground underline" href="/auth/sign-in">
 					Sign in

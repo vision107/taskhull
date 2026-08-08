@@ -200,7 +200,7 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 										src={activeOrganization.logo}
 									/>
 								) : (
-									<PersonalAccountAvatar className="size-6" />
+									<PersonalAccountAvatar className="size-6 after:border-0" />
 								)}
 								<div className="flex flex-1 flex-col items-start gap-0.5 overflow-hidden text-left">
 									<span className="block w-full truncate leading-none font-semibold">
@@ -215,32 +215,35 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 							</div>
 						</SidebarMenuButton>
 					</PopoverTrigger>
-					<PopoverContent align="start" className="w-60 p-0" forceMount>
-						<Command onValueChange={setSelectedValue} value={selectedValue}>
+					<PopoverContent align="start" className="w-60 gap-0 p-0" forceMount>
+						<Command
+							className="p-0"
+							onValueChange={setSelectedValue}
+							value={selectedValue}
+						>
 							<CommandInput className="h-9" placeholder="Search..." />
 							<CommandList>
-								<CommandGroup>
-									<CommandItem
-										className="cursor-pointer"
-										onSelect={handleSelectPersonalAccount}
-										value={user.id}
-									>
-										<PersonalAccountAvatar className="size-5 shrink-0" />
-										<span className="mr-2">Personal</span>
-										<Icon type="personal" />
-									</CommandItem>
-								</CommandGroup>
+								<CommandItem
+									className="mx-1 mt-1 cursor-pointer"
+									onSelect={handleSelectPersonalAccount}
+									showCheckmark={false}
+									value={user.id}
+								>
+									<PersonalAccountAvatar className="size-6 shrink-0 after:border-0" />
+									<span className="mr-2">Personal</span>
+									<Icon type="personal" />
+								</CommandItem>
 								{Array.isArray(allOrganizations) &&
 									allOrganizations.length > 0 && (
 										<>
-											<CommandSeparator />
+											<CommandSeparator className="my-1" />
 											<CommandGroup
 												heading={`Your Organizations (${allOrganizations.length})`}
 											>
 												{allOrganizations.map((organization) => (
 													<CommandItem
 														className={cn(
-															"group my-1 flex cursor-pointer justify-between transition-colors",
+															"group flex cursor-pointer justify-between transition-colors",
 															{
 																"bg-muted":
 																	isOrganizationArea &&
@@ -251,6 +254,7 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 														onSelect={() =>
 															handleSelectOrganization(organization.id)
 														}
+														showCheckmark={false}
 														value={organization.id}
 													>
 														<div className="flex items-center">

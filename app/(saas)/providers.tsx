@@ -20,21 +20,21 @@ export function SaaSProviders({
 	children,
 }: SaaSProvidersProps): React.JSX.Element {
 	return (
-		<NuqsAdapter>
-			<NextTopLoader color="var(--color-primary)" />
-			<ThemeProvider
-				attribute="class"
-				defaultTheme={appConfig.theme.saas.default}
-				disableTransitionOnChange
-				enableSystem
-				storageKey={appConfig.theme.saas.storageKey}
-				themes={[...appConfig.theme.saas.available]}
-			>
+		<ThemeProvider
+			attribute="class"
+			defaultTheme={appConfig.theme.saas.default}
+			disableTransitionOnChange
+			enableSystem
+			storageKey={appConfig.theme.saas.storageKey}
+			themes={[...appConfig.theme.saas.available]}
+		>
+			<NuqsAdapter>
+				<NextTopLoader color="var(--color-primary)" />
 				<TooltipProvider>
 					<NiceModal.Provider>{children}</NiceModal.Provider>
 				</TooltipProvider>
-			</ThemeProvider>
-			<Toaster position="top-right" />
-		</NuqsAdapter>
+				<Toaster position="top-right" />
+			</NuqsAdapter>
+		</ThemeProvider>
 	);
 }
