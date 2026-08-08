@@ -52,12 +52,12 @@ export const PurchaseCreditsModal = NiceModal.create<PurchaseCreditsModalProps>(
 		};
 
 		return (
-			<Dialog open={modal.visible} onOpenChange={modal.handleOpenChange}>
-				<DialogContent
-					className="max-w-2xl"
-					onAnimationEndCapture={modal.handleAnimationEndCapture}
-					onClose={modal.handleClose}
-				>
+			<Dialog
+				open={modal.visible}
+				onOpenChange={modal.handleOpenChange}
+				onOpenChangeComplete={modal.handleOpenChangeComplete}
+			>
+				<DialogContent className="max-w-2xl">
 					<DialogHeader>
 						<DialogTitle>Buy Credits</DialogTitle>
 						<DialogDescription>

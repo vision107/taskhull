@@ -1,57 +1,52 @@
-"use client";
-
-import { Slot } from "@radix-ui/react-slot";
+import { mergeProps } from "@base-ui/react/merge-props";
+import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
-import type * as React from "react";
+import * as React from "react";
 
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
-export type ItemGroupElement = HTMLDivElement;
-export type ItemGroupProps = React.ComponentPropsWithoutRef<"div">;
-
-function ItemGroup({ className, ...props }: ItemGroupProps): React.JSX.Element {
+function ItemGroup({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			role="list"
 			data-slot="item-group"
-			className={cn("group/item-group flex flex-col", className)}
+			className={cn(
+				"group/item-group flex w-full flex-col gap-4 has-data-[size=sm]:gap-2.5 has-data-[size=xs]:gap-2",
+				className,
+			)}
 			{...props}
 		/>
 	);
 }
 
-export type ItemSeparatorElement = React.ComponentRef<typeof Separator>;
-export type ItemSeparatorProps = React.ComponentPropsWithoutRef<
-	typeof Separator
->;
-
 function ItemSeparator({
 	className,
 	...props
-}: ItemSeparatorProps): React.JSX.Element {
+}: React.ComponentProps<typeof Separator>) {
 	return (
 		<Separator
 			data-slot="item-separator"
 			orientation="horizontal"
-			className={cn("my-0", className)}
+			className={cn("my-2", className)}
 			{...props}
 		/>
 	);
 }
 
 const itemVariants = cva(
-	"group/item flex items-center border border-transparent text-sm rounded-md transition-colors [a]:hover:bg-accent/50 [a]:transition-colors duration-100 flex-wrap outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+	"group/item flex w-full flex-wrap items-center rounded-lg border text-sm transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [a]:transition-colors [a]:hover:bg-muted",
 	{
 		variants: {
 			variant: {
-				default: "bg-transparent",
+				default: "border-transparent",
 				outline: "border-border",
-				muted: "bg-muted/50",
+				muted: "border-transparent bg-muted/50",
 			},
 			size: {
-				default: "p-4 gap-4 ",
-				sm: "py-3 px-4 gap-2.5",
+				default: "gap-2.5 px-3 py-2.5",
+				sm: "gap-2.5 px-3 py-2.5",
+				xs: "gap-2 px-2.5 py-2 in-data-[slot=dropdown-menu-content]:p-0",
 			},
 		},
 		defaultVariants: {
@@ -61,38 +56,39 @@ const itemVariants = cva(
 	},
 );
 
-export type ItemElement = HTMLDivElement;
-export type ItemProps = React.ComponentPropsWithoutRef<"div"> &
-	VariantProps<typeof itemVariants> & { asChild?: boolean };
-
 function Item({
 	className,
 	variant = "default",
 	size = "default",
-	asChild = false,
+	render,
 	...props
-}: ItemProps): React.JSX.Element {
-	const Comp = asChild ? Slot : "div";
-	return (
-		<Comp
-			data-slot="item"
-			data-variant={variant}
-			data-size={size}
-			className={cn(itemVariants({ variant, size, className }))}
-			{...props}
-		/>
-	);
+}: useRender.ComponentProps<"div"> & VariantProps<typeof itemVariants>) {
+	return useRender({
+		defaultTagName: "div",
+		props: mergeProps<"div">(
+			{
+				className: cn(itemVariants({ variant, size, className })),
+			},
+			props,
+		),
+		render,
+		state: {
+			slot: "item",
+			variant,
+			size,
+		},
+	});
 }
 
 const itemMediaVariants = cva(
-	"flex shrink-0 items-center justify-center gap-2 group-has-[[data-slot=item-description]]/item:self-start [&_svg]:pointer-events-none group-has-[[data-slot=item-description]]/item:translate-y-0.5",
+	"flex shrink-0 items-center justify-center gap-2 group-has-data-[slot=item-description]/item:translate-y-0.5 group-has-data-[slot=item-description]/item:self-start [&_svg]:pointer-events-none",
 	{
 		variants: {
 			variant: {
 				default: "bg-transparent",
-				icon: "size-8 border rounded-sm bg-muted [&_svg:not([class*='size-'])]:size-4",
+				icon: "[&_svg:not([class*='size-'])]:size-4",
 				image:
-					"size-10 rounded-sm overflow-hidden [&_img]:size-full [&_img]:object-cover",
+					"size-10 overflow-hidden rounded-sm group-data-[size=sm]/item:size-8 group-data-[size=xs]/item:size-6 [&_img]:size-full [&_img]:object-cover",
 			},
 		},
 		defaultVariants: {
@@ -101,15 +97,11 @@ const itemMediaVariants = cva(
 	},
 );
 
-export type ItemMediaElement = HTMLDivElement;
-export type ItemMediaProps = React.ComponentPropsWithoutRef<"div"> &
-	VariantProps<typeof itemMediaVariants>;
-
 function ItemMedia({
 	className,
 	variant = "default",
 	...props
-}: ItemMediaProps): React.JSX.Element {
+}: React.ComponentProps<"div"> & VariantProps<typeof itemMediaVariants>) {
 	return (
 		<div
 			data-slot="item-media"
@@ -120,18 +112,12 @@ function ItemMedia({
 	);
 }
 
-export type ItemContentElement = HTMLDivElement;
-export type ItemContentProps = React.ComponentPropsWithoutRef<"div">;
-
-function ItemContent({
-	className,
-	...props
-}: ItemContentProps): React.JSX.Element {
+function ItemContent({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="item-content"
 			className={cn(
-				"flex flex-1 flex-col gap-1 [&+[data-slot=item-content]]:flex-none",
+				"flex flex-1 flex-col gap-1 group-data-[size=xs]/item:gap-0 [&+[data-slot=item-content]]:flex-none",
 				className,
 			)}
 			{...props}
@@ -139,15 +125,12 @@ function ItemContent({
 	);
 }
 
-export type ItemTitleElement = HTMLDivElement;
-export type ItemTitleProps = React.ComponentPropsWithoutRef<"div">;
-
-function ItemTitle({ className, ...props }: ItemTitleProps): React.JSX.Element {
+function ItemTitle({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="item-title"
 			className={cn(
-				"flex w-fit items-center gap-2 text-sm leading-snug font-medium",
+				"line-clamp-1 flex w-fit items-center gap-2 text-sm leading-snug font-medium underline-offset-4",
 				className,
 			)}
 			{...props}
@@ -155,19 +138,12 @@ function ItemTitle({ className, ...props }: ItemTitleProps): React.JSX.Element {
 	);
 }
 
-export type ItemDescriptionElement = HTMLParagraphElement;
-export type ItemDescriptionProps = React.ComponentPropsWithoutRef<"p">;
-
-function ItemDescription({
-	className,
-	...props
-}: ItemDescriptionProps): React.JSX.Element {
+function ItemDescription({ className, ...props }: React.ComponentProps<"p">) {
 	return (
 		<p
 			data-slot="item-description"
 			className={cn(
-				"line-clamp-2 text-sm leading-normal font-normal text-balance text-muted-foreground",
-				"[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary",
+				"line-clamp-2 text-left text-sm leading-normal font-normal text-muted-foreground group-data-[size=xs]/item:text-xs [&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary",
 				className,
 			)}
 			{...props}
@@ -175,13 +151,7 @@ function ItemDescription({
 	);
 }
 
-export type ItemActionsElement = HTMLDivElement;
-export type ItemActionsProps = React.ComponentPropsWithoutRef<"div">;
-
-function ItemActions({
-	className,
-	...props
-}: ItemActionsProps): React.JSX.Element {
+function ItemActions({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="item-actions"
@@ -191,13 +161,7 @@ function ItemActions({
 	);
 }
 
-export type ItemHeaderElement = HTMLDivElement;
-export type ItemHeaderProps = React.ComponentPropsWithoutRef<"div">;
-
-function ItemHeader({
-	className,
-	...props
-}: ItemHeaderProps): React.JSX.Element {
+function ItemHeader({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="item-header"
@@ -210,13 +174,7 @@ function ItemHeader({
 	);
 }
 
-export type ItemFooterElement = HTMLDivElement;
-export type ItemFooterProps = React.ComponentPropsWithoutRef<"div">;
-
-function ItemFooter({
-	className,
-	...props
-}: ItemFooterProps): React.JSX.Element {
+function ItemFooter({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="item-footer"
@@ -228,6 +186,43 @@ function ItemFooter({
 		/>
 	);
 }
+
+export type ItemGroupElement = import("react").ComponentRef<typeof ItemGroup>;
+export type ItemGroupProps = import("react").ComponentProps<typeof ItemGroup>;
+export type ItemSeparatorElement = import("react").ComponentRef<
+	typeof ItemSeparator
+>;
+export type ItemSeparatorProps = import("react").ComponentProps<
+	typeof ItemSeparator
+>;
+export type ItemElement = import("react").ComponentRef<typeof Item>;
+export type ItemProps = import("react").ComponentProps<typeof Item>;
+export type ItemMediaElement = import("react").ComponentRef<typeof ItemMedia>;
+export type ItemMediaProps = import("react").ComponentProps<typeof ItemMedia>;
+export type ItemContentElement = import("react").ComponentRef<
+	typeof ItemContent
+>;
+export type ItemContentProps = import("react").ComponentProps<
+	typeof ItemContent
+>;
+export type ItemTitleElement = import("react").ComponentRef<typeof ItemTitle>;
+export type ItemTitleProps = import("react").ComponentProps<typeof ItemTitle>;
+export type ItemDescriptionElement = import("react").ComponentRef<
+	typeof ItemDescription
+>;
+export type ItemDescriptionProps = import("react").ComponentProps<
+	typeof ItemDescription
+>;
+export type ItemActionsElement = import("react").ComponentRef<
+	typeof ItemActions
+>;
+export type ItemActionsProps = import("react").ComponentProps<
+	typeof ItemActions
+>;
+export type ItemHeaderElement = import("react").ComponentRef<typeof ItemHeader>;
+export type ItemHeaderProps = import("react").ComponentProps<typeof ItemHeader>;
+export type ItemFooterElement = import("react").ComponentRef<typeof ItemFooter>;
+export type ItemFooterProps = import("react").ComponentProps<typeof ItemFooter>;
 
 export {
 	Item,

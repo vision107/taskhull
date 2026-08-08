@@ -1,6 +1,6 @@
 "use client";
 
-import * as TabsPrimitive from "@radix-ui/react-tabs";
+import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -49,10 +49,10 @@ function UnderlinedTabsList({
 }
 
 export type UnderlinedTabsTriggerElement = React.ComponentRef<
-	typeof TabsPrimitive.Trigger
+	typeof TabsPrimitive.Tab
 >;
 export type UnderlinedTabsTriggerProps = React.ComponentPropsWithoutRef<
-	typeof TabsPrimitive.Trigger
+	typeof TabsPrimitive.Tab
 >;
 
 function UnderlinedTabsTrigger({
@@ -60,10 +60,10 @@ function UnderlinedTabsTrigger({
 	...props
 }: UnderlinedTabsTriggerProps): React.JSX.Element {
 	return (
-		<TabsPrimitive.Trigger
+		<TabsPrimitive.Tab
 			data-slot="underlined-tabs-trigger"
 			className={cn(
-				"group relative mx-4 inline-flex h-12 cursor-pointer items-center justify-center rounded-none border-b border-b-transparent bg-transparent py-1 pt-2 pb-3 text-sm whitespace-nowrap text-muted-foreground shadow-none ring-offset-background transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:font-medium data-[state=active]:text-foreground data-[state=active]:shadow-none",
+				"group relative mx-4 inline-flex h-12 cursor-pointer items-center justify-center rounded-none border-b border-b-transparent bg-transparent py-1 pt-2 pb-3 text-sm whitespace-nowrap text-muted-foreground shadow-none ring-offset-background transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-active:border-b-primary data-active:font-medium data-active:text-foreground data-active:shadow-none",
 				className,
 			)}
 			{...props}
@@ -72,10 +72,10 @@ function UnderlinedTabsTrigger({
 }
 
 export type UnderlinedTabsContentElement = React.ComponentRef<
-	typeof TabsPrimitive.Content
+	typeof TabsPrimitive.Panel
 >;
 export type UnderlinedTabsContentProps = React.ComponentPropsWithoutRef<
-	typeof TabsPrimitive.Content
+	typeof TabsPrimitive.Panel
 >;
 
 function UnderlinedTabsContent({
@@ -83,7 +83,7 @@ function UnderlinedTabsContent({
 	...props
 }: UnderlinedTabsContentProps): React.JSX.Element {
 	return (
-		<TabsPrimitive.Content
+		<TabsPrimitive.Panel
 			data-slot="underlined-tabs-content"
 			className={cn("flex-1 outline-none", className)}
 			{...props}

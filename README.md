@@ -7,7 +7,7 @@ A production-ready SaaS boilerplate with authentication, billing, organizations 
 | Category          | Technologies                               |
 | ----------------- | ------------------------------------------ |
 | **Framework**     | Next.js 16.3, React 19, TypeScript 7       |
-| **Styling**       | Tailwind CSS 4, Radix UI, Lucide Icons     |
+| **Styling**       | Tailwind CSS 4, Base UI, Lucide Icons      |
 | **Data**          | tRPC, React Query, Drizzle ORM, PostgreSQL |
 | **Auth**          | Better Auth (email, Google OAuth, 2FA)     |
 | **Billing**       | Stripe (subscriptions, per-seat, one-time) |

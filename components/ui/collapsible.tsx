@@ -1,49 +1,52 @@
 "use client";
 
-import * as CollapsiblePrimitive from "@radix-ui/react-collapsible";
-import type * as React from "react";
+import { Collapsible as CollapsiblePrimitive } from "@base-ui/react/collapsible";
+import * as React from "react";
 
-export type CollapsibleElement = React.ComponentRef<
-	typeof CollapsiblePrimitive.Root
->;
-export type CollapsibleProps = React.ComponentPropsWithoutRef<
-	typeof CollapsiblePrimitive.Root
->;
-
-function Collapsible(props: CollapsibleProps): React.JSX.Element {
+function Collapsible({ ...props }: CollapsiblePrimitive.Root.Props) {
 	return <CollapsiblePrimitive.Root data-slot="collapsible" {...props} />;
 }
 
-export type CollapsibleTriggerElement = React.ComponentRef<
-	typeof CollapsiblePrimitive.CollapsibleTrigger
->;
-export type CollapsibleTriggerProps = React.ComponentPropsWithoutRef<
-	typeof CollapsiblePrimitive.CollapsibleTrigger
->;
-
-function CollapsibleTrigger(props: CollapsibleTriggerProps): React.JSX.Element {
+function CollapsibleTrigger({
+	asChild = false,
+	children,
+	render,
+	...props
+}: CollapsiblePrimitive.Trigger.Props & { asChild?: boolean }) {
 	return (
-		<CollapsiblePrimitive.CollapsibleTrigger
+		<CollapsiblePrimitive.Trigger
 			data-slot="collapsible-trigger"
+			render={asChild && React.isValidElement(children) ? children : render}
 			{...props}
-		/>
+		>
+			{asChild ? undefined : children}
+		</CollapsiblePrimitive.Trigger>
 	);
 }
 
-export type CollapsibleContentElement = React.ComponentRef<
-	typeof CollapsiblePrimitive.CollapsibleContent
->;
-export type CollapsibleContentProps = React.ComponentPropsWithoutRef<
-	typeof CollapsiblePrimitive.CollapsibleContent
->;
-
-function CollapsibleContent(props: CollapsibleContentProps): React.JSX.Element {
+function CollapsibleContent({ ...props }: CollapsiblePrimitive.Panel.Props) {
 	return (
-		<CollapsiblePrimitive.CollapsibleContent
-			data-slot="collapsible-content"
-			{...props}
-		/>
+		<CollapsiblePrimitive.Panel data-slot="collapsible-content" {...props} />
 	);
 }
+
+export type CollapsibleElement = import("react").ComponentRef<
+	typeof Collapsible
+>;
+export type CollapsibleProps = import("react").ComponentProps<
+	typeof Collapsible
+>;
+export type CollapsibleTriggerElement = import("react").ComponentRef<
+	typeof CollapsibleTrigger
+>;
+export type CollapsibleTriggerProps = import("react").ComponentProps<
+	typeof CollapsibleTrigger
+>;
+export type CollapsibleContentElement = import("react").ComponentRef<
+	typeof CollapsibleContent
+>;
+export type CollapsibleContentProps = import("react").ComponentProps<
+	typeof CollapsibleContent
+>;
 
 export { Collapsible, CollapsibleTrigger, CollapsibleContent };

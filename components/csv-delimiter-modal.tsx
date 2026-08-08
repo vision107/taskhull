@@ -41,11 +41,12 @@ export const CsvDelimiterModal = NiceModal.create<CsvDelimiterModalProps>(
 		};
 
 		return (
-			<Dialog open={modal.visible} onOpenChange={modal.handleOpenChange}>
-				<DialogContent
-					className="sm:max-w-[425px]"
-					onAnimationEndCapture={modal.handleAnimationEndCapture}
-				>
+			<Dialog
+				open={modal.visible}
+				onOpenChange={modal.handleOpenChange}
+				onOpenChangeComplete={modal.handleOpenChangeComplete}
+			>
+				<DialogContent className="sm:max-w-[425px]">
 					<DialogHeader>
 						<DialogTitle>{title}</DialogTitle>
 						<DialogDescription>{description}</DialogDescription>

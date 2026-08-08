@@ -13,7 +13,7 @@ Multi-tenant SaaS template with authentication, billing, organizations, lead man
 - **Database**: PostgreSQL with Drizzle ORM
 - **Auth**: Better Auth (organizations, 2FA, Google OAuth)
 - **Billing**: Stripe (subscriptions, per-seat, one-time)
-- **UI**: Tailwind CSS 4, Shadcn UI, Radix, Lucide React
+- **UI**: Tailwind CSS 4, Shadcn UI, Base UI, Lucide React
 - **Forms**: React Hook Form + Zod
 - **Email**: Resend + React Email
 - **Testing**: Vitest (unit), Playwright (E2E)

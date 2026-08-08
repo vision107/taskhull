@@ -85,12 +85,12 @@ export const CreateOrganizationModal =
 
 		return (
 			<Form {...form}>
-				<Dialog open={modal.visible}>
-					<DialogContent
-						className="max-w-lg"
-						onAnimationEndCapture={modal.handleAnimationEndCapture}
-						onClose={modal.handleClose}
-					>
+				<Dialog
+					open={modal.visible}
+					onOpenChange={modal.handleOpenChange}
+					onOpenChangeComplete={modal.handleOpenChangeComplete}
+				>
+					<DialogContent className="max-w-lg">
 						<DialogHeader>
 							<DialogTitle>Create Organization</DialogTitle>
 							<DialogDescription>

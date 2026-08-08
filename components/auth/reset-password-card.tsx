@@ -7,7 +7,7 @@ import type * as React from "react";
 
 import { PasswordFormMessage } from "@/components/auth/password-form-message";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -87,9 +87,12 @@ export function ResetPasswordCard(): React.JSX.Element {
 								Your password has been reset successfully.
 							</AlertDescription>
 						</Alert>
-						<Button asChild className="w-full">
-							<Link href="/auth/sign-in">Go to login page</Link>
-						</Button>
+						<Link
+							href="/auth/sign-in"
+							className={buttonVariants({ className: "w-full" })}
+						>
+							Go to login page
+						</Link>
 					</div>
 				) : (
 					<Form {...methods}>

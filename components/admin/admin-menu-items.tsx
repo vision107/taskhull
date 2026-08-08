@@ -62,7 +62,7 @@ export function AdminMenuItems(): React.JSX.Element {
 
 	return (
 		<ScrollArea
-			className="h-full [&>[data-radix-scroll-area-viewport]>div]:flex! [&>[data-radix-scroll-area-viewport]>div]:h-full [&>[data-radix-scroll-area-viewport]>div]:flex-col"
+			className="h-full [&>[data-slot=scroll-area-viewport]>div]:flex! [&>[data-slot=scroll-area-viewport]>div]:h-full [&>[data-slot=scroll-area-viewport]>div]:flex-col"
 			verticalScrollBar
 		>
 			{menuGroups.map((group, groupIndex) => (

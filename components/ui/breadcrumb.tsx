@@ -1,28 +1,27 @@
-import { Slot } from "@radix-ui/react-slot";
-import { ChevronRight, MoreHorizontal } from "lucide-react";
-import type * as React from "react";
+import { mergeProps } from "@base-ui/react/merge-props";
+import { useRender } from "@base-ui/react/use-render";
+import { ChevronRightIcon, MoreHorizontalIcon } from "lucide-react";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-export type BreadcrumbElement = React.ComponentRef<"nav">;
-export type BreadcrumbProps = React.ComponentPropsWithoutRef<"nav">;
-
-function Breadcrumb(props: BreadcrumbProps): React.JSX.Element {
-	return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />;
+function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
+	return (
+		<nav
+			aria-label="breadcrumb"
+			data-slot="breadcrumb"
+			className={cn(className)}
+			{...props}
+		/>
+	);
 }
 
-export type BreadcrumbListElement = React.ComponentRef<"ol">;
-export type BreadcrumbListProps = React.ComponentPropsWithoutRef<"ol">;
-
-function BreadcrumbList({
-	className,
-	...props
-}: BreadcrumbListProps): React.JSX.Element {
+function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
 	return (
 		<ol
 			data-slot="breadcrumb-list"
 			className={cn(
-				"flex flex-wrap items-center gap-1.5 text-sm wrap-break-word text-muted-foreground sm:gap-2.5",
+				"flex flex-wrap items-center gap-1.5 text-sm wrap-break-word text-muted-foreground",
 				className,
 			)}
 			{...props}
@@ -30,52 +29,45 @@ function BreadcrumbList({
 	);
 }
 
-export type BreadcrumbItemElement = React.ComponentRef<"li">;
-export type BreadcrumbItemProps = React.ComponentPropsWithoutRef<"li">;
-
-function BreadcrumbItem({
-	className,
-	...props
-}: BreadcrumbItemProps): React.JSX.Element {
+function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
 	return (
 		<li
 			data-slot="breadcrumb-item"
-			className={cn("inline-flex items-center gap-1.5", className)}
+			className={cn("inline-flex items-center gap-1", className)}
 			{...props}
 		/>
 	);
 }
-
-export type BreadcrumbLinkElement = React.ComponentRef<"a">;
-export type BreadcrumbLinkProps = React.ComponentPropsWithoutRef<"a"> & {
-	asChild?: boolean;
-};
 
 function BreadcrumbLink({
-	asChild,
 	className,
+	asChild = false,
+	children,
+	render,
 	...props
-}: BreadcrumbLinkProps): React.JSX.Element {
-	const Comp = asChild ? Slot : "a";
-	return (
-		<Comp
-			data-slot="breadcrumb-link"
-			className={cn("transition-colors hover:text-foreground", className)}
-			{...props}
-		/>
-	);
+}: useRender.ComponentProps<"a"> & { asChild?: boolean }) {
+	return useRender({
+		defaultTagName: "a",
+		props: mergeProps<"a">(
+			{
+				className: cn("transition-colors hover:text-foreground", className),
+				children: asChild ? undefined : children,
+			},
+			props,
+		),
+		render: asChild && React.isValidElement(children) ? children : render,
+		state: {
+			slot: "breadcrumb-link",
+		},
+	});
 }
 
-export type BreadcrumbPageElement = React.ComponentRef<"span">;
-export type BreadcrumbPageProps = React.ComponentPropsWithoutRef<"span">;
-
-function BreadcrumbPage({
-	className,
-	...props
-}: BreadcrumbPageProps): React.JSX.Element {
+function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
 	return (
 		<span
 			data-slot="breadcrumb-page"
+			role="link"
+			aria-disabled="true"
 			aria-current="page"
 			className={cn("font-normal text-foreground", className)}
 			{...props}
@@ -83,14 +75,11 @@ function BreadcrumbPage({
 	);
 }
 
-export type BreadcrumbSeparatorElement = React.ComponentRef<"li">;
-export type BreadcrumbSeparatorProps = React.ComponentProps<"li">;
-
 function BreadcrumbSeparator({
 	children,
 	className,
 	...props
-}: BreadcrumbSeparatorProps): React.JSX.Element {
+}: React.ComponentProps<"li">) {
 	return (
 		<li
 			data-slot="breadcrumb-separator"
@@ -99,31 +88,70 @@ function BreadcrumbSeparator({
 			className={cn("[&>svg]:size-3.5", className)}
 			{...props}
 		>
-			{children ?? <ChevronRight />}
+			{children ?? <ChevronRightIcon />}
 		</li>
 	);
 }
 
-export type BreadcrumbEllipsisElement = React.ComponentRef<"span">;
-export type BreadcrumbEllipsisProps = React.ComponentProps<"span">;
-
 function BreadcrumbEllipsis({
 	className,
 	...props
-}: BreadcrumbEllipsisProps): React.JSX.Element {
+}: React.ComponentProps<"span">) {
 	return (
 		<span
 			data-slot="breadcrumb-ellipsis"
 			role="presentation"
 			aria-hidden="true"
-			className={cn("flex size-9 items-center justify-center", className)}
+			className={cn(
+				"flex size-5 items-center justify-center [&>svg]:size-4",
+				className,
+			)}
 			{...props}
 		>
-			<MoreHorizontal className="size-4" />
+			<MoreHorizontalIcon />
 			<span className="sr-only">More</span>
 		</span>
 	);
 }
+
+export type BreadcrumbElement = import("react").ComponentRef<typeof Breadcrumb>;
+export type BreadcrumbProps = import("react").ComponentProps<typeof Breadcrumb>;
+export type BreadcrumbListElement = import("react").ComponentRef<
+	typeof BreadcrumbList
+>;
+export type BreadcrumbListProps = import("react").ComponentProps<
+	typeof BreadcrumbList
+>;
+export type BreadcrumbItemElement = import("react").ComponentRef<
+	typeof BreadcrumbItem
+>;
+export type BreadcrumbItemProps = import("react").ComponentProps<
+	typeof BreadcrumbItem
+>;
+export type BreadcrumbLinkElement = import("react").ComponentRef<
+	typeof BreadcrumbLink
+>;
+export type BreadcrumbLinkProps = import("react").ComponentProps<
+	typeof BreadcrumbLink
+>;
+export type BreadcrumbPageElement = import("react").ComponentRef<
+	typeof BreadcrumbPage
+>;
+export type BreadcrumbPageProps = import("react").ComponentProps<
+	typeof BreadcrumbPage
+>;
+export type BreadcrumbSeparatorElement = import("react").ComponentRef<
+	typeof BreadcrumbSeparator
+>;
+export type BreadcrumbSeparatorProps = import("react").ComponentProps<
+	typeof BreadcrumbSeparator
+>;
+export type BreadcrumbEllipsisElement = import("react").ComponentRef<
+	typeof BreadcrumbEllipsis
+>;
+export type BreadcrumbEllipsisProps = import("react").ComponentProps<
+	typeof BreadcrumbEllipsis
+>;
 
 export {
 	Breadcrumb,

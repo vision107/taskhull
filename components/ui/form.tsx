@@ -1,7 +1,6 @@
 "use client";
 
-import type * as LabelPrimitive from "@radix-ui/react-label";
-import { Slot } from "@radix-ui/react-slot";
+import { useRender } from "@base-ui/react/use-render";
 import * as React from "react";
 import {
 	Controller,
@@ -25,8 +24,8 @@ type FormFieldContextValue<
 	name: TName;
 };
 
-const FormFieldContext = React.createContext<FormFieldContextValue>(
-	{} as FormFieldContextValue,
+const FormFieldContext = React.createContext<FormFieldContextValue | null>(
+	null,
 );
 
 const FormField = <
@@ -46,13 +45,17 @@ const useFormField = () => {
 	const fieldContext = React.useContext(FormFieldContext);
 	const itemContext = React.useContext(FormItemContext);
 	const { getFieldState } = useFormContext();
-	const formState = useFormState({ name: fieldContext.name });
-	const fieldState = getFieldState(fieldContext.name, formState);
+	const formState = useFormState({ name: fieldContext?.name });
 
 	if (!fieldContext) {
 		throw new Error("useFormField should be used within <FormField>");
 	}
 
+	if (!itemContext) {
+		throw new Error("useFormField should be used within <FormItem>");
+	}
+
+	const fieldState = getFieldState(fieldContext.name, formState);
 	const { id } = itemContext;
 
 	return {
@@ -69,38 +72,39 @@ type FormItemContextValue = {
 	id: string;
 };
 
-const FormItemContext = React.createContext<FormItemContextValue>(
-	{} as FormItemContextValue,
-);
+const FormItemContext = React.createContext<FormItemContextValue | null>(null);
 
-export type FormItemProps = React.ComponentPropsWithoutRef<"div"> & {
+export type FormItemProps = useRender.ComponentProps<"div"> & {
 	asChild?: boolean;
 };
 
 function FormItem({
 	className,
-	asChild,
+	asChild = false,
+	children,
+	render,
 	...props
 }: FormItemProps): React.JSX.Element {
 	const id = React.useId();
 
-	const Comp = asChild ? Slot : "div";
-
 	return (
 		<FormItemContext.Provider value={{ id }}>
-			<Comp
-				data-slot="form-item"
-				className={cn("grid gap-2", className)}
-				{...props}
-			/>
+			{useRender({
+				defaultTagName: "div",
+				render: asChild && React.isValidElement(children) ? children : render,
+				props: {
+					...props,
+					children: asChild ? undefined : children,
+					"data-slot": "form-item",
+					className: cn("grid gap-2", className),
+				},
+			})}
 		</FormItemContext.Provider>
 	);
 }
 
-export type FormLabelElement = React.ComponentRef<typeof LabelPrimitive.Root>;
-export type FormLabelProps = React.ComponentPropsWithoutRef<
-	typeof LabelPrimitive.Root
->;
+export type FormLabelElement = React.ComponentRef<typeof Label>;
+export type FormLabelProps = React.ComponentPropsWithoutRef<typeof Label>;
 
 function FormLabel({ className, ...props }: FormLabelProps): React.JSX.Element {
 	const { error, formItemId } = useFormField();
@@ -116,58 +120,67 @@ function FormLabel({ className, ...props }: FormLabelProps): React.JSX.Element {
 	);
 }
 
-export type FormControlElement = React.ComponentRef<typeof Slot>;
-export type FormControlProps = React.ComponentPropsWithoutRef<typeof Slot>;
+export type FormControlElement = HTMLElement;
+export type FormControlProps = useRender.ComponentProps<"div">;
 
-function FormControl({ ...props }: FormControlProps): React.JSX.Element {
+function FormControl({
+	children,
+	render,
+	...props
+}: FormControlProps): React.JSX.Element {
 	const { error, formItemId, formDescriptionId, formMessageId } =
 		useFormField();
 
-	return (
-		<Slot
-			data-slot="form-control"
-			id={formItemId}
-			aria-describedby={
-				!error
-					? `${formDescriptionId}`
-					: `${formDescriptionId} ${formMessageId}`
-			}
-			aria-invalid={!!error}
-			{...props}
-		/>
-	);
+	return useRender({
+		defaultTagName: "div",
+		render: React.isValidElement(children) ? children : render,
+		props: {
+			...props,
+			children: undefined,
+			"data-slot": "form-control",
+			id: formItemId,
+			"aria-describedby": !error
+				? `${formDescriptionId}`
+				: `${formDescriptionId} ${formMessageId}`,
+			"aria-invalid": !!error,
+		},
+	});
 }
 
-export type FormDescriptionProps = React.ComponentPropsWithoutRef<"p"> & {
+export type FormDescriptionProps = useRender.ComponentProps<"p"> & {
 	asChild?: boolean;
 };
 
 function FormDescription({
 	className,
-	asChild,
+	asChild = false,
+	children,
+	render,
 	...props
 }: FormDescriptionProps): React.JSX.Element {
 	const { formDescriptionId } = useFormField();
 
-	const Comp = asChild ? Slot : "p";
-
-	return (
-		<Comp
-			data-slot="form-description"
-			id={formDescriptionId}
-			className={cn("text-sm text-muted-foreground", className)}
-			{...props}
-		/>
-	);
+	return useRender({
+		defaultTagName: "p",
+		render: asChild && React.isValidElement(children) ? children : render,
+		props: {
+			...props,
+			children: asChild ? undefined : children,
+			"data-slot": "form-description",
+			id: formDescriptionId,
+			className: cn("text-sm text-muted-foreground", className),
+		},
+	});
 }
 
-export type FormMessageProps = React.ComponentPropsWithoutRef<"p"> & {
+export type FormMessageProps = useRender.ComponentProps<"p"> & {
 	asChild?: boolean;
 };
 
 function FormMessage({
 	className,
-	asChild,
+	asChild = false,
+	render,
 	...props
 }: FormMessageProps): React.JSX.Element | null {
 	const { error, formMessageId } = useFormField();
@@ -177,18 +190,18 @@ function FormMessage({
 		return null;
 	}
 
-	const Comp = asChild ? Slot : "p";
-
-	return (
-		<Comp
-			data-slot="form-message"
-			id={formMessageId}
-			className={cn("text-sm text-destructive", className)}
-			{...props}
-		>
-			{body}
-		</Comp>
-	);
+	return useRender({
+		defaultTagName: "p",
+		render:
+			asChild && React.isValidElement(props.children) ? props.children : render,
+		props: {
+			...props,
+			children: asChild ? undefined : body,
+			"data-slot": "form-message",
+			id: formMessageId,
+			className: cn("text-sm text-destructive", className),
+		},
+	});
 }
 
 export {

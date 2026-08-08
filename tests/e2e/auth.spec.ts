@@ -1,6 +1,39 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Authentication Pages", () => {
+	test("desktop navigation menus open, switch, and close", async ({ page }) => {
+		await page.goto("/");
+
+		await page.getByRole("button", { name: "Product" }).click();
+		const navigationContent = page.locator(
+			'[data-slot="navigation-menu-content"]',
+		);
+		await expect(
+			navigationContent.getByRole("link", { name: /^Features/ }),
+		).toBeVisible();
+		await expect(
+			navigationContent.getByRole("link", { name: /^FAQ/ }),
+		).toBeVisible();
+
+		const resourcesTrigger = page.getByRole("button", { name: "Resources" });
+		await resourcesTrigger.focus();
+		await resourcesTrigger.press("Enter");
+		await expect(
+			page.locator('[data-slot="navigation-menu-content"][data-open]'),
+		).toHaveAttribute("data-activation-direction", "right");
+		await expect(
+			navigationContent.getByRole("link", { name: /^Documentation/ }),
+		).toBeVisible();
+		await expect(
+			navigationContent.getByRole("link", { name: /^Blog/ }),
+		).toBeVisible();
+
+		await page.keyboard.press("Escape");
+		await expect(
+			navigationContent.getByRole("link", { name: /^Documentation/ }),
+		).toBeHidden();
+	});
+
 	test("sign-in page loads correctly", async ({ page }) => {
 		await page.goto("/auth/sign-in");
 

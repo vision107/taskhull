@@ -7,6 +7,7 @@ import {
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
+	type SelectTriggerProps,
 	SelectValue,
 } from "@/components/ui/select";
 import { organizationMemberRoleLabels } from "@/lib/auth/constants";
@@ -16,12 +17,13 @@ export type OrganizationRoleSelectProps = {
 	value: OrganizationMemberRole;
 	onSelect: (value: OrganizationMemberRole) => void;
 	disabled?: boolean;
-};
+} & Omit<SelectTriggerProps, "children" | "disabled" | "onSelect" | "value">;
 
 export function OrganizationRoleSelect({
 	value,
 	onSelect,
 	disabled,
+	...triggerProps
 }: OrganizationRoleSelectProps): React.JSX.Element {
 	const roleOptions = Object.entries(organizationMemberRoleLabels).map(
 		([v, label]) => ({
@@ -31,8 +33,17 @@ export function OrganizationRoleSelect({
 	);
 
 	return (
-		<Select disabled={disabled} onValueChange={onSelect} value={value}>
-			<SelectTrigger>
+		<Select
+			disabled={disabled}
+			items={organizationMemberRoleLabels}
+			onValueChange={(nextValue) => {
+				if (nextValue) {
+					onSelect(nextValue);
+				}
+			}}
+			value={value}
+		>
+			<SelectTrigger {...triggerProps}>
 				<SelectValue />
 			</SelectTrigger>
 			<SelectContent>

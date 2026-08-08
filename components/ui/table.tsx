@@ -1,13 +1,10 @@
 "use client";
 
-import type * as React from "react";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-export type TableElement = HTMLTableElement;
-export type TableProps = React.ComponentPropsWithoutRef<"table">;
-
-function Table({ className, ...props }: TableProps): React.JSX.Element {
+function Table({ className, ...props }: React.ComponentProps<"table">) {
 	return (
 		<div
 			data-slot="table-container"
@@ -22,13 +19,7 @@ function Table({ className, ...props }: TableProps): React.JSX.Element {
 	);
 }
 
-export type TableHeaderElement = HTMLTableSectionElement;
-export type TableHeaderProps = React.ComponentPropsWithoutRef<"thead">;
-
-function TableHeader({
-	className,
-	...props
-}: TableHeaderProps): React.JSX.Element {
+function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
 	return (
 		<thead
 			data-slot="table-header"
@@ -38,10 +29,7 @@ function TableHeader({
 	);
 }
 
-export type TableBodyElement = HTMLTableSectionElement;
-export type TableBodyProps = React.ComponentPropsWithoutRef<"tbody">;
-
-function TableBody({ className, ...props }: TableBodyProps): React.JSX.Element {
+function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
 	return (
 		<tbody
 			data-slot="table-body"
@@ -51,13 +39,7 @@ function TableBody({ className, ...props }: TableBodyProps): React.JSX.Element {
 	);
 }
 
-export type TableFooterElement = HTMLTableSectionElement;
-export type TableFooterProps = React.ComponentPropsWithoutRef<"tfoot">;
-
-function TableFooter({
-	className,
-	...props
-}: TableFooterProps): React.JSX.Element {
+function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
 	return (
 		<tfoot
 			data-slot="table-footer"
@@ -70,15 +52,12 @@ function TableFooter({
 	);
 }
 
-export type TableRowElement = HTMLTableRowElement;
-export type TableRowProps = React.ComponentPropsWithoutRef<"tr">;
-
-function TableRow({ className, ...props }: TableRowProps): React.JSX.Element {
+function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
 	return (
 		<tr
 			data-slot="table-row"
 			className={cn(
-				"border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+				"border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
 				className,
 			)}
 			{...props}
@@ -86,15 +65,12 @@ function TableRow({ className, ...props }: TableRowProps): React.JSX.Element {
 	);
 }
 
-export type TableHeadElement = HTMLTableCellElement;
-export type TableHeadProps = React.ComponentPropsWithoutRef<"th">;
-
-function TableHead({ className, ...props }: TableHeadProps): React.JSX.Element {
+function TableHead({ className, ...props }: React.ComponentProps<"th">) {
 	return (
 		<th
 			data-slot="table-head"
 			className={cn(
-				"h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+				"h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0",
 				className,
 			)}
 			{...props}
@@ -102,15 +78,12 @@ function TableHead({ className, ...props }: TableHeadProps): React.JSX.Element {
 	);
 }
 
-export type TableCellElement = HTMLTableCellElement;
-export type TableCellProps = React.ComponentPropsWithoutRef<"td">;
-
-function TableCell({ className, ...props }: TableCellProps): React.JSX.Element {
+function TableCell({ className, ...props }: React.ComponentProps<"td">) {
 	return (
 		<td
 			data-slot="table-cell"
 			className={cn(
-				"p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+				"p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
 				className,
 			)}
 			{...props}
@@ -118,13 +91,10 @@ function TableCell({ className, ...props }: TableCellProps): React.JSX.Element {
 	);
 }
 
-export type TableCaptionElement = HTMLTableCaptionElement;
-export type TableCaptionProps = React.ComponentPropsWithoutRef<"caption">;
-
 function TableCaption({
 	className,
 	...props
-}: TableCaptionProps): React.JSX.Element {
+}: React.ComponentProps<"caption">) {
 	return (
 		<caption
 			data-slot="table-caption"
@@ -133,6 +103,35 @@ function TableCaption({
 		/>
 	);
 }
+
+export type TableElement = import("react").ComponentRef<typeof Table>;
+export type TableProps = import("react").ComponentProps<typeof Table>;
+export type TableHeaderElement = import("react").ComponentRef<
+	typeof TableHeader
+>;
+export type TableHeaderProps = import("react").ComponentProps<
+	typeof TableHeader
+>;
+export type TableBodyElement = import("react").ComponentRef<typeof TableBody>;
+export type TableBodyProps = import("react").ComponentProps<typeof TableBody>;
+export type TableFooterElement = import("react").ComponentRef<
+	typeof TableFooter
+>;
+export type TableFooterProps = import("react").ComponentProps<
+	typeof TableFooter
+>;
+export type TableRowElement = import("react").ComponentRef<typeof TableRow>;
+export type TableRowProps = import("react").ComponentProps<typeof TableRow>;
+export type TableHeadElement = import("react").ComponentRef<typeof TableHead>;
+export type TableHeadProps = import("react").ComponentProps<typeof TableHead>;
+export type TableCellElement = import("react").ComponentRef<typeof TableCell>;
+export type TableCellProps = import("react").ComponentProps<typeof TableCell>;
+export type TableCaptionElement = import("react").ComponentRef<
+	typeof TableCaption
+>;
+export type TableCaptionProps = import("react").ComponentProps<
+	typeof TableCaption
+>;
 
 export {
 	Table,

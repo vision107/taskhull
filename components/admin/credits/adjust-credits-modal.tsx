@@ -98,12 +98,12 @@ export const AdjustCreditsModal = NiceModal.create(
 		const wouldGoNegative = watchType === "subtract" && newBalance < 0;
 
 		return (
-			<Dialog open={modal.visible}>
-				<DialogContent
-					className="sm:max-w-[425px]"
-					onAnimationEndCapture={modal.handleAnimationEndCapture}
-					onClose={modal.handleClose}
-				>
+			<Dialog
+				open={modal.visible}
+				onOpenChange={modal.handleOpenChange}
+				onOpenChangeComplete={modal.handleOpenChangeComplete}
+			>
+				<DialogContent className="sm:max-w-[425px]">
 					<DialogHeader>
 						<DialogTitle>Adjust Credits</DialogTitle>
 						<DialogDescription>
@@ -120,6 +120,10 @@ export const AdjustCreditsModal = NiceModal.create(
 									<FormItem>
 										<FormLabel>Type</FormLabel>
 										<Select
+											items={{
+												add: "Add Credits",
+												subtract: "Subtract Credits",
+											}}
 											onValueChange={field.onChange}
 											defaultValue={field.value}
 										>

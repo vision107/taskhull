@@ -19,11 +19,17 @@ import { trpc } from "@/trpc/client";
 export type UserAvatarUploadProps = {
 	onSuccess: () => void;
 	onError: () => void;
-};
+} & Pick<
+	React.ComponentPropsWithoutRef<"input">,
+	"id" | "aria-describedby" | "aria-invalid"
+>;
 
 export function UserAvatarUpload({
 	onSuccess,
 	onError,
+	id = "avatar-upload-input",
+	"aria-describedby": ariaDescribedBy,
+	"aria-invalid": ariaInvalid,
 }: UserAvatarUploadProps): React.JSX.Element | null {
 	const { user, reloadSession } = useSession();
 	const [deleting, setDeleting] = React.useState(false);
@@ -120,7 +126,13 @@ export function UserAvatarUpload({
 					)}
 					{...getRootProps()}
 				>
-					<input {...getInputProps()} id="avatar-upload-input" />
+					<input
+						{...getInputProps({
+							id,
+							"aria-describedby": ariaDescribedBy,
+							"aria-invalid": ariaInvalid,
+						})}
+					/>
 					{user?.image ? (
 						<UserAvatar
 							name={user.name}
@@ -146,7 +158,7 @@ export function UserAvatarUpload({
 								variant="outline"
 								type="button"
 								onClick={() => {
-									const input = document.getElementById("avatar-upload-input");
+									const input = document.getElementById(id);
 									input?.click();
 								}}
 								disabled={uploading || deleting}

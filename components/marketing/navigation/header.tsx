@@ -117,7 +117,7 @@ export function Header() {
 						<NavigationMenu>
 							<NavigationMenuList>
 								<NavigationMenuItem>
-									<NavigationMenuTrigger className="rounded-full bg-transparent text-marketing-fg hover:bg-marketing-card-hover hover:text-marketing-fg data-[state=open]:bg-marketing-card-hover">
+									<NavigationMenuTrigger className="rounded-full bg-transparent text-marketing-fg hover:bg-marketing-card-hover hover:text-marketing-fg data-popup-open:bg-marketing-card-hover">
 										Product
 									</NavigationMenuTrigger>
 									<NavigationMenuContent>
@@ -150,7 +150,7 @@ export function Header() {
 								</NavigationMenuItem>
 
 								<NavigationMenuItem>
-									<NavigationMenuTrigger className="rounded-full bg-transparent text-marketing-fg hover:bg-marketing-card-hover hover:text-marketing-fg data-[state=open]:bg-marketing-card-hover">
+									<NavigationMenuTrigger className="rounded-full bg-transparent text-marketing-fg hover:bg-marketing-card-hover hover:text-marketing-fg data-popup-open:bg-marketing-card-hover">
 										Resources
 									</NavigationMenuTrigger>
 									<NavigationMenuContent>
@@ -169,7 +169,7 @@ export function Header() {
 								</NavigationMenuItem>
 
 								<NavigationMenuItem>
-									<NavigationMenuTrigger className="rounded-full bg-transparent text-marketing-fg hover:bg-marketing-card-hover hover:text-marketing-fg data-[state=open]:bg-marketing-card-hover">
+									<NavigationMenuTrigger className="rounded-full bg-transparent text-marketing-fg hover:bg-marketing-card-hover hover:text-marketing-fg data-popup-open:bg-marketing-card-hover">
 										Company
 									</NavigationMenuTrigger>
 									<NavigationMenuContent>

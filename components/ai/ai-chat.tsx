@@ -789,7 +789,12 @@ export function AiChat({ organizationId }: AiChatProps) {
 
 				{/* Messages */}
 				<Conversation className="min-h-0 flex-1">
-					<ConversationContent className="mx-auto w-full max-w-3xl gap-6 px-4 py-8 pt-16">
+					{/* Browser translation can reparent streamed nodes before React removes them. */}
+					<ConversationContent
+						className="notranslate mx-auto w-full max-w-3xl gap-6 px-4 py-8 pt-16"
+						data-chat-transcript
+						translate="no"
+					>
 						{isLoadingChat ? (
 							<div className="flex flex-1 items-center justify-center">
 								<Loader size={24} />

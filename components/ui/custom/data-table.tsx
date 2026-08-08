@@ -645,7 +645,7 @@ function DataTableFacetedFilter({
 		setMounted(true);
 	}, []);
 
-	// Render a placeholder button during SSR to avoid Radix hydration mismatch
+	// Render a placeholder button during SSR to avoid popup hydration mismatch.
 	if (!mounted) {
 		return (
 			<Button

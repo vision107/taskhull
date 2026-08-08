@@ -128,7 +128,8 @@ function DateRangePicker({
 				</PopoverTrigger>
 				<PopoverContent className="w-auto p-0" align="end">
 					<Calendar
-						initialFocus
+						// oxlint-disable-next-line jsx-a11y/no-autofocus -- keyboard users should enter the opened range calendar immediately
+						autoFocus
 						mode="range"
 						defaultMonth={dateRange?.from}
 						selected={dateRange}

@@ -48,8 +48,79 @@ test("owner can navigate account and organization surfaces", async ({
 	await expect(
 		page.getByRole("heading", { name: "Your Organizations" }),
 	).toBeVisible();
-	await page.getByText("Open", { exact: true }).click();
+	await page.getByRole("button", { name: "Create an Organization" }).click();
+	const createOrganizationDialog = page.getByRole("dialog", {
+		name: "Create Organization",
+	});
+	await expect(createOrganizationDialog).toBeVisible();
+	await expect(
+		createOrganizationDialog.getByLabel("Organization Name"),
+	).toBeVisible();
+	await createOrganizationDialog.getByRole("button", { name: "Close" }).click();
+	await expect(createOrganizationDialog).toBeHidden();
+	await page.getByRole("button", { name: /E2E Owner/ }).click();
+	await page.getByRole("menuitem", { name: /Command Menu/ }).click();
+	const commandDialog = page.getByRole("dialog", { name: "Command Palette" });
+	await expect(commandDialog).toBeVisible();
+	await commandDialog
+		.getByPlaceholder("Type a command or search...")
+		.fill("Profile");
+	await expect(
+		commandDialog.getByText("Profile", { exact: true }),
+	).toBeVisible();
+	await expect(commandDialog.getByText("Home", { exact: true })).toBeHidden();
+	await commandDialog.getByText("Profile", { exact: true }).click();
+	await expect(page).toHaveURL(/\/dashboard\/settings\?tab=profile/);
+	await expect(page.getByLabel("Current Email")).toBeDisabled();
+	await page.getByRole("button", { name: /E2E Owner/ }).click();
+	await page.getByRole("menuitem", { name: /Command Menu/ }).click();
+	await expect(commandDialog).toBeVisible();
+	const commandInput = commandDialog.getByPlaceholder(
+		"Type a command or search...",
+	);
+	await commandInput.fill("Sessions");
+	await commandInput.press("Enter");
+	await expect(page).toHaveURL(/\/dashboard\/settings\?tab=sessions/);
+	await page.getByRole("button", { name: /E2E Owner/ }).click();
+	await page.getByRole("menuitem", { name: /Command Menu/ }).click();
+	await expect(commandDialog).toBeVisible();
+	await page.keyboard.press("Escape");
+	await expect(commandDialog).toBeHidden();
+	await page.goto("/dashboard");
+	await page.getByRole("button", { name: /Personal/ }).click();
+	const organizationSearch = page.getByPlaceholder("Search...");
+	await organizationSearch.fill("E2E Organization");
+	await organizationSearch.press("Enter");
 	await expect(page).toHaveURL(/\/dashboard\/organization/);
+	await expect(
+		page.getByRole("button", { name: /E2E Organization/ }),
+	).toBeVisible();
+	await page.goto("/dashboard/organization/settings?tab=members");
+	await expect(
+		page.getByRole("heading", { name: "Organization Settings" }),
+	).toBeVisible();
+	const roleSelect = page.getByRole("combobox", { name: "Role" });
+	await roleSelect.click();
+	await page.getByRole("option", { name: "Admin" }).click();
+	await expect(roleSelect).toContainText("Admin");
+	await page.getByRole("tab", { name: "Pending Invitations" }).click();
+	await expect(
+		page.getByRole("tab", { name: "Pending Invitations" }),
+	).toHaveAttribute("data-active");
+	await page.goto("/dashboard/organization/leads");
+	await page.getByRole("button", { name: "Add Lead" }).click();
+	const leadSheet = page.getByRole("dialog", { name: "Create Lead" });
+	await expect(leadSheet).toBeVisible();
+	const statusSelect = leadSheet.getByRole("combobox", { name: "Status" });
+	await statusSelect.click();
+	await page.getByRole("option", { name: "Qualified" }).click();
+	await expect(statusSelect).toContainText("Qualified");
+	const sourceSelect = leadSheet.getByRole("combobox", { name: "Source" });
+	await sourceSelect.click();
+	await page.getByRole("option", { name: "Referral" }).click();
+	await expect(sourceSelect).toContainText("Referral");
+	await leadSheet.getByRole("button", { name: "Close" }).click();
+	await expect(leadSheet).toBeHidden();
 	for (const path of ["leads", "settings", "chatbot"]) {
 		await page.goto(`/dashboard/organization/${path}`);
 		await expect(page).not.toHaveURL(/auth\/sign-in/);
@@ -58,6 +129,49 @@ test("owner can navigate account and organization surfaces", async ({
 	await expect(
 		page.getByRole("heading", { name: "Account Settings" }),
 	).toBeVisible();
+
+	const sidebarWrapper = page.locator('[data-slot="sidebar-wrapper"]');
+	const sidebarRail = page.locator('[data-slot="sidebar-rail"]');
+	const railBounds = await sidebarRail.boundingBox();
+	expect(railBounds).not.toBeNull();
+	const initialSidebarWidth = await sidebarWrapper.evaluate((element) =>
+		Number.parseFloat(
+			getComputedStyle(element).getPropertyValue("--sidebar-width"),
+		),
+	);
+	await page.mouse.move(
+		railBounds!.x + railBounds!.width / 2,
+		railBounds!.y + railBounds!.height / 2,
+	);
+	await page.mouse.down();
+	await page.mouse.move(railBounds!.x + 48, railBounds!.y + 40);
+	await page.mouse.up();
+	const resizedSidebarWidth = await sidebarWrapper.evaluate((element) =>
+		Number.parseFloat(
+			getComputedStyle(element).getPropertyValue("--sidebar-width"),
+		),
+	);
+	expect(resizedSidebarWidth).toBeGreaterThan(initialSidebarWidth);
+	await expect
+		.poll(() => page.evaluate(() => document.cookie.includes("sidebar_width=")))
+		.toBe(true);
+
+	await page.setViewportSize({ width: 390, height: 844 });
+	const sidebarTrigger = page.getByRole("button", { name: "Toggle Sidebar" });
+	await sidebarTrigger.click();
+	const mobileSidebar = page.getByRole("dialog", { name: "Sidebar" });
+	await expect(mobileSidebar).toBeVisible();
+	await expect(
+		mobileSidebar.getByRole("link", { name: "Security" }),
+	).toBeVisible();
+	await page.keyboard.press("Escape");
+	await expect(mobileSidebar).toBeHidden();
+	await expect(sidebarTrigger).toBeFocused();
+
+	await sidebarTrigger.click();
+	await mobileSidebar.getByRole("link", { name: "Security" }).click();
+	await expect(page).toHaveURL(/\/dashboard\/settings\?tab=security/);
+	await expect(mobileSidebar).toBeHidden();
 });
 
 test("owner can enroll in and authenticate with TOTP", async ({ page }) => {
@@ -100,6 +214,10 @@ test("AI chat enforces organization credits", async ({ page }) => {
 	await page.getByText("Open", { exact: true }).click();
 	await expect(page).toHaveURL(/\/dashboard\/organization/);
 	await page.goto("/dashboard/organization/chatbot");
+	await expect(page.locator("[data-chat-transcript]")).toHaveAttribute(
+		"translate",
+		"no",
+	);
 	await page.getByPlaceholder("Ask me anything...").fill("E2E message");
 	await page.getByRole("button", { name: "Submit" }).click();
 	await expect(page.getByText("Not enough credits").first()).toBeVisible();
@@ -110,6 +228,10 @@ test("administrator can access every admin surface", async ({ page }) => {
 	// in Better Auth's short protection window.
 	await page.waitForTimeout(10_500);
 	await signIn(page, "admin@e2e.local");
+	await page.goto("/dashboard/admin/users");
+	await page.getByRole("button", { name: /Admin Panel/ }).click();
+	await expect(page.getByRole("link", { name: "Admin Panel" })).toBeVisible();
+	await page.keyboard.press("Escape");
 	for (const [path, heading] of [
 		["users", "Users"],
 		["organizations", "Organizations"],
@@ -118,4 +240,49 @@ test("administrator can access every admin surface", async ({ page }) => {
 		await page.goto(`/dashboard/admin/${path}`);
 		await expect(page.getByRole("heading", { name: heading })).toBeVisible();
 	}
+	await page.goto("/dashboard/admin/users");
+	const ownerRow = page.getByRole("row").filter({ hasText: "owner@e2e.local" });
+	await ownerRow.getByRole("button", { name: "Open menu" }).click();
+	await page.getByRole("menuitem", { name: "Ban user" }).click();
+	const banDialog = page.getByRole("dialog", { name: "Ban User" });
+	await expect(banDialog).toBeVisible();
+	await banDialog
+		.getByRole("button", { name: "Ban expiration (optional)" })
+		.click();
+	await expect(page.locator('[data-slot="calendar"]')).toBeVisible();
+	await page.keyboard.press("Escape");
+	await expect(page.locator('[data-slot="calendar"]')).toBeHidden();
+	await banDialog.getByRole("button", { name: "Cancel" }).click();
+	await expect(banDialog).toBeHidden();
+
+	await ownerRow.getByRole("checkbox", { name: "Select row" }).click();
+	await expect(page.getByText("1 selected", { exact: true })).toBeVisible();
+	await page.getByRole("button", { name: /Bulk actions/ }).click();
+	await page.getByRole("menuitem", { name: "Export to CSV" }).click();
+	const exportDialog = page.getByRole("dialog", { name: "Export to CSV" });
+	await expect(exportDialog).toBeVisible();
+	const semicolonOption = exportDialog.getByRole("radio", {
+		name: "Semicolon (;)",
+	});
+	await semicolonOption.click();
+	await expect(semicolonOption).toBeChecked();
+	await exportDialog.getByRole("button", { name: "Cancel" }).click();
+	await expect(exportDialog).toBeHidden();
+
+	await page.goto("/dashboard/admin/organizations");
+	const organizationRow = page
+		.getByRole("row")
+		.filter({ hasText: "E2E Organization" });
+	const organizationMenuTrigger = organizationRow.getByRole("button", {
+		name: "Open menu",
+	});
+	await organizationMenuTrigger.click();
+	await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
+	const deleteOrganizationDialog = page.getByRole("alertdialog", {
+		name: "Delete organization",
+	});
+	await expect(deleteOrganizationDialog).toBeVisible();
+	await page.keyboard.press("Escape");
+	await expect(deleteOrganizationDialog).toBeHidden();
+	await expect(organizationMenuTrigger).toBeFocused();
 });

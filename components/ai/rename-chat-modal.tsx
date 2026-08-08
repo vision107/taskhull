@@ -69,12 +69,12 @@ export const RenameChatModal = NiceModal.create<RenameChatModalProps>(
 
 		return (
 			<Form {...form}>
-				<Dialog open={modal.visible} onOpenChange={modal.handleOpenChange}>
-					<DialogContent
-						className="max-w-md"
-						onAnimationEndCapture={modal.handleAnimationEndCapture}
-						onClose={modal.handleClose}
-					>
+				<Dialog
+					open={modal.visible}
+					onOpenChange={modal.handleOpenChange}
+					onOpenChangeComplete={modal.handleOpenChangeComplete}
+				>
+					<DialogContent className="max-w-md">
 						<DialogHeader>
 							<DialogTitle>Rename Chat</DialogTitle>
 							<DialogDescription>

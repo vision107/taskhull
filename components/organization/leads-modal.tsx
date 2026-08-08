@@ -138,12 +138,10 @@ export const LeadsModal = NiceModal.create<LeadsModalProps>(({ lead }) => {
 	return (
 		<Sheet
 			open={modal.visible}
-			onOpenChange={(open) => !open && modal.handleClose()}
+			onOpenChange={modal.handleOpenChange}
+			onOpenChangeComplete={modal.handleOpenChangeComplete}
 		>
-			<SheetContent
-				className="sm:max-w-lg"
-				onAnimationEndCapture={modal.handleAnimationEndCapture}
-			>
+			<SheetContent className="sm:max-w-lg">
 				<SheetHeader>
 					<SheetTitle>{isEditing ? "Edit Lead" : "Create Lead"}</SheetTitle>
 					<SheetDescription className="sr-only">
@@ -295,6 +293,10 @@ export const LeadsModal = NiceModal.create<LeadsModalProps>(({ lead }) => {
 												<Field>
 													<FormLabel>Status</FormLabel>
 													<Select
+														items={Object.values(LeadStatus).map((status) => ({
+															label: capitalize(status.replace("_", " ")),
+															value: status,
+														}))}
 														onValueChange={field.onChange}
 														defaultValue={field.value}
 													>
@@ -324,6 +326,10 @@ export const LeadsModal = NiceModal.create<LeadsModalProps>(({ lead }) => {
 												<Field>
 													<FormLabel>Source</FormLabel>
 													<Select
+														items={Object.values(LeadSource).map((source) => ({
+															label: capitalize(source.replace("_", " ")),
+															value: source,
+														}))}
 														onValueChange={field.onChange}
 														defaultValue={field.value}
 													>

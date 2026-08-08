@@ -132,12 +132,12 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 		verifyTwoFactorMutation.mutate(typeof code === "string" ? code : "");
 	};
 	return (
-		<Dialog open={modal.visible}>
-			<DialogContent
-				className="max-w-md"
-				onAnimationEndCapture={modal.handleAnimationEndCapture}
-				onClose={modal.handleClose}
-			>
+		<Dialog
+			open={modal.visible}
+			onOpenChange={modal.handleOpenChange}
+			onOpenChangeComplete={modal.handleOpenChangeComplete}
+		>
+			<DialogContent className="max-w-md">
 				<DialogHeader>
 					<DialogTitle>
 						{view === "password"

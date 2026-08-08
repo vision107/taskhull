@@ -214,7 +214,7 @@ export function UserDropDownMenu(
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<SidebarMenuButton
-							className="group-data-[collapsible=icon]:-ml-[1px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:!p-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+							className="group-data-[collapsible=icon]:-ml-[1px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:!p-2 data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground"
 							size="lg"
 						>
 							{sidebarState === "collapsed" ? (
@@ -240,7 +240,7 @@ export function UserDropDownMenu(
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<SidebarMenuButton
-								className="group-data-[collapsible=icon]:-ml-[1px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:!p-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+								className="group-data-[collapsible=icon]:-ml-[1px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:!p-2 data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground"
 								size="lg"
 							>
 								<UserAvatar
@@ -260,16 +260,18 @@ export function UserDropDownMenu(
 							</SidebarMenuButton>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="start" className="w-60" forceMount>
-							<DropdownMenuLabel className="font-normal">
-								<div className="flex flex-col space-y-1">
-									<p className="truncate text-sm leading-none font-medium">
-										{user.name}
-									</p>
-									<p className="text-xs leading-none text-muted-foreground">
-										{user.email}
-									</p>
-								</div>
-							</DropdownMenuLabel>
+							<DropdownMenuGroup>
+								<DropdownMenuLabel className="font-normal">
+									<div className="flex flex-col space-y-1">
+										<p className="truncate text-sm leading-none font-medium">
+											{user.name}
+										</p>
+										<p className="text-xs leading-none text-muted-foreground">
+											{user.email}
+										</p>
+									</div>
+								</DropdownMenuLabel>
+							</DropdownMenuGroup>
 							<DropdownMenuSeparator />
 							<DropdownMenuGroup>
 								<DropdownMenuItem

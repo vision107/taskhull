@@ -109,6 +109,7 @@ export const CommandMenu = NiceModal.create<CommandMenuProps>(() => {
 		<CommandDialog
 			open={modal.visible}
 			onOpenChange={modal.handleOpenChange}
+			onOpenChangeComplete={modal.handleOpenChangeComplete}
 			className="max-w-lg"
 		>
 			<CommandInput placeholder="Type a command or search..." />

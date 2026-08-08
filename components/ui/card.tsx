@@ -1,16 +1,18 @@
-import type * as React from "react";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-export type CardElement = React.ComponentRef<"div">;
-export type CardProps = React.ComponentPropsWithoutRef<"div">;
-
-function Card({ className, ...props }: CardProps): React.JSX.Element {
+function Card({
+	className,
+	size = "default",
+	...props
+}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
 	return (
 		<div
 			data-slot="card"
+			data-size={size}
 			className={cn(
-				"flex flex-col gap-6 rounded-xl border bg-card py-6 text-card-foreground shadow-xs",
+				"group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
 				className,
 			)}
 			{...props}
@@ -18,18 +20,12 @@ function Card({ className, ...props }: CardProps): React.JSX.Element {
 	);
 }
 
-export type CardHeaderElement = React.ComponentRef<"div">;
-export type CardHeaderProps = React.ComponentPropsWithoutRef<"div">;
-
-function CardHeader({
-	className,
-	...props
-}: CardHeaderProps): React.JSX.Element {
+function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-header"
 			className={cn(
-				"@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
+				"group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)",
 				className,
 			)}
 			{...props}
@@ -37,26 +33,20 @@ function CardHeader({
 	);
 }
 
-export type CardTitleElement = React.ComponentRef<"div">;
-export type CardTitleProps = React.ComponentPropsWithoutRef<"div">;
-
-function CardTitle({ className, ...props }: CardTitleProps): React.JSX.Element {
+function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-title"
-			className={cn("leading-none font-semibold", className)}
+			className={cn(
+				"text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
+				className,
+			)}
 			{...props}
 		/>
 	);
 }
 
-export type CardDescriptionElement = React.ComponentRef<"div">;
-export type CardDescriptionProps = React.ComponentPropsWithoutRef<"div">;
-
-function CardDescription({
-	className,
-	...props
-}: CardDescriptionProps): React.JSX.Element {
+function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-description"
@@ -66,13 +56,7 @@ function CardDescription({
 	);
 }
 
-export type CardActionElement = React.ComponentRef<"div">;
-export type CardActionProps = React.ComponentPropsWithoutRef<"div">;
-
-function CardAction({
-	className,
-	...props
-}: CardActionProps): React.JSX.Element {
+function CardAction({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-action"
@@ -85,37 +69,51 @@ function CardAction({
 	);
 }
 
-export type CardContentElement = React.ComponentRef<"div">;
-export type CardContentProps = React.ComponentPropsWithoutRef<"div">;
-
-function CardContent({
-	className,
-	...props
-}: CardContentProps): React.JSX.Element {
+function CardContent({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-content"
-			className={cn("px-6", className)}
+			className={cn("px-(--card-spacing)", className)}
 			{...props}
 		/>
 	);
 }
 
-export type CardFooterElement = React.ComponentRef<"div">;
-export type CardFooterProps = React.ComponentPropsWithoutRef<"div">;
-
-function CardFooter({
-	className,
-	...props
-}: CardFooterProps): React.JSX.Element {
+function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-footer"
-			className={cn("flex items-center px-6 [.border-t]:pt-6", className)}
+			className={cn(
+				"flex items-center rounded-b-xl border-t bg-muted/50 p-(--card-spacing)",
+				className,
+			)}
 			{...props}
 		/>
 	);
 }
+
+export type CardElement = import("react").ComponentRef<typeof Card>;
+export type CardProps = import("react").ComponentProps<typeof Card>;
+export type CardHeaderElement = import("react").ComponentRef<typeof CardHeader>;
+export type CardHeaderProps = import("react").ComponentProps<typeof CardHeader>;
+export type CardTitleElement = import("react").ComponentRef<typeof CardTitle>;
+export type CardTitleProps = import("react").ComponentProps<typeof CardTitle>;
+export type CardDescriptionElement = import("react").ComponentRef<
+	typeof CardDescription
+>;
+export type CardDescriptionProps = import("react").ComponentProps<
+	typeof CardDescription
+>;
+export type CardActionElement = import("react").ComponentRef<typeof CardAction>;
+export type CardActionProps = import("react").ComponentProps<typeof CardAction>;
+export type CardContentElement = import("react").ComponentRef<
+	typeof CardContent
+>;
+export type CardContentProps = import("react").ComponentProps<
+	typeof CardContent
+>;
+export type CardFooterElement = import("react").ComponentRef<typeof CardFooter>;
+export type CardFooterProps = import("react").ComponentProps<typeof CardFooter>;
 
 export {
 	Card,

@@ -1,61 +1,66 @@
 "use client";
 
-import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
-import type * as React from "react";
+import { PreviewCard as PreviewCardPrimitive } from "@base-ui/react/preview-card";
 
 import { cn } from "@/lib/utils";
 
-export type HoverCardElement = React.ComponentRef<
-	typeof HoverCardPrimitive.Root
->;
-export type HoverCardProps = React.ComponentPropsWithoutRef<
-	typeof HoverCardPrimitive.Root
->;
-
-function HoverCard(props: HoverCardProps): React.JSX.Element {
-	return <HoverCardPrimitive.Root data-slot="hover-card" {...props} />;
+function HoverCard({ ...props }: PreviewCardPrimitive.Root.Props) {
+	return <PreviewCardPrimitive.Root data-slot="hover-card" {...props} />;
 }
 
-export type HoverCardTriggerElement = React.ComponentRef<
-	typeof HoverCardPrimitive.Trigger
->;
-export type HoverCardTriggerProps = React.ComponentPropsWithoutRef<
-	typeof HoverCardPrimitive.Trigger
->;
-
-function HoverCardTrigger(props: HoverCardTriggerProps): React.JSX.Element {
+function HoverCardTrigger({ ...props }: PreviewCardPrimitive.Trigger.Props) {
 	return (
-		<HoverCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />
+		<PreviewCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />
 	);
 }
-
-export type HoverCardContentElement = React.ComponentRef<
-	typeof HoverCardPrimitive.Content
->;
-export type HoverCardContentProps = React.ComponentPropsWithoutRef<
-	typeof HoverCardPrimitive.Content
->;
 
 function HoverCardContent({
 	className,
-	align = "center",
+	side = "bottom",
 	sideOffset = 4,
+	align = "center",
+	alignOffset = 4,
 	...props
-}: HoverCardContentProps): React.JSX.Element {
+}: PreviewCardPrimitive.Popup.Props &
+	Pick<
+		PreviewCardPrimitive.Positioner.Props,
+		"align" | "alignOffset" | "side" | "sideOffset"
+	>) {
 	return (
-		<HoverCardPrimitive.Portal data-slot="hover-card-portal">
-			<HoverCardPrimitive.Content
-				data-slot="hover-card-content"
+		<PreviewCardPrimitive.Portal data-slot="hover-card-portal">
+			<PreviewCardPrimitive.Positioner
 				align={align}
+				alignOffset={alignOffset}
+				side={side}
 				sideOffset={sideOffset}
-				className={cn(
-					"z-50 w-64 origin-(--radix-hover-card-content-transform-origin) rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-hidden fill-mode-forwards! data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
-					className,
-				)}
-				{...props}
-			/>
-		</HoverCardPrimitive.Portal>
+				className="isolate z-50"
+			>
+				<PreviewCardPrimitive.Popup
+					data-slot="hover-card-content"
+					className={cn(
+						"z-50 w-64 origin-(--transform-origin) rounded-lg bg-popover p-2.5 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-hidden duration-100 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+						className,
+					)}
+					{...props}
+				/>
+			</PreviewCardPrimitive.Positioner>
+		</PreviewCardPrimitive.Portal>
 	);
 }
+
+export type HoverCardElement = import("react").ComponentRef<typeof HoverCard>;
+export type HoverCardProps = import("react").ComponentProps<typeof HoverCard>;
+export type HoverCardTriggerElement = import("react").ComponentRef<
+	typeof HoverCardTrigger
+>;
+export type HoverCardTriggerProps = import("react").ComponentProps<
+	typeof HoverCardTrigger
+>;
+export type HoverCardContentElement = import("react").ComponentRef<
+	typeof HoverCardContent
+>;
+export type HoverCardContentProps = import("react").ComponentProps<
+	typeof HoverCardContent
+>;
 
 export { HoverCard, HoverCardTrigger, HoverCardContent };

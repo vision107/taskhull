@@ -231,13 +231,13 @@
 			height: 0;
 		}
 		to {
-			height: var(--radix-accordion-content-height);
+			height: var(--accordion-panel-height);
 		}
 	}
 
 	@keyframes accordion-up {
 		from {
-			height: var(--radix-accordion-content-height);
+			height: var(--accordion-panel-height);
 		}
 		to {
 			height: 0;
@@ -350,8 +350,8 @@ input[type="number"] {
 	appearance: textfield;
 }
 
-/* Radix scroll area viewport fix */
-[data-radix-scroll-area-viewport] > div {
+/* Keep scroll area content sized to its viewport. */
+[data-slot="scroll-area-viewport"] > div {
 	min-width: auto !important;
 	display: block !important;
 	height: inherit;
@@ -383,7 +383,7 @@ div[role="tablist"].bg-secondary {
 	@apply bg-muted!;
 }
 
-input[cmdk-input] {
+input[data-slot="command-input"] {
 	@apply border-none focus-visible:ring-0;
 }
 

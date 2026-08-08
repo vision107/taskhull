@@ -13,6 +13,7 @@ import {
 	FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { UserAvatarUpload } from "@/components/user/user-avatar-upload";
 import { useSession } from "@/hooks/use-session";
 import { useZodForm } from "@/hooks/use-zod-form";
@@ -77,19 +78,17 @@ export function OnboardingProfileStep({
 							</FormItem>
 						)}
 					/>
-					<FormItem className="flex flex-col gap-4">
-						<FormLabel>Avatar</FormLabel>
-						<FormControl>
-							<UserAvatarUpload
-								onError={() => {
-									return;
-								}}
-								onSuccess={() => {
-									return;
-								}}
-							/>
-						</FormControl>
-					</FormItem>
+					<div className="flex flex-col gap-4">
+						<Label htmlFor="avatar-upload-input">Avatar</Label>
+						<UserAvatarUpload
+							onError={() => {
+								return;
+							}}
+							onSuccess={() => {
+								return;
+							}}
+						/>
+					</div>
 					<Button loading={methods.formState.isSubmitting} type="submit">
 						Continue
 						<ArrowRightIcon className="ml-2 size-4 shrink-0" />

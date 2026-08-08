@@ -1,18 +1,16 @@
-import type React from "react";
-
 import { cn } from "@/lib/utils";
 
-export type SkeletonElement = HTMLDivElement;
-export type SkeletonProps = React.ComponentPropsWithoutRef<"div">;
-
-function Skeleton({ className, ...props }: SkeletonProps): React.JSX.Element {
+function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="skeleton"
-			className={cn("animate-pulse rounded-md bg-accent", className)}
+			className={cn("animate-pulse rounded-md bg-muted", className)}
 			{...props}
 		/>
 	);
 }
+
+export type SkeletonElement = import("react").ComponentRef<typeof Skeleton>;
+export type SkeletonProps = import("react").ComponentProps<typeof Skeleton>;
 
 export { Skeleton };

@@ -1,25 +1,20 @@
-import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
+import { NavigationMenu as NavigationMenuPrimitive } from "@base-ui/react/navigation-menu";
 import { cva } from "class-variance-authority";
 import { ChevronDownIcon } from "lucide-react";
-import type * as React from "react";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-export type NavigationMenuElement = React.ComponentRef<
-	typeof NavigationMenuPrimitive.Root
->;
-export type NavigationMenuProps = React.ComponentPropsWithoutRef<
-	typeof NavigationMenuPrimitive.Root
-> & {
-	viewport?: boolean;
-};
-
 function NavigationMenu({
+	align = "start",
 	className,
 	children,
 	viewport = true,
 	...props
-}: NavigationMenuProps): React.JSX.Element {
+}: NavigationMenuPrimitive.Root.Props &
+	Pick<NavigationMenuPrimitive.Positioner.Props, "align"> & {
+		viewport?: boolean;
+	}) {
 	return (
 		<NavigationMenuPrimitive.Root
 			data-slot="navigation-menu"
@@ -31,27 +26,20 @@ function NavigationMenu({
 			{...props}
 		>
 			{children}
-			{viewport && <NavigationMenuViewport />}
+			{viewport && <NavigationMenuPositioner align={align} />}
 		</NavigationMenuPrimitive.Root>
 	);
 }
 
-export type NavigationMenuListElement = React.ComponentRef<
-	typeof NavigationMenuPrimitive.List
->;
-export type NavigationMenuListProps = React.ComponentPropsWithoutRef<
-	typeof NavigationMenuPrimitive.List
->;
-
 function NavigationMenuList({
 	className,
 	...props
-}: NavigationMenuListProps): React.JSX.Element {
+}: React.ComponentPropsWithRef<typeof NavigationMenuPrimitive.List>) {
 	return (
 		<NavigationMenuPrimitive.List
 			data-slot="navigation-menu-list"
 			className={cn(
-				"group flex flex-1 list-none items-center justify-center gap-1",
+				"group flex flex-1 list-none items-center justify-center gap-0",
 				className,
 			)}
 			{...props}
@@ -59,17 +47,10 @@ function NavigationMenuList({
 	);
 }
 
-export type NavigationMenuItemElement = React.ComponentRef<
-	typeof NavigationMenuPrimitive.Item
->;
-export type NavigationMenuItemProps = React.ComponentPropsWithoutRef<
-	typeof NavigationMenuPrimitive.Item
->;
-
 function NavigationMenuItem({
 	className,
 	...props
-}: NavigationMenuItemProps): React.JSX.Element {
+}: React.ComponentPropsWithRef<typeof NavigationMenuPrimitive.Item>) {
 	return (
 		<NavigationMenuPrimitive.Item
 			data-slot="navigation-menu-item"
@@ -80,21 +61,14 @@ function NavigationMenuItem({
 }
 
 const navigationMenuTriggerStyle = cva(
-	"cursor-pointer group inline-flex h-9 w-max items-center justify-center rounded-full bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:focus-visible:outline-none focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1",
+	"group/navigation-menu-trigger inline-flex h-9 w-max cursor-pointer items-center justify-center rounded-lg px-2.5 py-1.5 text-sm font-medium transition-all outline-none hover:bg-muted focus:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-popup-open:bg-muted/50 data-popup-open:hover:bg-muted data-open:bg-muted/50 data-open:hover:bg-muted data-open:focus:bg-muted",
 );
-
-export type NavigationMenuTriggerElement = React.ComponentRef<
-	typeof NavigationMenuPrimitive.Trigger
->;
-export type NavigationMenuTriggerProps = React.ComponentPropsWithoutRef<
-	typeof NavigationMenuPrimitive.Trigger
->;
 
 function NavigationMenuTrigger({
 	className,
 	children,
 	...props
-}: NavigationMenuTriggerProps): React.JSX.Element {
+}: NavigationMenuPrimitive.Trigger.Props) {
 	return (
 		<NavigationMenuPrimitive.Trigger
 			data-slot="navigation-menu-trigger"
@@ -103,30 +77,22 @@ function NavigationMenuTrigger({
 		>
 			{children}{" "}
 			<ChevronDownIcon
-				className="relative top-px ml-1 size-3 cursor-pointer transition duration-300 group-data-[state=open]:rotate-180"
+				className="relative top-px ml-1 size-3 transition duration-300 group-data-open/navigation-menu-trigger:rotate-180 group-data-popup-open/navigation-menu-trigger:rotate-180"
 				aria-hidden="true"
 			/>
 		</NavigationMenuPrimitive.Trigger>
 	);
 }
 
-export type NavigationMenuContentElement = React.ComponentRef<
-	typeof NavigationMenuPrimitive.Content
->;
-export type NavigationMenuContentProps = React.ComponentPropsWithoutRef<
-	typeof NavigationMenuPrimitive.Content
->;
-
 function NavigationMenuContent({
 	className,
 	...props
-}: NavigationMenuContentProps): React.JSX.Element {
+}: NavigationMenuPrimitive.Content.Props) {
 	return (
 		<NavigationMenuPrimitive.Content
 			data-slot="navigation-menu-content"
 			className={cn(
-				"top-0 left-0 w-full p-2 pr-2.5 data-[motion=from-end]:slide-in-from-right-52 data-[motion=from-start]:slide-in-from-left-52 data-[motion=to-end]:slide-out-to-right-52 data-[motion=to-start]:slide-out-to-left-52 data-[motion^=from-]:animate-in data-[motion^=from-]:fade-in data-[motion^=to-]:animate-out data-[motion^=to-]:fade-out md:absolute md:w-auto",
-				"group-data-[viewport=false]/navigation-menu:top-full group-data-[viewport=false]/navigation-menu:mt-1.5 group-data-[viewport=false]/navigation-menu:overflow-hidden group-data-[viewport=false]/navigation-menu:rounded-md group-data-[viewport=false]/navigation-menu:border group-data-[viewport=false]/navigation-menu:bg-popover group-data-[viewport=false]/navigation-menu:text-popover-foreground group-data-[viewport=false]/navigation-menu:shadow group-data-[viewport=false]/navigation-menu:duration-200 **:data-[slot=navigation-menu-link]:focus:ring-0 **:data-[slot=navigation-menu-link]:focus:outline-none group-data-[viewport=false]/navigation-menu:data-[state=closed]:animate-out group-data-[viewport=false]/navigation-menu:data-[state=closed]:fade-out-0 group-data-[viewport=false]/navigation-menu:data-[state=closed]:zoom-out-95 group-data-[viewport=false]/navigation-menu:data-[state=open]:animate-in group-data-[viewport=false]/navigation-menu:data-[state=open]:fade-in-0 group-data-[viewport=false]/navigation-menu:data-[state=open]:zoom-in-95",
+				"h-full w-auto p-1 transition-[opacity,transform,translate] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[viewport=false]/navigation-menu:rounded-lg group-data-[viewport=false]/navigation-menu:bg-popover group-data-[viewport=false]/navigation-menu:text-popover-foreground group-data-[viewport=false]/navigation-menu:shadow group-data-[viewport=false]/navigation-menu:ring-1 group-data-[viewport=false]/navigation-menu:ring-foreground/10 group-data-[viewport=false]/navigation-menu:duration-300 group-data-[viewport=false]/navigation-menu:data-closed:animate-out group-data-[viewport=false]/navigation-menu:data-closed:fade-out-0 group-data-[viewport=false]/navigation-menu:data-closed:zoom-out-95 data-ending-style:opacity-0 group-data-[viewport=false]/navigation-menu:data-open:animate-in group-data-[viewport=false]/navigation-menu:data-open:fade-in-0 group-data-[viewport=false]/navigation-menu:data-open:zoom-in-95 data-starting-style:opacity-0 data-ending-style:data-[activation-direction=left]:translate-x-[50%] data-starting-style:data-[activation-direction=left]:translate-x-[-50%] data-ending-style:data-[activation-direction=right]:translate-x-[-50%] data-starting-style:data-[activation-direction=right]:translate-x-[50%] **:data-[slot=navigation-menu-link]:focus:ring-0 **:data-[slot=navigation-menu-link]:focus:outline-none",
 				className,
 			)}
 			{...props}
@@ -134,91 +100,135 @@ function NavigationMenuContent({
 	);
 }
 
-export type NavigationMenuViewportElement = React.ComponentRef<
-	typeof NavigationMenuPrimitive.Viewport
->;
-export type NavigationMenuViewportProps = React.ComponentPropsWithoutRef<
-	typeof NavigationMenuPrimitive.Viewport
->;
-
-function NavigationMenuViewport({
+function NavigationMenuPositioner({
 	className,
+	side = "bottom",
+	sideOffset = 8,
+	align = "start",
+	alignOffset = 0,
 	...props
-}: NavigationMenuViewportProps): React.JSX.Element {
+}: NavigationMenuPrimitive.Positioner.Props) {
 	return (
-		<div
-			className={cn(
-				"absolute top-full left-0 isolate z-50 flex justify-center",
-			)}
-		>
-			<NavigationMenuPrimitive.Viewport
-				data-slot="navigation-menu-viewport"
+		<NavigationMenuPrimitive.Portal>
+			<NavigationMenuPrimitive.Positioner
+				side={side}
+				sideOffset={sideOffset}
+				align={align}
+				alignOffset={alignOffset}
 				className={cn(
-					"origin-top-center relative mt-1.5 h-(--radix-navigation-menu-viewport-height) w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]",
+					"isolate z-50 h-(--positioner-height) w-(--positioner-width) max-w-(--available-width) transition-[top,left,right,bottom] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)] data-instant:transition-none data-[side=bottom]:before:top-[-10px] data-[side=bottom]:before:right-0 data-[side=bottom]:before:left-0",
 					className,
 				)}
 				{...props}
-			/>
-		</div>
+			>
+				<NavigationMenuPrimitive.Popup className="data-[ending-style]:easing-[ease] xs:w-(--popup-width) relative h-(--popup-height) w-(--popup-width) origin-(--transform-origin) rounded-lg bg-popover text-popover-foreground shadow ring-1 ring-foreground/10 transition-[opacity,transform,width,height,scale,translate] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)] outline-none data-ending-style:scale-90 data-ending-style:opacity-0 data-ending-style:duration-150 data-starting-style:scale-90 data-starting-style:opacity-0">
+					<NavigationMenuPrimitive.Viewport className="relative size-full overflow-hidden" />
+				</NavigationMenuPrimitive.Popup>
+			</NavigationMenuPrimitive.Positioner>
+		</NavigationMenuPrimitive.Portal>
 	);
 }
 
-export type NavigationMenuLinkElement = React.ComponentRef<
-	typeof NavigationMenuPrimitive.Link
->;
-export type NavigationMenuLinkProps = React.ComponentPropsWithoutRef<
-	typeof NavigationMenuPrimitive.Link
->;
+const NavigationMenuViewport = NavigationMenuPositioner;
 
 function NavigationMenuLink({
 	className,
+	asChild = false,
+	children,
+	render,
 	...props
-}: NavigationMenuLinkProps): React.JSX.Element {
+}: NavigationMenuPrimitive.Link.Props & { asChild?: boolean }) {
 	return (
 		<NavigationMenuPrimitive.Link
 			data-slot="navigation-menu-link"
+			render={asChild && React.isValidElement(children) ? children : render}
 			className={cn(
-				"flex cursor-pointer flex-col gap-1 rounded-full p-2 text-sm transition-all outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 data-[active=true]:bg-accent/50 data-[active=true]:text-accent-foreground data-[active=true]:hover:bg-accent data-[active=true]:focus:bg-accent [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
+				"flex cursor-pointer items-center gap-2 rounded-lg p-2 text-sm transition-all outline-none hover:bg-muted focus:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-1 in-data-[slot=navigation-menu-content]:rounded-md data-active:bg-muted/50 data-active:hover:bg-muted data-active:focus:bg-muted [&_svg:not([class*='size-'])]:size-4",
 				className,
 			)}
 			{...props}
-		/>
+		>
+			{asChild ? undefined : children}
+		</NavigationMenuPrimitive.Link>
 	);
 }
-
-export type NavigationMenuIndicatorElement = React.ComponentRef<
-	typeof NavigationMenuPrimitive.Indicator
->;
-export type NavigationMenuIndicatorProps = React.ComponentPropsWithoutRef<
-	typeof NavigationMenuPrimitive.Indicator
->;
 
 function NavigationMenuIndicator({
 	className,
 	...props
-}: NavigationMenuIndicatorProps): React.JSX.Element {
+}: React.ComponentPropsWithRef<typeof NavigationMenuPrimitive.Icon>) {
 	return (
-		<NavigationMenuPrimitive.Indicator
+		<NavigationMenuPrimitive.Icon
 			data-slot="navigation-menu-indicator"
 			className={cn(
-				"top-full z-1 flex h-1.5 items-end justify-center overflow-hidden data-[state=hidden]:animate-out data-[state=hidden]:fade-out data-[state=visible]:animate-in data-[state=visible]:fade-in",
+				"top-full z-1 flex h-1.5 items-end justify-center overflow-hidden data-popup-open:animate-in data-popup-open:fade-in",
 				className,
 			)}
 			{...props}
 		>
 			<div className="relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm bg-border shadow-md" />
-		</NavigationMenuPrimitive.Indicator>
+		</NavigationMenuPrimitive.Icon>
 	);
 }
 
+export type NavigationMenuElement = import("react").ComponentRef<
+	typeof NavigationMenu
+>;
+export type NavigationMenuProps = import("react").ComponentProps<
+	typeof NavigationMenu
+>;
+export type NavigationMenuListElement = import("react").ComponentRef<
+	typeof NavigationMenuList
+>;
+export type NavigationMenuListProps = import("react").ComponentProps<
+	typeof NavigationMenuList
+>;
+export type NavigationMenuItemElement = import("react").ComponentRef<
+	typeof NavigationMenuItem
+>;
+export type NavigationMenuItemProps = import("react").ComponentProps<
+	typeof NavigationMenuItem
+>;
+export type NavigationMenuTriggerElement = import("react").ComponentRef<
+	typeof NavigationMenuTrigger
+>;
+export type NavigationMenuTriggerProps = import("react").ComponentProps<
+	typeof NavigationMenuTrigger
+>;
+export type NavigationMenuContentElement = import("react").ComponentRef<
+	typeof NavigationMenuContent
+>;
+export type NavigationMenuContentProps = import("react").ComponentProps<
+	typeof NavigationMenuContent
+>;
+export type NavigationMenuLinkElement = import("react").ComponentRef<
+	typeof NavigationMenuLink
+>;
+export type NavigationMenuLinkProps = import("react").ComponentProps<
+	typeof NavigationMenuLink
+>;
+export type NavigationMenuIndicatorElement = import("react").ComponentRef<
+	typeof NavigationMenuIndicator
+>;
+export type NavigationMenuIndicatorProps = import("react").ComponentProps<
+	typeof NavigationMenuIndicator
+>;
+export type NavigationMenuViewportElement = import("react").ComponentRef<
+	typeof NavigationMenuViewport
+>;
+export type NavigationMenuViewportProps = import("react").ComponentProps<
+	typeof NavigationMenuViewport
+>;
+
 export {
 	NavigationMenu,
-	NavigationMenuList,
-	NavigationMenuItem,
 	NavigationMenuContent,
-	NavigationMenuTrigger,
-	NavigationMenuLink,
 	NavigationMenuIndicator,
-	NavigationMenuViewport,
+	NavigationMenuItem,
+	NavigationMenuLink,
+	NavigationMenuList,
+	NavigationMenuTrigger,
 	navigationMenuTriggerStyle,
+	NavigationMenuPositioner,
+	NavigationMenuViewport,
 };

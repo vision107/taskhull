@@ -72,11 +72,12 @@ export const ConfirmationModal = NiceModal.create<ConfirmationModalProps>(
 		};
 
 		return (
-			<AlertDialog open={modal.visible}>
-				<AlertDialogContent
-					onAnimationEndCapture={modal.handleAnimationEndCapture}
-					onClose={modal.handleClose}
-				>
+			<AlertDialog
+				open={modal.visible}
+				onOpenChange={modal.handleOpenChange}
+				onOpenChangeComplete={modal.handleOpenChangeComplete}
+			>
+				<AlertDialogContent>
 					<AlertDialogHeader>
 						<AlertDialogTitle>{title}</AlertDialogTitle>
 					</AlertDialogHeader>

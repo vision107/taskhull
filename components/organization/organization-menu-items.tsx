@@ -144,7 +144,7 @@ export function OrganizationMenuItems(): React.JSX.Element {
 
 	return (
 		<ScrollArea
-			className="h-full [&>[data-radix-scroll-area-viewport]>div]:flex! [&>[data-radix-scroll-area-viewport]>div]:h-full [&>[data-radix-scroll-area-viewport]>div]:flex-col [&>[data-radix-scroll-area-viewport]>div]:-space-y-1"
+			className="h-full [&>[data-slot=scroll-area-viewport]>div]:flex! [&>[data-slot=scroll-area-viewport]>div]:h-full [&>[data-slot=scroll-area-viewport]>div]:flex-col [&>[data-slot=scroll-area-viewport]>div]:-space-y-1"
 			/* Overriding the hardcoded { disply:table } to get full flex height */
 			verticalScrollBar
 		>
@@ -266,7 +266,7 @@ export function OrganizationMenuItems(): React.JSX.Element {
 											tooltip={group.label}
 										>
 											<span>{group.label}</span>
-											<ChevronRight className="ml-auto h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+											<ChevronRight className="ml-auto h-4 w-4 shrink-0 transition-transform duration-200 group-data-open/collapsible:rotate-90" />
 										</SidebarMenuButton>
 									</CollapsibleTrigger>
 									<CollapsibleContent>

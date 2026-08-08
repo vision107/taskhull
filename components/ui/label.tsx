@@ -1,26 +1,24 @@
 "use client";
 
-import * as LabelPrimitive from "@radix-ui/react-label";
-import type * as React from "react";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-export type LabelElement = React.ComponentRef<typeof LabelPrimitive.Root>;
-export type LabelProps = React.ComponentPropsWithoutRef<
-	typeof LabelPrimitive.Root
->;
-
-function Label({ className, ...props }: LabelProps): React.JSX.Element {
+function Label({ className, ...props }: React.ComponentProps<"label">) {
 	return (
-		<LabelPrimitive.Root
+		// oxlint-disable-next-line jsx-a11y/label-has-associated-control -- reusable labels receive htmlFor or wrap a control at the call site
+		<label
 			data-slot="label"
 			className={cn(
-				"flex items-center gap-2 text-sm leading-none font-medium group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+				"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
 				className,
 			)}
 			{...props}
 		/>
 	);
 }
+
+export type LabelElement = import("react").ComponentRef<typeof Label>;
+export type LabelProps = import("react").ComponentProps<typeof Label>;
 
 export { Label };

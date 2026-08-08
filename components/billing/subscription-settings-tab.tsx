@@ -17,7 +17,7 @@ import { PricingTable } from "@/components/billing/pricing-table";
 import { SubscriptionStatusBadge } from "@/components/billing/subscription-status-badge";
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -374,16 +374,18 @@ export function SubscriptionSettingsTab({
 												{formatCurrency(invoice.amount, invoice.currency)}
 											</span>
 											{invoice.hostedInvoiceUrl && (
-												<Button variant="ghost" size="sm" asChild>
-													<a
-														href={invoice.hostedInvoiceUrl}
-														target="_blank"
-														rel="noopener noreferrer"
-														aria-label={`View invoice ${invoice.number ?? invoice.id}`}
-													>
-														<ExternalLink className="h-4 w-4" />
-													</a>
-												</Button>
+												<a
+													href={invoice.hostedInvoiceUrl}
+													target="_blank"
+													rel="noopener noreferrer"
+													aria-label={`View invoice ${invoice.number ?? invoice.id}`}
+													className={buttonVariants({
+														variant: "ghost",
+														size: "sm",
+													})}
+												>
+													<ExternalLink className="h-4 w-4" />
+												</a>
 											)}
 										</div>
 									</div>

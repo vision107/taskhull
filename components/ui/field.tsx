@@ -1,48 +1,36 @@
 "use client";
 
 import { cva, type VariantProps } from "class-variance-authority";
-import type * as React from "react";
 import { useMemo } from "react";
 
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
-export type FieldSetElement = HTMLFieldSetElement;
-export type FieldSetProps = React.ComponentPropsWithoutRef<"fieldset">;
-
-function FieldSet({ className, ...props }: FieldSetProps): React.JSX.Element {
+function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
 	return (
 		<fieldset
 			data-slot="field-set"
 			className={cn(
-				"flex flex-col gap-6",
-				"has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3",
+				"flex flex-col gap-4 has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3",
 				className,
 			)}
 			{...props}
 		/>
 	);
 }
-
-export type FieldLegendElement = HTMLLegendElement;
-export type FieldLegendProps = React.ComponentPropsWithoutRef<"legend"> & {
-	variant?: "legend" | "label";
-};
 
 function FieldLegend({
 	className,
 	variant = "legend",
 	...props
-}: FieldLegendProps): React.JSX.Element {
+}: React.ComponentProps<"legend"> & { variant?: "legend" | "label" }) {
 	return (
 		<legend
 			data-slot="field-legend"
 			data-variant={variant}
 			className={cn(
-				"mb-3 font-medium",
-				"data-[variant=legend]:text-base",
-				"data-[variant=label]:text-sm",
+				"mb-1.5 font-medium data-[variant=label]:text-sm data-[variant=legend]:text-base",
 				className,
 			)}
 			{...props}
@@ -50,18 +38,12 @@ function FieldLegend({
 	);
 }
 
-export type FieldGroupElement = HTMLDivElement;
-export type FieldGroupProps = React.ComponentPropsWithoutRef<"div">;
-
-function FieldGroup({
-	className,
-	...props
-}: FieldGroupProps): React.JSX.Element {
+function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="field-group"
 			className={cn(
-				"group/field-group @container/field-group flex w-full flex-col gap-7 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4",
+				"group/field-group @container/field-group flex w-full flex-col gap-5 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4",
 				className,
 			)}
 			{...props}
@@ -70,21 +52,15 @@ function FieldGroup({
 }
 
 const fieldVariants = cva(
-	"group/field flex w-full gap-3 data-[invalid=true]:text-destructive",
+	"group/field flex w-full gap-2 data-[invalid=true]:text-destructive",
 	{
 		variants: {
 			orientation: {
-				vertical: ["flex-col [&>*]:w-full [&>.sr-only]:w-auto"],
-				horizontal: [
-					"flex-row items-center",
-					"[&>[data-slot=field-label]]:flex-auto",
-					"has-[>[data-slot=field-content]]:items-start has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
-				],
-				responsive: [
-					"flex-col [&>*]:w-full [&>.sr-only]:w-auto @md/field-group:flex-row @md/field-group:items-center @md/field-group:[&>*]:w-auto",
-					"@md/field-group:[&>[data-slot=field-label]]:flex-auto",
-					"@md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
-				],
+				vertical: "flex-col *:w-full [&>.sr-only]:w-auto",
+				horizontal:
+					"flex-row items-center has-[>[data-slot=field-content]]:items-start *:data-[slot=field-label]:flex-auto has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
+				responsive:
+					"flex-col *:w-full @md/field-group:flex-row @md/field-group:items-center @md/field-group:*:w-auto @md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:*:data-[slot=field-label]:flex-auto [&>.sr-only]:w-auto @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
 			},
 		},
 		defaultVariants: {
@@ -93,15 +69,11 @@ const fieldVariants = cva(
 	},
 );
 
-export type FieldElement = HTMLDivElement;
-export type FieldProps = React.ComponentPropsWithoutRef<"div"> &
-	VariantProps<typeof fieldVariants>;
-
 function Field({
 	className,
 	orientation = "vertical",
 	...props
-}: FieldProps): React.JSX.Element {
+}: React.ComponentProps<"div"> & VariantProps<typeof fieldVariants>) {
 	return (
 		<div
 			role="group"
@@ -113,39 +85,29 @@ function Field({
 	);
 }
 
-export type FieldContentElement = HTMLDivElement;
-export type FieldContentProps = React.ComponentPropsWithoutRef<"div">;
-
-function FieldContent({
-	className,
-	...props
-}: FieldContentProps): React.JSX.Element {
+function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="field-content"
 			className={cn(
-				"group/field-content flex flex-1 flex-col gap-1.5 leading-snug",
+				"group/field-content flex flex-1 flex-col gap-0.5 leading-snug",
 				className,
 			)}
 			{...props}
 		/>
 	);
 }
-
-export type FieldLabelElement = React.ComponentRef<typeof Label>;
-export type FieldLabelProps = React.ComponentPropsWithoutRef<typeof Label>;
 
 function FieldLabel({
 	className,
 	...props
-}: FieldLabelProps): React.JSX.Element {
+}: React.ComponentProps<typeof Label>) {
 	return (
 		<Label
 			data-slot="field-label"
 			className={cn(
-				"group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50",
-				"has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border *:data-[slot=field]:p-4",
-				"has-data-[state=checked]:border-primary has-data-[state=checked]:bg-primary/5 dark:has-data-[state=checked]:bg-primary/10",
+				"group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50 has-data-checked:border-primary/30 has-data-checked:bg-primary/5 has-[>[data-slot=field]]:rounded-lg has-[>[data-slot=field]]:border *:data-[slot=field]:p-2.5 dark:has-data-checked:border-primary/20 dark:has-data-checked:bg-primary/10",
+				"has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col",
 				className,
 			)}
 			{...props}
@@ -153,18 +115,12 @@ function FieldLabel({
 	);
 }
 
-export type FieldTitleElement = HTMLDivElement;
-export type FieldTitleProps = React.ComponentPropsWithoutRef<"div">;
-
-function FieldTitle({
-	className,
-	...props
-}: FieldTitleProps): React.JSX.Element {
+function FieldTitle({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="field-label"
 			className={cn(
-				"flex w-fit items-center gap-2 text-sm leading-snug font-medium group-data-[disabled=true]/field:opacity-50",
+				"flex w-fit items-center gap-2 text-sm font-medium group-data-[disabled=true]/field:opacity-50",
 				className,
 			)}
 			{...props}
@@ -172,19 +128,13 @@ function FieldTitle({
 	);
 }
 
-export type FieldDescriptionElement = HTMLParagraphElement;
-export type FieldDescriptionProps = React.ComponentPropsWithoutRef<"p">;
-
-function FieldDescription({
-	className,
-	...props
-}: FieldDescriptionProps): React.JSX.Element {
+function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
 	return (
 		<p
 			data-slot="field-description"
 			className={cn(
-				"text-sm leading-normal font-normal text-muted-foreground group-has-data-[orientation=horizontal]/field:text-balance",
-				"last:mt-0 nth-last-2:-mt-1 [[data-variant=legend]+&]:-mt-1.5",
+				"text-left text-sm leading-normal font-normal text-muted-foreground group-data-[orientation=horizontal]/field:text-balance [[data-variant=legend]+&]:-mt-1.5",
+				"last:mt-0 nth-last-2:-mt-1",
 				"[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary",
 				className,
 			)}
@@ -193,16 +143,13 @@ function FieldDescription({
 	);
 }
 
-export type FieldSeparatorElement = HTMLDivElement;
-export type FieldSeparatorProps = React.ComponentPropsWithoutRef<"div"> & {
-	children?: React.ReactNode;
-};
-
 function FieldSeparator({
 	children,
 	className,
 	...props
-}: FieldSeparatorProps): React.JSX.Element {
+}: React.ComponentProps<"div"> & {
+	children?: React.ReactNode;
+}) {
 	return (
 		<div
 			data-slot="field-separator"
@@ -226,17 +173,14 @@ function FieldSeparator({
 	);
 }
 
-export type FieldErrorElement = HTMLDivElement;
-export type FieldErrorProps = React.ComponentPropsWithoutRef<"div"> & {
-	errors?: Array<{ message?: string } | undefined>;
-};
-
 function FieldError({
 	className,
 	children,
 	errors,
 	...props
-}: FieldErrorProps): React.JSX.Element | null {
+}: React.ComponentProps<"div"> & {
+	errors?: Array<{ message?: string } | undefined>;
+}) {
 	const content = useMemo(() => {
 		if (children) {
 			return children;
@@ -250,7 +194,7 @@ function FieldError({
 			...new Map(errors.map((error) => [error?.message, error])).values(),
 		];
 
-		if (uniqueErrors?.length === 1) {
+		if (uniqueErrors?.length == 1) {
 			return uniqueErrors[0]?.message;
 		}
 
@@ -279,6 +223,43 @@ function FieldError({
 		</div>
 	);
 }
+
+export type FieldSetElement = import("react").ComponentRef<typeof FieldSet>;
+export type FieldSetProps = import("react").ComponentProps<typeof FieldSet>;
+export type FieldLegendElement = import("react").ComponentRef<
+	typeof FieldLegend
+>;
+export type FieldLegendProps = import("react").ComponentProps<
+	typeof FieldLegend
+>;
+export type FieldGroupElement = import("react").ComponentRef<typeof FieldGroup>;
+export type FieldGroupProps = import("react").ComponentProps<typeof FieldGroup>;
+export type FieldElement = import("react").ComponentRef<typeof Field>;
+export type FieldProps = import("react").ComponentProps<typeof Field>;
+export type FieldContentElement = import("react").ComponentRef<
+	typeof FieldContent
+>;
+export type FieldContentProps = import("react").ComponentProps<
+	typeof FieldContent
+>;
+export type FieldLabelElement = import("react").ComponentRef<typeof FieldLabel>;
+export type FieldLabelProps = import("react").ComponentProps<typeof FieldLabel>;
+export type FieldTitleElement = import("react").ComponentRef<typeof FieldTitle>;
+export type FieldTitleProps = import("react").ComponentProps<typeof FieldTitle>;
+export type FieldDescriptionElement = import("react").ComponentRef<
+	typeof FieldDescription
+>;
+export type FieldDescriptionProps = import("react").ComponentProps<
+	typeof FieldDescription
+>;
+export type FieldSeparatorElement = import("react").ComponentRef<
+	typeof FieldSeparator
+>;
+export type FieldSeparatorProps = import("react").ComponentProps<
+	typeof FieldSeparator
+>;
+export type FieldErrorElement = import("react").ComponentRef<typeof FieldError>;
+export type FieldErrorProps = import("react").ComponentProps<typeof FieldError>;
 
 export {
 	Field,

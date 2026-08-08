@@ -14,7 +14,7 @@ import * as React from "react";
 
 import { CreateOrganizationModal } from "@/components/organization/create-organization-modal";
 import { OrganizationLogo } from "@/components/organization/organization-logo";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
 	Command,
 	CommandGroup,
@@ -275,36 +275,34 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 							{user?.role === "admin" && (
 								<>
 									<Separator />
-									<Button
-										asChild
-										className="h-8 w-full justify-start gap-1.5 text-sm font-normal"
-										size="sm"
-										variant="ghost"
+									<Link
+										href="/dashboard/admin/users"
+										onClick={() => setOpen(false)}
+										className={buttonVariants({
+											variant: "ghost",
+											size: "sm",
+											className:
+												"h-8 w-full justify-start gap-1.5 text-sm font-normal",
+										})}
 									>
-										<Link
-											href="/dashboard/admin/users"
-											onClick={() => setOpen(false)}
-											className="flex items-center"
+										<div className="mr-0.75 -ml-0.75 flex size-5 items-center justify-center rounded-md bg-foreground text-background">
+											<ShieldIcon className="size-3 shrink-0" />
+										</div>
+										<span className="flex-1">Admin Panel</span>
+										<div
+											className={cn(
+												"ml-auto flex size-4 items-center justify-center rounded-full text-primary-foreground",
+												isAdminArea ? "bg-blue-500" : "bg-transparent",
+											)}
 										>
-											<div className="mr-0.75 -ml-0.75 flex size-5 items-center justify-center rounded-md bg-foreground text-background">
-												<ShieldIcon className="size-3 shrink-0" />
-											</div>
-											<span className="flex-1">Admin Panel</span>
-											<div
+											<CheckIcon
 												className={cn(
-													"ml-auto flex size-4 items-center justify-center rounded-full text-primary-foreground",
-													isAdminArea ? "bg-blue-500" : "bg-transparent",
+													"size-3 shrink-0 text-current",
+													isAdminArea ? "opacity-100" : "opacity-0",
 												)}
-											>
-												<CheckIcon
-													className={cn(
-														"size-3 shrink-0 text-current",
-														isAdminArea ? "opacity-100" : "opacity-0",
-													)}
-												/>
-											</div>
-										</Link>
-									</Button>
+											/>
+										</div>
+									</Link>
 								</>
 							)}
 							{appConfig.organizations.allowUserCreation && (

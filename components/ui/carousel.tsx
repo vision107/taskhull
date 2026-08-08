@@ -3,18 +3,18 @@
 import useEmblaCarousel, {
 	type UseEmblaCarouselType,
 } from "embla-carousel-react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type CarouselApi = UseEmblaCarouselType[1];
+type CarouselApi = UseEmblaCarouselType[1];
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;
 export type CarouselOptions = UseCarouselParameters[0];
 export type CarouselPlugin = UseCarouselParameters[1];
 
-export type CarouselProps = React.ComponentPropsWithoutRef<"div"> & {
+export type CarouselProps = React.ComponentProps<"div"> & {
 	opts?: CarouselOptions;
 	plugins?: CarouselPlugin;
 	orientation?: "horizontal" | "vertical";
@@ -28,12 +28,7 @@ type CarouselContextProps = {
 	scrollNext: () => void;
 	canScrollPrev: boolean;
 	canScrollNext: boolean;
-} & {
-	opts?: CarouselOptions;
-	plugins?: CarouselPlugin;
-	orientation?: "horizontal" | "vertical";
-	setApi?: (api: CarouselApi) => void;
-};
+} & CarouselProps;
 
 const CarouselContext = React.createContext<CarouselContextProps | null>(null);
 
@@ -47,8 +42,6 @@ function useCarousel() {
 	return context;
 }
 
-export type CarouselElement = HTMLDivElement;
-
 function Carousel({
 	orientation = "horizontal",
 	opts,
@@ -57,7 +50,7 @@ function Carousel({
 	className,
 	children,
 	...props
-}: CarouselProps): React.JSX.Element {
+}: React.ComponentProps<"div"> & CarouselProps) {
 	const [carouselRef, api] = useEmblaCarousel(
 		{
 			...opts,
@@ -139,13 +132,7 @@ function Carousel({
 	);
 }
 
-export type CarouselContentElement = HTMLDivElement;
-export type CarouselContentProps = React.ComponentPropsWithoutRef<"div">;
-
-function CarouselContent({
-	className,
-	...props
-}: CarouselContentProps): React.JSX.Element {
+function CarouselContent({ className, ...props }: React.ComponentProps<"div">) {
 	const { carouselRef, orientation } = useCarousel();
 
 	return (
@@ -166,13 +153,7 @@ function CarouselContent({
 	);
 }
 
-export type CarouselItemElement = HTMLDivElement;
-export type CarouselItemProps = React.ComponentPropsWithoutRef<"div">;
-
-function CarouselItem({
-	className,
-	...props
-}: CarouselItemProps): React.JSX.Element {
+function CarouselItem({ className, ...props }: React.ComponentProps<"div">) {
 	const { orientation } = useCarousel();
 
 	return (
@@ -190,17 +171,12 @@ function CarouselItem({
 	);
 }
 
-export type CarouselPreviousElement = React.ComponentRef<typeof Button>;
-export type CarouselPreviousProps = React.ComponentPropsWithoutRef<
-	typeof Button
->;
-
 function CarouselPrevious({
 	className,
 	variant = "outline",
-	size = "icon",
+	size = "icon-sm",
 	...props
-}: CarouselPreviousProps): React.JSX.Element {
+}: React.ComponentProps<typeof Button>) {
 	const { orientation, scrollPrev, canScrollPrev } = useCarousel();
 
 	return (
@@ -209,9 +185,9 @@ function CarouselPrevious({
 			variant={variant}
 			size={size}
 			className={cn(
-				"absolute size-8 rounded-full",
+				"absolute touch-manipulation rounded-full",
 				orientation === "horizontal"
-					? "top-1/2 -left-12 -translate-y-1/2"
+					? "inset-y-0 -left-12 my-auto"
 					: "-top-12 left-1/2 -translate-x-1/2 rotate-90",
 				className,
 			)}
@@ -219,21 +195,18 @@ function CarouselPrevious({
 			onClick={scrollPrev}
 			{...props}
 		>
-			<ArrowLeft />
+			<ChevronLeftIcon />
 			<span className="sr-only">Previous slide</span>
 		</Button>
 	);
 }
 
-export type CarouselNextElement = React.ComponentRef<typeof Button>;
-export type CarouselNextProps = React.ComponentPropsWithoutRef<typeof Button>;
-
 function CarouselNext({
 	className,
 	variant = "outline",
-	size = "icon",
+	size = "icon-sm",
 	...props
-}: CarouselNextProps): React.JSX.Element {
+}: React.ComponentProps<typeof Button>) {
 	const { orientation, scrollNext, canScrollNext } = useCarousel();
 
 	return (
@@ -242,9 +215,9 @@ function CarouselNext({
 			variant={variant}
 			size={size}
 			className={cn(
-				"absolute size-8 rounded-full",
+				"absolute touch-manipulation rounded-full",
 				orientation === "horizontal"
-					? "top-1/2 -right-12 -translate-y-1/2"
+					? "inset-y-0 -right-12 my-auto"
 					: "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
 				className,
 			)}
@@ -252,16 +225,44 @@ function CarouselNext({
 			onClick={scrollNext}
 			{...props}
 		>
-			<ArrowRight />
+			<ChevronRightIcon />
 			<span className="sr-only">Next slide</span>
 		</Button>
 	);
 }
 
+export type CarouselElement = import("react").ComponentRef<typeof Carousel>;
+export type CarouselContentElement = import("react").ComponentRef<
+	typeof CarouselContent
+>;
+export type CarouselContentProps = import("react").ComponentProps<
+	typeof CarouselContent
+>;
+export type CarouselItemElement = import("react").ComponentRef<
+	typeof CarouselItem
+>;
+export type CarouselItemProps = import("react").ComponentProps<
+	typeof CarouselItem
+>;
+export type CarouselPreviousElement = import("react").ComponentRef<
+	typeof CarouselPrevious
+>;
+export type CarouselPreviousProps = import("react").ComponentProps<
+	typeof CarouselPrevious
+>;
+export type CarouselNextElement = import("react").ComponentRef<
+	typeof CarouselNext
+>;
+export type CarouselNextProps = import("react").ComponentProps<
+	typeof CarouselNext
+>;
+
 export {
+	type CarouselApi,
 	Carousel,
 	CarouselContent,
 	CarouselItem,
 	CarouselPrevious,
 	CarouselNext,
+	useCarousel,
 };
