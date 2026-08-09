@@ -48,6 +48,8 @@ export const authErrorMessages: { [K in keyof AuthClientErrorCodes]?: string } =
 		SOCIAL_ACCOUNT_ALREADY_LINKED: "This account is already linked to a user.",
 		USER_EMAIL_NOT_FOUND: "Email not found.",
 		USER_ALREADY_EXISTS: "Email address is already taken.",
+		USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL:
+			"Email address is already taken. Please use another email address.",
 		INVALID_INVITATION: "The invitation is invalid or expired.",
 		SESSION_EXPIRED: "The session has expired.",
 		FAILED_TO_UNLINK_LAST_ACCOUNT: "Failed to unlink account",
