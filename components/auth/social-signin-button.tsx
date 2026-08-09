@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { authConfig } from "@/config/auth.config";
 import { authClient } from "@/lib/auth/client";
 import { oAuthProviders } from "@/lib/auth/oauth-providers";
+import { getAuthRedirectPath } from "@/lib/auth/redirect";
 import { cn } from "@/lib/utils";
 
 export type SocialSigninButtonProps =
@@ -21,12 +22,15 @@ export function SocialSigninButton({
 	...props
 }: SocialSigninButtonProps): React.JSX.Element {
 	const [invitationId] = useQueryState("invitationId", parseAsString);
+	const [redirectTo] = useQueryState("redirectTo", parseAsString);
 	const [isSigningIn, setIsSigningIn] = React.useState(false);
 	const providerData = oAuthProviders[provider];
 
-	const redirectPath = invitationId
-		? `/app/organization-invitation/${invitationId}`
-		: authConfig.redirectAfterSignIn;
+	const redirectPath = getAuthRedirectPath({
+		invitationId,
+		redirectTo,
+		fallback: authConfig.redirectAfterSignIn,
+	});
 
 	const onSignin = async () => {
 		const callbackURL = new URL(redirectPath, window.location.origin);

@@ -1,5 +1,7 @@
 import { APIError } from "better-auth/api";
 
+import { getValidInvitationId } from "@/lib/auth/redirect";
+
 export type SignUpInvitation = {
 	email: string;
 	status: string;
@@ -13,9 +15,6 @@ export type AssertInvitationSignUpAllowedOptions = {
 	findInvitation: (id: string) => Promise<SignUpInvitation | null>;
 	now?: Date;
 };
-
-const UUID_PATTERN =
-	/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function throwInvalidInvitation(): never {
 	throw new APIError("FORBIDDEN", {
@@ -35,15 +34,13 @@ export async function assertInvitationSignUpAllowed({
 		return;
 	}
 
-	if (
-		!invitationId ||
-		!UUID_PATTERN.test(invitationId) ||
-		typeof email !== "string"
-	) {
+	const validInvitationId = getValidInvitationId(invitationId);
+
+	if (!validInvitationId || typeof email !== "string") {
 		throwInvalidInvitation();
 	}
 
-	const invitation = await findInvitation(invitationId);
+	const invitation = await findInvitation(validInvitationId);
 	const normalizedEmail = email.trim().toLowerCase();
 
 	if (

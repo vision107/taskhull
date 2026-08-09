@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useProgressRouter } from "@/hooks/use-progress-router";
+import { getSafeRedirectPath } from "@/lib/auth/redirect";
 import { trpc } from "@/trpc/client";
 
 export function OnboardingCard(): React.JSX.Element {
@@ -32,7 +33,7 @@ export function OnboardingCard(): React.JSX.Element {
 
 		await utils.user.getSession.invalidate();
 
-		router.replace(redirectTo ?? "/dashboard");
+		router.replace(getSafeRedirectPath(redirectTo, "/dashboard"));
 	};
 
 	const steps = [

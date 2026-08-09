@@ -33,18 +33,18 @@ import { authConfig } from "@/config/auth.config";
 import { useZodForm } from "@/hooks/use-zod-form";
 import { authClient } from "@/lib/auth/client";
 import { getAuthErrorMessage } from "@/lib/auth/constants";
+import { getAuthRedirectPath } from "@/lib/auth/redirect";
 import { otpSchema } from "@/schemas/auth-schemas";
 
 export function OtpCard(): React.JSX.Element {
 	const searchParams = useSearchParams();
 	const [isVerifying, setIsVerifying] = React.useState(false);
 
-	const invitationId = searchParams.get("invitationId");
-	const redirectTo = searchParams.get("redirectTo");
-
-	const redirectPath = invitationId
-		? `/dashboard/organization-invitation/${invitationId}`
-		: (redirectTo ?? authConfig.redirectAfterSignIn);
+	const redirectPath = getAuthRedirectPath({
+		invitationId: searchParams.get("invitationId"),
+		redirectTo: searchParams.get("redirectTo"),
+		fallback: authConfig.redirectAfterSignIn,
+	});
 
 	const methods = useZodForm({
 		schema: otpSchema,

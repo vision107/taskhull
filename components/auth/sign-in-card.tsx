@@ -46,6 +46,7 @@ import {
 	getAuthErrorMessage,
 } from "@/lib/auth/constants";
 import { type OAuthProvider, oAuthProviders } from "@/lib/auth/oauth-providers";
+import { getAuthRedirectPath, getValidInvitationId } from "@/lib/auth/redirect";
 import { signInSchema } from "@/schemas/auth-schemas";
 
 export function SignInCard(): React.JSX.Element {
@@ -63,7 +64,7 @@ export function SignInCard(): React.JSX.Element {
 		handleExpire,
 	} = useTurnstile();
 
-	const invitationId = searchParams.get("invitationId");
+	const invitationId = getValidInvitationId(searchParams.get("invitationId"));
 	const emailParam = searchParams.get("email");
 	const redirectTo = searchParams.get("redirectTo");
 
@@ -75,9 +76,11 @@ export function SignInCard(): React.JSX.Element {
 		},
 	});
 
-	const redirectPath = invitationId
-		? `/dashboard/organization-invitation/${invitationId}`
-		: (redirectTo ?? authConfig.redirectAfterSignIn);
+	const redirectPath = getAuthRedirectPath({
+		invitationId,
+		redirectTo,
+		fallback: authConfig.redirectAfterSignIn,
+	});
 
 	React.useEffect(() => {
 		if (sessionLoaded && user) {
