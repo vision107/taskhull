@@ -57,7 +57,7 @@ export function PlanSelection({ className }: PlanSelectionProps) {
 		setLoadingPriceId(stripePriceId);
 		createCheckout.mutate({
 			priceId: stripePriceId,
-			successUrl: `${appConfig.baseUrl}/dashboard/organization?checkout=success`,
+			successUrl: `${appConfig.baseUrl}/dashboard/billing/return?session_id={CHECKOUT_SESSION_ID}`,
 			cancelUrl: `${appConfig.baseUrl}/dashboard/choose-plan?checkout=cancelled`,
 		});
 	};

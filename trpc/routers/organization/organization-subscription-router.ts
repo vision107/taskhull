@@ -10,11 +10,14 @@ import {
 	createCustomerPortalSession,
 	getActivePlanForOrganization,
 	getActiveSubscriptionByOrganizationId,
+	getCheckoutSession,
+	getOrderByCheckoutSessionId,
 	getOrCreateStripeCustomer,
 	getOrderItemsByOrderId,
 	getOrdersByOrganizationId,
 	getStripeCustomerByOrganizationId,
 	getSubscriptionsByOrganizationId,
+	getSubscriptionById,
 	isStripeConfigured,
 	listCustomerInvoices,
 	previewSubscriptionChange,
@@ -28,6 +31,7 @@ import { db } from "@/lib/db";
 import { memberTable, organizationTable } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
 import {
+	checkoutReturnSchema,
 	createCheckoutSchema,
 	createPortalSessionSchema,
 	listInvoicesSchema,
@@ -56,6 +60,43 @@ async function getOrganizationWithBilling(organizationId: string) {
  * Handles all subscription and billing-related operations for organizations
  */
 export const organizationSubscriptionRouter = createTRPCRouter({
+	checkoutReturn: protectedOrganizationProcedure
+		.input(checkoutReturnSchema)
+		.query(async ({ ctx, input }) => {
+			if (!billingConfig.enabled || !isStripeConfigured()) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Billing is not enabled",
+				});
+			}
+
+			const session = await getCheckoutSession(input.sessionId);
+			if (session.metadata?.organizationId !== ctx.organization.id) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			if (session.status !== "complete") {
+				return { ready: false as const };
+			}
+
+			if (session.mode === "subscription") {
+				const subscriptionId =
+					typeof session.subscription === "string"
+						? session.subscription
+						: session.subscription?.id;
+				const subscription = subscriptionId
+					? await getSubscriptionById(subscriptionId)
+					: null;
+
+				return {
+					ready: subscription?.organizationId === ctx.organization.id,
+				};
+			}
+
+			const order = await getOrderByCheckoutSessionId(session.id);
+			return { ready: order?.organizationId === ctx.organization.id };
+		}),
+
 	/**
 	 * Get the current billing status for the organization
 	 * Returns the active plan, subscription status, etc.
@@ -336,7 +377,7 @@ export const organizationSubscriptionRouter = createTRPCRouter({
 			const baseUrl = appConfig.baseUrl;
 			const successUrl =
 				input.successUrl ??
-				`${baseUrl}/dashboard/organization/settings?tab=subscription&success=true`;
+				`${baseUrl}/dashboard/billing/return?session_id={CHECKOUT_SESSION_ID}`;
 			const cancelUrl =
 				input.cancelUrl ??
 				`${baseUrl}/dashboard/organization/settings?tab=subscription&canceled=true`;

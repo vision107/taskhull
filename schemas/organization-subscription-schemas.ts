@@ -29,6 +29,14 @@ export const createCheckoutSchema = z.object({
 	cancelUrl: z.string().url().optional(),
 });
 
+export const checkoutReturnSchema = z.object({
+	sessionId: z
+		.string()
+		.min(4)
+		.max(255)
+		.regex(/^cs_[A-Za-z0-9_]+$/, "Invalid checkout session ID"),
+});
+
 // Create portal session schema
 export const createPortalSessionSchema = z.object({
 	returnUrl: z.string().url().optional(),
