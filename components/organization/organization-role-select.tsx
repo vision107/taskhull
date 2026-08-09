@@ -17,20 +17,22 @@ export type OrganizationRoleSelectProps = {
 	value: OrganizationMemberRole;
 	onSelect: (value: OrganizationMemberRole) => void;
 	disabled?: boolean;
+	allowOwner?: boolean;
 } & Omit<SelectTriggerProps, "children" | "disabled" | "onSelect" | "value">;
 
 export function OrganizationRoleSelect({
 	value,
 	onSelect,
 	disabled,
+	allowOwner = true,
 	...triggerProps
 }: OrganizationRoleSelectProps): React.JSX.Element {
-	const roleOptions = Object.entries(organizationMemberRoleLabels).map(
-		([v, label]) => ({
+	const roleOptions = Object.entries(organizationMemberRoleLabels)
+		.map(([v, label]) => ({
 			value: v,
 			label,
-		}),
-	);
+		}))
+		.filter((option) => allowOwner || option.value !== "owner");
 
 	return (
 		<Select

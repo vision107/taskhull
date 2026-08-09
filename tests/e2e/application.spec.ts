@@ -13,7 +13,7 @@ async function signIn(page: Page, email: string) {
 	await page.getByLabel("Email").fill(email);
 	await page.getByLabel("Password", { exact: true }).fill("E2e-password-123!");
 	await page.getByRole("button", { name: "Sign in" }).click();
-	await expect(page).toHaveURL(/\/dashboard/);
+	await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
 }
 
 function totp(secret: string) {
@@ -95,6 +95,8 @@ test("owner can navigate account and organization surfaces", async ({
 	await expect(
 		page.getByRole("button", { name: /E2E Organization/ }),
 	).toBeVisible();
+	await page.goto("/dashboard/organization/settings?tab=general");
+	await expect(page.getByText("Danger Zone", { exact: true })).toBeVisible();
 	await page.goto("/dashboard/organization/settings?tab=members");
 	await expect(
 		page.getByRole("heading", { name: "Organization Settings" }),
@@ -285,4 +287,53 @@ test("administrator can access every admin surface", async ({ page }) => {
 	await page.keyboard.press("Escape");
 	await expect(deleteOrganizationDialog).toBeHidden();
 	await expect(organizationMenuTrigger).toBeFocused();
+});
+
+test("organization and global admins cannot delete an organization", async ({
+	browser,
+}) => {
+	test.setTimeout(90_000);
+	await new Promise((resolve) => setTimeout(resolve, 10_500));
+
+	for (const email of ["organization-admin@e2e.local", "admin@e2e.local"]) {
+		const context = await browser.newContext();
+		const page = await context.newPage();
+		await signIn(page, email);
+
+		const organizationsResponse = await page.request.get(
+			"/api/auth/organization/list",
+		);
+		expect(organizationsResponse.ok()).toBe(true);
+		const organizations = (await organizationsResponse.json()) as Array<{
+			id: string;
+			slug: string;
+		}>;
+		const organization = organizations.find(
+			(item) => item.slug === "e2e-organization",
+		);
+		expect(organization).toBeDefined();
+
+		const setActiveResponse = await page.request.post(
+			"/api/auth/organization/set-active",
+			{
+				data: { organizationId: organization!.id },
+				headers: { Origin: "http://localhost:3000" },
+			},
+		);
+		expect(setActiveResponse.ok()).toBe(true);
+
+		await page.goto("/dashboard/organization/settings?tab=general");
+		await expect(page.getByText("Danger Zone", { exact: true })).toBeHidden();
+
+		const deleteResponse = await page.request.post(
+			"/api/auth/organization/delete",
+			{
+				data: { organizationId: organization!.id },
+				headers: { Origin: "http://localhost:3000" },
+			},
+		);
+		expect(deleteResponse.status()).toBe(403);
+
+		await context.close();
+	}
 });

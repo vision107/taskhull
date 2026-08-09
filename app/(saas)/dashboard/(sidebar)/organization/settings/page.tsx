@@ -11,8 +11,9 @@ import {
 	PagePrimaryBar,
 	PageTitle,
 } from "@/components/ui/custom/page";
+import { canUploadOrganizationLogo } from "@/lib/auth/organization-permissions";
 import { getOrganizationById, getSession } from "@/lib/auth/server";
-import { isOrganizationAdmin } from "@/lib/auth/utils";
+import { isOrganizationAdmin, isOrganizationOwner } from "@/lib/auth/utils";
 
 export const metadata: Metadata = {
 	title: "Organization Settings",
@@ -34,6 +35,9 @@ export default async function OrganizationSettingsPage(): Promise<React.JSX.Elem
 	if (!organization) {
 		redirect("/dashboard");
 	}
+	const membership = organization.members.find(
+		(member) => member.userId === session.user.id,
+	);
 
 	return (
 		<Page>
@@ -56,6 +60,8 @@ export default async function OrganizationSettingsPage(): Promise<React.JSX.Elem
 						</div>
 						<OrganizationSettingsTabs
 							isAdmin={isOrganizationAdmin(organization, session?.user)}
+							isOwner={isOrganizationOwner(organization, session?.user)}
+							canUploadLogo={canUploadOrganizationLogo(membership?.role)}
 						/>
 					</div>
 				</div>

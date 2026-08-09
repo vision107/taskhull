@@ -30,6 +30,7 @@ import { UserAvatar } from "@/components/user/user-avatar";
 import { useSession } from "@/hooks/use-session";
 import { authClient } from "@/lib/auth/client";
 import { organizationMemberRoleLabels } from "@/lib/auth/constants";
+import { canChangeOrganizationRole } from "@/lib/auth/organization-permissions";
 import { isOrganizationAdmin } from "@/lib/auth/utils";
 import { trpc } from "@/trpc/client";
 import type { OrganizationMemberRole } from "@/types/organization-member-role";
@@ -52,6 +53,9 @@ export function OrganizationMembersTable({
 	);
 
 	const userIsOrganizationAdmin = isOrganizationAdmin(organization, user);
+	const currentMemberRole = organization?.members.find(
+		(member) => member.userId === user?.id,
+	)?.role;
 
 	const updateMemberRole = (memberId: string, role: OrganizationMemberRole) => {
 		toast.promise(
@@ -127,8 +131,13 @@ export function OrganizationMembersTable({
 						{userIsOrganizationAdmin ? (
 							<>
 								<OrganizationRoleSelect
+									allowOwner={currentMemberRole === "owner"}
 									disabled={
-										!userIsOrganizationAdmin || row.original.role === "owner"
+										!canChangeOrganizationRole({
+											actorRole: currentMemberRole,
+											currentRole: row.original.role,
+											nextRole: row.original.role,
+										})
 									}
 									onSelect={async (value) =>
 										updateMemberRole(row.original.id, value)

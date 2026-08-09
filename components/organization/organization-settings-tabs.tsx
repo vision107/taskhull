@@ -23,10 +23,14 @@ type TabValue = (typeof tabValues)[number];
 
 type OrganizationSettingsTabsProps = {
 	isAdmin: boolean;
+	isOwner: boolean;
+	canUploadLogo: boolean;
 };
 
 export function OrganizationSettingsTabs({
 	isAdmin,
+	isOwner,
+	canUploadLogo,
 }: OrganizationSettingsTabsProps): React.JSX.Element {
 	const [tab, setTab] = useQueryState(
 		"tab",
@@ -53,9 +57,9 @@ export function OrganizationSettingsTabs({
 			</UnderlinedTabsList>
 			<UnderlinedTabsContent value="general">
 				<div className="space-y-4">
-					<OrganizationLogoCard />
+					{canUploadLogo && <OrganizationLogoCard />}
 					<OrganizationChangeNameCard />
-					<DeleteOrganizationCard />
+					{isOwner && <DeleteOrganizationCard />}
 				</div>
 			</UnderlinedTabsContent>
 			<UnderlinedTabsContent value="members">

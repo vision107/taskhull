@@ -8,7 +8,13 @@ if (!databaseUrl) throw new Error("DATABASE_URL is required");
 const pool = new Pool({ connectionString: databaseUrl });
 const password = await hashPassword("E2e-password-123!");
 
-async function seedUser({ email, name, role, organization }) {
+async function seedUser({
+	email,
+	name,
+	role,
+	organization,
+	organizationRole = "owner",
+}) {
 	const result = await pool.query(
 		`INSERT INTO "user" (name, email, email_verified, role, onboarding_complete)
 		 VALUES ($1, $2, true, $3, true)
@@ -32,9 +38,9 @@ async function seedUser({ email, name, role, organization }) {
 			[organization.name, organization.slug],
 		);
 		await pool.query(
-			`INSERT INTO member (organization_id, user_id, role) VALUES ($1, $2, 'owner')
-			 ON CONFLICT (user_id, organization_id) DO UPDATE SET role = 'owner'`,
-			[org.rows[0].id, userId],
+			`INSERT INTO member (organization_id, user_id, role) VALUES ($1, $2, $3)
+			 ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`,
+			[org.rows[0].id, userId, organizationRole],
 		);
 	}
 }
@@ -45,5 +51,18 @@ await seedUser({
 	role: "user",
 	organization: { name: "E2E Organization", slug: "e2e-organization" },
 });
-await seedUser({ email: "admin@e2e.local", name: "E2E Admin", role: "admin" });
+await seedUser({
+	email: "organization-admin@e2e.local",
+	name: "E2E Organization Admin",
+	role: "user",
+	organization: { name: "E2E Organization", slug: "e2e-organization" },
+	organizationRole: "admin",
+});
+await seedUser({
+	email: "admin@e2e.local",
+	name: "E2E Admin",
+	role: "admin",
+	organization: { name: "E2E Organization", slug: "e2e-organization" },
+	organizationRole: "admin",
+});
 await pool.end();

@@ -5,7 +5,6 @@ import { ImageIcon } from "lucide-react";
 import * as React from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
-import { v4 as uuid } from "uuid";
 
 import { CropImageModal } from "@/components/crop-image-modal";
 import { OrganizationLogo } from "@/components/organization/organization-logo";
@@ -18,7 +17,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import { storageConfig } from "@/config/storage.config";
 import { useProgressRouter } from "@/hooks/use-progress-router";
 import { authClient } from "@/lib/auth/client";
 import { cn } from "@/lib/utils";
@@ -30,7 +28,8 @@ export function OrganizationLogoCard(): React.JSX.Element | null {
 	const [uploading, setUploading] = React.useState(false);
 	const { data: organization } = authClient.useActiveOrganization();
 	const utils = trpc.useUtils();
-	const getSignedUploadUrlMutation = trpc.storage.signedUploadUrl.useMutation();
+	const getSignedUploadUrlMutation =
+		trpc.storage.organizationLogoUploadUrl.useMutation();
 
 	const handleRemove = async (e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -70,11 +69,8 @@ export function OrganizationLogoCard(): React.JSX.Element | null {
 
 					setUploading(true);
 					try {
-						const path = `${organization.id}-${uuid()}.png`;
-						const { signedUrl } = await getSignedUploadUrlMutation.mutateAsync({
-							path,
-							bucket: storageConfig.bucketNames.images,
-						});
+						const { path, signedUrl } =
+							await getSignedUploadUrlMutation.mutateAsync();
 
 						const response = await fetch(signedUrl, {
 							method: "PUT",

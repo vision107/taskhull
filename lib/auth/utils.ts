@@ -1,5 +1,17 @@
 import { authConfig } from "@/config/auth.config";
+import {
+	canDeleteOrganization,
+	canManageOrganizationMembers,
+} from "@/lib/auth/organization-permissions";
 import type { Organization } from "@/types/organization";
+
+function getOrganizationRole(
+	organization?: Organization | null,
+	user?: { id: string } | null,
+): string | undefined {
+	return organization?.members.find((member) => member.userId === user?.id)
+		?.role;
+}
 
 export function isOrganizationAdmin(
 	organization?: Organization | null,
@@ -8,23 +20,14 @@ export function isOrganizationAdmin(
 		role?: string | null;
 	} | null,
 ): boolean {
-	if (!user) {
-		return false;
-	}
+	return canManageOrganizationMembers(getOrganizationRole(organization, user));
+}
 
-	if (user.role === "admin") {
-		return true;
-	}
-
-	if (organization) {
-		const userOrganizationRole = organization.members.find(
-			(member) => member.userId === user.id,
-		)?.role;
-
-		return ["owner", "admin"].includes(userOrganizationRole ?? "");
-	}
-
-	return false;
+export function isOrganizationOwner(
+	organization?: Organization | null,
+	user?: { id: string } | null,
+): boolean {
+	return canDeleteOrganization(getOrganizationRole(organization, user));
 }
 
 class PasswordValidator {

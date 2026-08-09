@@ -4,13 +4,11 @@ import NiceModal from "@ebay/nice-modal-react";
 import { ImageIcon } from "lucide-react";
 import * as React from "react";
 import { useDropzone } from "react-dropzone";
-import { v4 as uuid } from "uuid";
 
 import { CropImageModal } from "@/components/crop-image-modal";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { UserAvatar } from "@/components/user/user-avatar";
-import { storageConfig } from "@/config/storage.config";
 import { useSession } from "@/hooks/use-session";
 import { authClient } from "@/lib/auth/client";
 import { cn } from "@/lib/utils";
@@ -34,7 +32,8 @@ export function UserAvatarUpload({
 	const { user, reloadSession } = useSession();
 	const [deleting, setDeleting] = React.useState(false);
 	const [uploading, setUploading] = React.useState(false);
-	const getSignedUploadUrlMutation = trpc.storage.signedUploadUrl.useMutation();
+	const getSignedUploadUrlMutation =
+		trpc.storage.userAvatarUploadUrl.useMutation();
 
 	const handleRemove = async (e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -70,11 +69,8 @@ export function UserAvatarUpload({
 
 					setUploading(true);
 					try {
-						const path = `${user.id}-${uuid()}.png`;
-						const { signedUrl } = await getSignedUploadUrlMutation.mutateAsync({
-							path,
-							bucket: storageConfig.bucketNames.images,
-						});
+						const { path, signedUrl } =
+							await getSignedUploadUrlMutation.mutateAsync();
 
 						const response = await fetch(signedUrl, {
 							method: "PUT",

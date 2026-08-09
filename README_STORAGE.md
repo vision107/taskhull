@@ -198,11 +198,8 @@ import { OrganizationLogo } from "@/components/organization/organization-logo";
 ### Get Signed Upload URL
 
 ```typescript
-// Request
-const { signedUrl } = await trpc.uploads.signedUploadUrl.mutate({
-	bucket: "my-app-images",
-	path: "user123-abc.png",
-});
+// The server derives the object path from the authenticated user.
+const { path, signedUrl } = await trpc.storage.userAvatarUploadUrl.mutate();
 
 // Upload file directly
 await fetch(signedUrl, {
@@ -215,8 +212,9 @@ await fetch(signedUrl, {
 The endpoint:
 
 - Requires authentication
-- Validates bucket against whitelist
-- Returns 403 for unauthorized buckets
+- Derives the bucket and object path on the server
+- Uses the authenticated user ID for avatars
+- Requires owner or admin membership for organization logos
 
 ---
 
@@ -339,28 +337,26 @@ export const storageConfig = {
 NEXT_PUBLIC_DOCUMENTS_BUCKET_NAME="my-app-documents"
 ```
 
-### 3. Update tRPC Router
+### 3. Add a Purpose-Specific tRPC Procedure
 
 ```typescript
 // trpc/routers/storage/index.ts
-signedUploadUrl: protectedProcedure
-  .input(signedUploadUrlSchema)
-  .mutation(async ({ input }) => {
-    const allowedBuckets = [
-      storageConfig.bucketNames.images,
-      storageConfig.bucketNames.documents,  // Add new bucket
-    ];
-
-    if (allowedBuckets.includes(input.bucket)) {
-      const signedUrl = await getSignedUploadUrl(
-        input.path,
-        input.bucket,
-      );
-      return { signedUrl };
-    }
+documentUploadUrl: protectedOrganizationProcedure.mutation(async ({ ctx }) => {
+  if (!canManageOrganizationDocuments(ctx.membership.role)) {
     throw new TRPCError({ code: "FORBIDDEN" });
-  }),
+  }
+
+  const path = `${ctx.organization.id}-${crypto.randomUUID()}.pdf`;
+  const signedUrl = await getSignedUploadUrl(
+    path,
+    storageConfig.bucketNames.documents,
+  );
+  return { path, signedUrl };
+}),
 ```
+
+Do not accept arbitrary bucket names or object paths from the client. Derive both
+from the authenticated user or organization after checking the required role.
 
 ### 4. Update Storage Route (if needed)
 
