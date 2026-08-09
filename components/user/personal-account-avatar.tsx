@@ -14,7 +14,7 @@ export function PersonalAccountAvatar({
 	fallbackClassName,
 }: PersonalAccountAvatarProps): React.JSX.Element {
 	return (
-		<Avatar className={cn("size-8 group-focus:ring-2", className)}>
+		<Avatar className={cn("size-8 rounded-full group-focus:ring-2", className)}>
 			<AvatarFallback className={cn("bg-transparent", fallbackClassName)}>
 				<User2Icon className="size-5 shrink-0" />
 			</AvatarFallback>

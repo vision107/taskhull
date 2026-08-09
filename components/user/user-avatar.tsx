@@ -21,7 +21,7 @@ export function UserAvatar({
 }: UserAvatarProps): React.JSX.Element {
 	const signedUrl = useStorage(src);
 	return (
-		<Avatar className={cn("size-8 group-focus:ring-2", className)}>
+		<Avatar className={cn("size-8 rounded-full group-focus:ring-2", className)}>
 			<AvatarImage src={signedUrl ?? undefined} />
 			<AvatarFallback
 				className={cn("bg-neutral-200 dark:bg-neutral-700", fallbackClassName)}
