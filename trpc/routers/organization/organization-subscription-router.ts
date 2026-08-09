@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { appConfig } from "@/config/app.config";
 import { billingConfig } from "@/config/billing.config";
@@ -28,7 +28,11 @@ import {
 } from "@/lib/billing";
 import { getPlanById, getPriceByStripePriceId } from "@/lib/billing/plans";
 import { db } from "@/lib/db";
-import { memberTable, organizationTable } from "@/lib/db/schema";
+import {
+	creditTransactionTable,
+	memberTable,
+	organizationTable,
+} from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
 import {
 	checkoutReturnSchema,
@@ -91,6 +95,19 @@ export const organizationSubscriptionRouter = createTRPCRouter({
 				return {
 					ready: subscription?.organizationId === ctx.organization.id,
 				};
+			}
+
+			if (session.metadata?.type === "credit_purchase") {
+				const transaction = await db.query.creditTransactionTable.findFirst({
+					where: and(
+						eq(creditTransactionTable.organizationId, ctx.organization.id),
+						eq(creditTransactionTable.referenceType, "checkout_session"),
+						eq(creditTransactionTable.referenceId, session.id),
+					),
+					columns: { id: true },
+				});
+
+				return { ready: Boolean(transaction) };
 			}
 
 			const order = await getOrderByCheckoutSessionId(session.id);
