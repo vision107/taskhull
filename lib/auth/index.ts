@@ -7,7 +7,6 @@ import {
 	openAPI,
 	organization,
 	twoFactor,
-	username,
 } from "better-auth/plugins";
 import { and, eq } from "drizzle-orm";
 
@@ -156,7 +155,6 @@ export const auth = betterAuth({
 		},
 	},
 	plugins: [
-		username(),
 		admin(),
 		...(env.TURNSTILE_SECRET_KEY
 			? [
