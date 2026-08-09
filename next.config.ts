@@ -82,11 +82,13 @@ export default withContentCollections(
 					tunnelRoute: "/monitoring",
 					widenClientFileUpload: true,
 					telemetry: false,
-					reactComponentAnnotation: {
-						enabled: true,
+					webpack: {
+						reactComponentAnnotation: {
+							enabled: true,
+						},
+						// Avoid cluttering traces with a ton of middleware spans.
+						autoInstrumentMiddleware: false,
 					},
-					// Avoid cluttering traces with a ton of middleware spans.
-					autoInstrumentMiddleware: false,
 				})
 			: bundleAnalyzerConfig,
 	),
