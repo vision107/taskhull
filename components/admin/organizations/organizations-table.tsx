@@ -679,6 +679,9 @@ export function OrganizationsTable(): React.JSX.Element {
 																);
 															}
 															void utils.admin.organization.list.invalidate();
+															void utils.organization.subscription.getStatus.invalidate();
+															void utils.organization.subscription.listInvoices.invalidate();
+															void utils.organization.get.invalidate();
 														},
 														onError: (error) => {
 															toast.error(`Failed to sync: ${error.message}`);
@@ -763,6 +766,11 @@ export function OrganizationsTable(): React.JSX.Element {
 															void utils.organization.get.invalidate();
 															void utils.organization.list.invalidate();
 															void utils.admin.organization.list.invalidate();
+															void utils.organization.subscription.getStatus.invalidate();
+															void utils.organization.subscription.listInvoices.invalidate();
+															void utils.organization.credit.getBalance.invalidate();
+															void utils.organization.credit.getTransactions.invalidate();
+															void utils.organization.get.invalidate();
 														},
 														onError: () => {
 															toast.success(

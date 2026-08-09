@@ -136,6 +136,11 @@ export function OrganizationBulkActions({
 										);
 									}
 									void utils.admin.organization.list.invalidate();
+									void utils.organization.subscription.getStatus.invalidate();
+									void utils.organization.subscription.listInvoices.invalidate();
+									void utils.organization.credit.getBalance.invalidate();
+									void utils.organization.credit.getTransactions.invalidate();
+									void utils.organization.get.invalidate();
 									onClearSelection();
 								},
 								onError: (error) => {

@@ -10,7 +10,7 @@ import {
 	RefreshCw,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { PricingTable } from "@/components/billing/pricing-table";
@@ -42,6 +42,19 @@ export function SubscriptionSettingsTab({
 	const hasShownFeedback = useRef(false);
 
 	const utils = trpc.useUtils();
+	const invalidateSubscriptionQueries = useCallback(
+		() =>
+			Promise.all([
+				utils.organization.subscription.getStatus.invalidate(),
+				utils.organization.subscription.listInvoices.invalidate(),
+				utils.organization.get.invalidate(),
+				utils.organization.list.invalidate(),
+				utils.admin.organization.list.invalidate(),
+				utils.organization.credit.getBalance.invalidate(),
+				utils.organization.credit.getTransactions.invalidate(),
+			]),
+		[utils],
+	);
 
 	// Handle checkout success/cancel URL params and show feedback
 	useEffect(() => {
@@ -57,8 +70,7 @@ export function SubscriptionSettingsTab({
 			});
 
 			// Refresh billing data
-			void utils.organization.subscription.getStatus.invalidate();
-			void utils.organization.subscription.listInvoices.invalidate();
+			void invalidateSubscriptionQueries();
 
 			// Clean up URL
 			const url = new URL(window.location.href);
@@ -77,7 +89,7 @@ export function SubscriptionSettingsTab({
 			url.searchParams.delete("canceled");
 			window.history.replaceState({}, "", url.toString());
 		}
-	}, [searchParams, utils]);
+	}, [invalidateSubscriptionQueries, searchParams]);
 
 	const {
 		data: billingStatus,
@@ -99,11 +111,11 @@ export function SubscriptionSettingsTab({
 
 	const cancelSubscription =
 		trpc.organization.subscription.cancelSubscription.useMutation({
-			onSuccess: () => {
+			onSuccess: async () => {
 				toast.success(
 					"Subscription will be canceled at the end of the billing period",
 				);
-				void utils.organization.subscription.getStatus.invalidate();
+				await invalidateSubscriptionQueries();
 			},
 			onError: (error) => {
 				toast.error(error.message);
@@ -112,9 +124,9 @@ export function SubscriptionSettingsTab({
 
 	const reactivateSubscription =
 		trpc.organization.subscription.reactivateSubscription.useMutation({
-			onSuccess: () => {
+			onSuccess: async () => {
 				toast.success("Subscription reactivated");
-				void utils.organization.subscription.getStatus.invalidate();
+				await invalidateSubscriptionQueries();
 			},
 			onError: (error) => {
 				toast.error(error.message);

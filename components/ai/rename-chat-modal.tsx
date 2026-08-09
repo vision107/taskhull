@@ -60,6 +60,10 @@ export const RenameChatModal = NiceModal.create<RenameChatModalProps>(
 					title: title.trim(),
 				});
 				await utils.organization.ai.listChats.invalidate();
+				await Promise.all([
+					utils.organization.ai.searchChats.invalidate(),
+					utils.organization.ai.getChat.invalidate({ id: chatId }),
+				]);
 				toast.success("Chat renamed");
 				modal.handleClose();
 			} catch {

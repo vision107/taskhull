@@ -47,6 +47,7 @@ export function OrganizationInvitationCard({
 				}
 
 				await utils.organization.list.invalidate();
+				await utils.organization.get.invalidate();
 
 				router.replace("/dashboard");
 			} else {
@@ -57,6 +58,8 @@ export function OrganizationInvitationCard({
 				if (error) {
 					throw error;
 				}
+
+				await utils.organization.get.invalidate();
 
 				router.replace("/dashboard");
 			}

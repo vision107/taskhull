@@ -347,7 +347,10 @@ export function AiChat({ organizationId }: AiChatProps) {
 
 		try {
 			const result = await createChatMutation.mutateAsync({});
-			await utils.organization.ai.listChats.invalidate();
+			await Promise.all([
+				utils.organization.ai.listChats.invalidate(),
+				utils.organization.ai.searchChats.invalidate(),
+			]);
 			if (result.chat.id) {
 				void setChatId(result.chat.id);
 			}
@@ -360,6 +363,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 	}, [
 		createChatMutation,
 		utils.organization.ai.listChats,
+		utils.organization.ai.searchChats,
 		setChatId,
 		setMessages,
 	]);
@@ -386,6 +390,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 				// Also invalidate to ensure consistency with server
 				// Fire-and-forget - errors don't affect UX since we already updated optimistically
 				utils.organization.ai.listChats.invalidate().catch(() => {});
+				utils.organization.ai.searchChats.invalidate().catch(() => {});
 
 				if (isCurrentChat) {
 					// Clear messages immediately
@@ -406,6 +411,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 		[
 			deleteChatMutation,
 			utils.organization.ai.listChats,
+			utils.organization.ai.searchChats,
 			chatId,
 			chats,
 			setChatId,
@@ -434,12 +440,19 @@ export function AiChat({ organizationId }: AiChatProps) {
 		async (id: string) => {
 			try {
 				await togglePinMutation.mutateAsync({ id });
-				await utils.organization.ai.listChats.invalidate();
+				await Promise.all([
+					utils.organization.ai.listChats.invalidate(),
+					utils.organization.ai.searchChats.invalidate(),
+				]);
 			} catch {
 				toast.error("Failed to update pin status");
 			}
 		},
-		[togglePinMutation, utils.organization.ai.listChats],
+		[
+			togglePinMutation,
+			utils.organization.ai.listChats,
+			utils.organization.ai.searchChats,
+		],
 	);
 
 	// Auto-select or create chat on load

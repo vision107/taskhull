@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { useZodForm } from "@/hooks/use-zod-form";
 import { authClient } from "@/lib/auth/client";
 import { inviteMemberSchema } from "@/schemas/organization-schemas";
+import { trpc } from "@/trpc/client";
 
 /**
  * Card component for inviting members to the organization.
@@ -32,6 +33,7 @@ import { inviteMemberSchema } from "@/schemas/organization-schemas";
  */
 export function OrganizationInviteMemberCard(): React.JSX.Element {
 	const { data: organization } = authClient.useActiveOrganization();
+	const utils = trpc.useUtils();
 
 	const methods = useZodForm({
 		schema: inviteMemberSchema,
@@ -77,6 +79,7 @@ export function OrganizationInviteMemberCard(): React.JSX.Element {
 			}
 
 			methods.reset();
+			await utils.organization.get.invalidate({ id: organization.id });
 			toast.success("Invitation sent successfully.");
 		} catch (err) {
 			// Handle any thrown errors that have a message

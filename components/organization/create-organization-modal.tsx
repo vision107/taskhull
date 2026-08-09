@@ -63,6 +63,7 @@ export const CreateOrganizationModal =
 				// Invalidate the organizations list query to ensure the UI updates
 				// (e.g., in OrganizationSwitcher and OrganizationsGrid)
 				await utils.organization.list.invalidate();
+				await utils.admin.organization.list.invalidate();
 
 				// Set the new organization as active in the session
 				await authClient.organization.setActive({

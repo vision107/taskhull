@@ -22,7 +22,7 @@ import { clearOrganizationScopedQueries } from "@/trpc/query-client";
 export function DeleteOrganizationCard(): React.JSX.Element | null {
 	const router = useProgressRouter();
 	const queryClient = useQueryClient();
-	const { refetch: reloadOrganizations } = trpc.organization.list.useQuery();
+	const utils = trpc.useUtils();
 	const { data: organization } = authClient.useActiveOrganization();
 	if (!organization) {
 		return null;
@@ -56,7 +56,10 @@ export function DeleteOrganizationCard(): React.JSX.Element | null {
 				clearOrganizationScopedQueries(queryClient);
 
 				toast.success("Your organization has been deleted.");
-				await reloadOrganizations();
+				await Promise.all([
+					utils.organization.list.invalidate(),
+					utils.admin.organization.list.invalidate(),
+				]);
 				router.replace("/dashboard");
 			},
 		});
