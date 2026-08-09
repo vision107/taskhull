@@ -1,6 +1,14 @@
 import { z } from "zod/v4";
 
 import { appConfig } from "@/config/app.config";
+import { isAllowedPaymentRedirectUrl } from "@/lib/billing/redirect";
+
+export const paymentRedirectUrlSchema = z
+	.string()
+	.url()
+	.refine(isAllowedPaymentRedirectUrl, {
+		message: "Redirect URL must use the application origin",
+	});
 
 // Pagination schema for subscription queries
 export const listSubscriptionsSchema = z.object({
@@ -25,8 +33,8 @@ export const listInvoicesSchema = z.object({
 export const createCheckoutSchema = z.object({
 	priceId: z.string().min(1, "Price ID is required"),
 	quantity: z.number().min(1).default(1),
-	successUrl: z.string().url().optional(),
-	cancelUrl: z.string().url().optional(),
+	successUrl: paymentRedirectUrlSchema.optional(),
+	cancelUrl: paymentRedirectUrlSchema.optional(),
 });
 
 export const checkoutReturnSchema = z.object({
@@ -39,7 +47,7 @@ export const checkoutReturnSchema = z.object({
 
 // Create portal session schema
 export const createPortalSessionSchema = z.object({
-	returnUrl: z.string().url().optional(),
+	returnUrl: paymentRedirectUrlSchema.optional(),
 });
 
 // Plan change schema (used for both preview and mutation)
