@@ -45,7 +45,7 @@ export function SetPasswordCard(): React.JSX.Element {
 	};
 
 	return (
-		<Card>
+		<Card id="set-password">
 			<CardHeader>
 				<CardTitle>Your Password</CardTitle>
 				<CardDescription>

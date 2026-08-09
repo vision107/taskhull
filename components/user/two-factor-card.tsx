@@ -1,7 +1,7 @@
 "use client";
 
 import NiceModal from "@ebay/nice-modal-react";
-import { ShieldCheck, ShieldCheckIcon } from "lucide-react";
+import { KeyRoundIcon, ShieldCheck, ShieldCheckIcon } from "lucide-react";
 import type * as React from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -24,7 +24,7 @@ export type TwoFactorCardProps = {
 
 export function TwoFactorCard({
 	hasCredentialAccount,
-}: TwoFactorCardProps): React.JSX.Element | null {
+}: TwoFactorCardProps): React.JSX.Element {
 	const { user } = useSession();
 
 	const { data: accounts, isLoading } = trpc.user.getAccounts.useQuery(
@@ -37,10 +37,6 @@ export function TwoFactorCard({
 	const isCredentialAccount =
 		hasCredentialAccount ??
 		accounts?.some((account) => account.providerId === "credential");
-
-	if (isCredentialAccount === false) {
-		return null;
-	}
 
 	if (isCredentialAccount === undefined && isLoading) {
 		return <Skeleton className="h-[218px] w-full" />;
@@ -60,7 +56,28 @@ export function TwoFactorCard({
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				{user?.twoFactorEnabled ? (
+				{isCredentialAccount === false ? (
+					<div className="flex flex-col items-start gap-4">
+						<Alert>
+							<KeyRoundIcon className="size-4 shrink-0" />
+							<AlertDescription>
+								Two-factor authentication requires a password. Set a password
+								for your account first, then return here to finish setup.
+							</AlertDescription>
+						</Alert>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() =>
+								document
+									.getElementById("set-password")
+									?.scrollIntoView({ behavior: "smooth", block: "center" })
+							}
+						>
+							Set a password first
+						</Button>
+					</div>
+				) : user?.twoFactorEnabled ? (
 					<div className="flex flex-col items-start gap-4">
 						<Alert variant="success">
 							<ShieldCheckIcon className="size-4 shrink-0 text-green-500" />
