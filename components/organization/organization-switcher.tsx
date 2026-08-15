@@ -160,13 +160,13 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 	if (isInitialLoading || !user) {
 		if (sidebarState === "collapsed") {
 			return (
-				<div className="flex h-[44px] w-9 items-center justify-center rounded-md p-2">
+				<div className="flex size-8 items-center justify-center rounded-md p-2">
 					<Skeleton className="size-5 rounded-md bg-muted" />
 				</div>
 			);
 		}
 		return (
-			<div className="-mt-1 ml-0.5 flex h-12 w-full items-center gap-2 rounded-md p-2">
+			<div className="ml-0.5 flex h-9 w-full items-center gap-2 rounded-md p-2">
 				<Skeleton className="size-8 rounded-md bg-muted" />
 				<Skeleton className="h-4 flex-1 rounded bg-muted" />
 				<Skeleton className="ml-auto h-4 w-4 rounded bg-muted" />
@@ -179,16 +179,16 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 	}
 
 	return (
-		<SidebarMenu>
-			<SidebarMenuItem>
+		<SidebarMenu className="w-fit! max-w-full">
+			<SidebarMenuItem className="w-fit max-w-full">
 				<Popover onOpenChange={setOpen} open={open}>
 					<PopoverTrigger asChild>
 						<SidebarMenuButton
 							aria-expanded={open}
-							className="-mt-1 p-2 transition-none group-data-[collapsible=icon]:ml-1.5 group-data-[collapsible=icon]:h-12! group-data-[collapsible=icon]:bg-transparent!"
+							className="h-9! w-fit! max-w-full p-2 transition-none group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1!"
 							size="lg"
 						>
-							<div className="flex w-full items-center gap-2 overflow-hidden">
+							<div className="flex max-w-full min-w-0 items-center gap-2 overflow-hidden group-data-[collapsible=icon]:size-6 group-data-[collapsible=icon]:shrink-0 group-data-[collapsible=icon]:gap-0">
 								{isAdminArea ? (
 									<div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-foreground text-background">
 										<ShieldIcon className="size-4" />
@@ -202,7 +202,7 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 								) : (
 									<PersonalAccountAvatar className="size-6 after:border-0" />
 								)}
-								<div className="flex flex-1 flex-col items-start gap-0.5 overflow-hidden text-left">
+								<div className="flex flex-1 flex-col items-start gap-0.5 overflow-hidden text-left group-data-[collapsible=icon]:hidden">
 									<span className="block w-full truncate leading-none font-semibold">
 										{isAdminArea
 											? "Admin Panel"
@@ -211,7 +211,7 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 												: "Personal"}
 									</span>
 								</div>
-								<ChevronsUpDownIcon className="ml-auto block size-4 shrink-0 text-sidebar-foreground/70" />
+								<ChevronsUpDownIcon className="ml-auto block size-4 shrink-0 text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden" />
 							</div>
 						</SidebarMenuButton>
 					</PopoverTrigger>

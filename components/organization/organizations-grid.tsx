@@ -128,7 +128,7 @@ export function OrganizationsGrid(): React.JSX.Element {
 						<Card
 							className={cn(
 								"relative flex h-36 flex-col justify-between rounded-lg pt-4 pb-0 transition-all hover:bg-secondary/20 hover:shadow-xs active:bg-secondary/50 active:shadow-lg",
-								"border border-border dark:border-input dark:shadow-primary/20",
+								"dark:shadow-primary/20",
 								selectingOrgId === organization.id && "opacity-70",
 							)}
 						>

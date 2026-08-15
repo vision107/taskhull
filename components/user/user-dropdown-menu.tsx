@@ -214,7 +214,7 @@ export function UserDropDownMenu(
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<SidebarMenuButton
-							className="group-data-[collapsible=icon]:-ml-[1px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:!p-2 data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground"
+							className="group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:!p-2 data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground"
 							size="lg"
 						>
 							{sidebarState === "collapsed" ? (
@@ -240,7 +240,7 @@ export function UserDropDownMenu(
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<SidebarMenuButton
-								className="group-data-[collapsible=icon]:-ml-[1px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:!p-2 data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground"
+								className="group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:!p-2 data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground"
 								size="lg"
 							>
 								<UserAvatar

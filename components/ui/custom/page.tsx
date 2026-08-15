@@ -58,9 +58,7 @@ function PagePrimaryBar({
 		>
 			<SidebarTrigger />
 			<Separator className="mr-2 h-4!" orientation="vertical" />
-			<div className="flex w-full flex-row items-center justify-between">
-				{children}
-			</div>
+			<div className="w-full min-w-0">{children}</div>
 		</div>
 	);
 }
