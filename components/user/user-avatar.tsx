@@ -22,12 +22,12 @@ export function UserAvatar({
 	const signedUrl = useStorage(src);
 	return (
 		<Avatar className={cn("size-8 rounded-full group-focus:ring-2", className)}>
-			<AvatarImage src={signedUrl ?? undefined} />
+			<AvatarImage src={signedUrl ?? undefined} alt={`${name}'s avatar`} />
 			<AvatarFallback
 				className={cn("bg-neutral-200 dark:bg-neutral-700", fallbackClassName)}
 			>
 				<span className="uppercase" suppressHydrationWarning>
-					{name?.slice(0, 1)}
+					{name.slice(0, 1)}
 				</span>
 			</AvatarFallback>
 		</Avatar>

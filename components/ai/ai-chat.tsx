@@ -17,18 +17,8 @@ import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import {
-	Conversation,
-	ConversationContent,
-	ConversationScrollButton,
-} from "@/components/ai/conversation";
 import { Loader } from "@/components/ai/loader";
-import {
-	Message,
-	MessageContent,
-	MessageCopyButton,
-	MessageResponse,
-} from "@/components/ai/message";
+import { MessageCopyButton, MessageResponse } from "@/components/ai/message";
 import {
 	type ChatStatus,
 	PromptInput,
@@ -42,6 +32,7 @@ import { Suggestion, Suggestions } from "@/components/ai/suggestion";
 import { PurchaseCreditsModal } from "@/components/billing/purchase-credits-modal";
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
 import { CenteredSpinner } from "@/components/ui/custom/centered-spinner";
 import { InputSearch } from "@/components/ui/custom/input-search";
@@ -52,6 +43,21 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Marker, MarkerContent, MarkerIcon } from "@/components/ui/marker";
+import {
+	Message,
+	MessageAvatar,
+	MessageContent,
+	MessageFooter,
+} from "@/components/ui/message";
+import {
+	MessageScroller,
+	MessageScrollerButton,
+	MessageScrollerContent,
+	MessageScrollerItem,
+	MessageScrollerProvider,
+	MessageScrollerViewport,
+} from "@/components/ui/message-scroller";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	Select,
@@ -682,7 +688,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 												<div
 													key={chat.id}
 													className={cn(
-														"group relative flex items-center rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent",
+														"group relative flex h-8 items-center rounded-lg px-2 text-sm transition-colors hover:bg-accent",
 														chat.id === chatId && "bg-accent",
 													)}
 												>
@@ -720,7 +726,7 @@ export function AiChat({ organizationId }: AiChatProps) {
 													<div
 														key={chat.id}
 														className={cn(
-															"group relative flex items-center rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent",
+															"group relative flex h-8 items-center rounded-lg px-2 text-sm transition-colors hover:bg-accent",
 															chat.id === chatId && "bg-accent",
 														)}
 													>
@@ -801,174 +807,193 @@ export function AiChat({ organizationId }: AiChatProps) {
 				</div>
 
 				{/* Messages */}
-				<Conversation className="min-h-0 flex-1">
-					{/* Browser translation can reparent streamed nodes before React removes them. */}
-					<ConversationContent
-						className="notranslate mx-auto w-full max-w-3xl gap-6 px-4 py-8 pt-16"
-						data-chat-transcript
-						translate="no"
-					>
-						{isLoadingChat ? (
-							<div className="flex flex-1 items-center justify-center">
-								<Loader size={24} />
-							</div>
-						) : messages.length === 0 ? (
-							<div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-								<div className="flex flex-col gap-2">
-									<h2 className="text-2xl font-semibold">
-										How can I help you today?
-									</h2>
-									<p className="text-muted-foreground">
-										Ask me anything and I'll do my best to help.
-									</p>
-								</div>
-								<Suggestions className="mt-4 flex-wrap justify-center">
-									<Suggestion
-										suggestion="Help me draft a follow-up email"
-										onClick={handleSendMessage}
-									/>
-									<Suggestion
-										suggestion="Write a cold email for a SaaS product"
-										onClick={handleSendMessage}
-									/>
-									<Suggestion
-										suggestion="Give me tips for closing deals"
-										onClick={handleSendMessage}
-									/>
-									<Suggestion
-										suggestion="How can I improve my pipeline?"
-										onClick={handleSendMessage}
-									/>
-								</Suggestions>
-							</div>
-						) : (
-							messages.map((message) => {
-								const isError = (message as any).isError;
-								return (
-									<Message
-										key={message.id}
-										from={message.role}
-										isError={isError}
-									>
-										<div
-											className={cn(
-												"flex w-full gap-4",
-												message.role === "user" && "flex-row-reverse",
-											)}
-										>
-											{message.role === "assistant" ? (
-												<Avatar className="size-8 shrink-0">
-													<AvatarFallback className="bg-primary text-primary-foreground">
-														<SparklesIcon className="size-4" />
-													</AvatarFallback>
-												</Avatar>
-											) : (
-												<UserAvatar
-													name={user?.name ?? "User"}
-													src={user?.image}
-													className="size-8 shrink-0"
-												/>
-											)}
-											<div className="flex min-w-0 flex-1 flex-col gap-1">
-												<MessageContent
-													isError={isError}
-													className={cn(
-														"max-w-none",
-														message.role === "user" &&
-															"rounded-2xl bg-secondary px-4 py-3",
-													)}
-												>
-													{message.role === "assistant" ? (
-														<MessageResponse>
-															{getMessageText(message)}
-														</MessageResponse>
-													) : (
-														<span className="whitespace-pre-wrap">
-															{getMessageText(message)}
-														</span>
-													)}
-												</MessageContent>
-												<div
-													className={cn(
-														"flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100",
-														message.role === "user" && "justify-end",
-													)}
-												>
-													<MessageCopyButton
-														content={getMessageText(message)}
-													/>
-													{message.role === "assistant" &&
-														message.id === messages[messages.length - 1]?.id &&
-														!isStreaming && (
-															<Button
-																variant="ghost"
-																size="icon"
-																className="size-7"
-																onClick={handleRegenerate}
-															>
-																<RefreshCwIcon className="size-3.5" />
-																<span className="sr-only">
-																	Regenerate response
-																</span>
-															</Button>
-														)}
-												</div>
-											</div>
-										</div>
-									</Message>
-								);
-							})
-						)}
-
-						{isStreaming && messages[messages.length - 1]?.role === "user" && (
-							<Message from="assistant">
-								<div className="flex w-full gap-4">
-									<Avatar className="size-8 shrink-0">
-										<AvatarFallback className="bg-primary text-primary-foreground">
-											<SparklesIcon className="size-4" />
-										</AvatarFallback>
-									</Avatar>
-									<MessageContent className="max-w-none flex-1">
-										<div className="flex items-center gap-2 text-muted-foreground">
-											<Loader size={16} />
-											<span>Thinking...</span>
-										</div>
-									</MessageContent>
-								</div>
-							</Message>
-						)}
-
-						{status === "error" &&
-							messages[messages.length - 1]?.role === "user" && (
-								<Message from="assistant">
-									<div className="flex w-full gap-4">
-										<Avatar className="size-8 shrink-0">
-											<AvatarFallback className="bg-destructive text-destructive-foreground">
-												<AlertCircleIcon className="size-4" />
-											</AvatarFallback>
-										</Avatar>
-										<MessageContent className="max-w-none flex-1">
-											<div className="flex flex-col gap-2">
-												<span className="text-destructive">
-													Failed to generate response
-												</span>
-												<Button
-													variant="outline"
-													size="sm"
-													onClick={handleRegenerate}
-													className="w-fit"
-												>
-													<RefreshCwIcon className="size-3.5" />
-													Try again
-												</Button>
-											</div>
-										</MessageContent>
+				<MessageScrollerProvider autoScroll defaultScrollPosition="end">
+					<MessageScroller className="min-h-0 flex-1">
+						<MessageScrollerViewport aria-label="Chat messages">
+							{/* Browser translation can reparent streamed nodes before React removes them. */}
+							<MessageScrollerContent
+								className="notranslate mx-auto w-full max-w-3xl gap-6 px-4 py-8 pt-16"
+								data-chat-transcript
+								translate="no"
+							>
+								{isLoadingChat ? (
+									<div className="flex flex-1 items-center justify-center">
+										<Loader size={24} />
 									</div>
-								</Message>
-							)}
-					</ConversationContent>
-					<ConversationScrollButton />
-				</Conversation>
+								) : messages.length === 0 ? (
+									<div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+										<div className="flex flex-col gap-2">
+											<h2 className="text-2xl font-semibold">
+												How can I help you today?
+											</h2>
+											<p className="text-muted-foreground">
+												Ask me anything and I'll do my best to help.
+											</p>
+										</div>
+										<Suggestions className="mt-4 flex-wrap justify-center">
+											<Suggestion
+												suggestion="Help me draft a follow-up email"
+												onClick={handleSendMessage}
+											/>
+											<Suggestion
+												suggestion="Write a cold email for a SaaS product"
+												onClick={handleSendMessage}
+											/>
+											<Suggestion
+												suggestion="Give me tips for closing deals"
+												onClick={handleSendMessage}
+											/>
+											<Suggestion
+												suggestion="How can I improve my pipeline?"
+												onClick={handleSendMessage}
+											/>
+										</Suggestions>
+									</div>
+								) : (
+									messages.map((message) => {
+										const isError = (message as any).isError;
+										return (
+											<MessageScrollerItem
+												key={message.id}
+												messageId={message.id}
+												scrollAnchor={
+													message.id === messages[messages.length - 1]?.id
+												}
+											>
+												<Message
+													align={message.role === "user" ? "end" : "start"}
+												>
+													<MessageAvatar
+														className={
+															message.role === "user" ? "min-w-6" : undefined
+														}
+													>
+														{message.role === "assistant" ? (
+															<Avatar className="size-8 shrink-0">
+																<AvatarFallback className="bg-primary text-primary-foreground">
+																	<SparklesIcon className="size-4" />
+																</AvatarFallback>
+															</Avatar>
+														) : (
+															<UserAvatar
+																name={user?.name ?? "User"}
+																src={user?.image ?? undefined}
+																className="size-6"
+															/>
+														)}
+													</MessageAvatar>
+													<MessageContent>
+														<Bubble
+															variant={
+																isError
+																	? "destructive"
+																	: message.role === "user"
+																		? "secondary"
+																		: "ghost"
+															}
+														>
+															<BubbleContent>
+																{message.role === "assistant" ? (
+																	<MessageResponse>
+																		{getMessageText(message)}
+																	</MessageResponse>
+																) : (
+																	<span className="whitespace-pre-wrap">
+																		{getMessageText(message)}
+																	</span>
+																)}
+															</BubbleContent>
+														</Bubble>
+														<MessageFooter className="gap-1 opacity-0 transition-opacity group-focus-within/message:opacity-100 group-hover/message:opacity-100">
+															<MessageCopyButton
+																content={getMessageText(message)}
+															/>
+															{message.role === "assistant" &&
+																message.id ===
+																	messages[messages.length - 1]?.id &&
+																!isStreaming && (
+																	<Button
+																		variant="ghost"
+																		size="icon"
+																		className="size-7"
+																		onClick={handleRegenerate}
+																	>
+																		<RefreshCwIcon className="size-3.5" />
+																		<span className="sr-only">
+																			Regenerate response
+																		</span>
+																	</Button>
+																)}
+														</MessageFooter>
+													</MessageContent>
+												</Message>
+											</MessageScrollerItem>
+										);
+									})
+								)}
+
+								{isStreaming &&
+									messages[messages.length - 1]?.role === "user" && (
+										<MessageScrollerItem scrollAnchor>
+											<Message>
+												<MessageAvatar>
+													<Avatar className="size-8 shrink-0">
+														<AvatarFallback className="bg-primary text-primary-foreground">
+															<SparklesIcon className="size-4" />
+														</AvatarFallback>
+													</Avatar>
+												</MessageAvatar>
+												<MessageContent>
+													<Marker role="status">
+														<MarkerIcon>
+															<Loader size={16} />
+														</MarkerIcon>
+														<MarkerContent className="shimmer">
+															Thinking...
+														</MarkerContent>
+													</Marker>
+												</MessageContent>
+											</Message>
+										</MessageScrollerItem>
+									)}
+
+								{status === "error" &&
+									messages[messages.length - 1]?.role === "user" && (
+										<MessageScrollerItem scrollAnchor>
+											<Message>
+												<MessageAvatar>
+													<Avatar className="size-8 shrink-0">
+														<AvatarFallback className="bg-destructive text-destructive-foreground">
+															<AlertCircleIcon className="size-4" />
+														</AvatarFallback>
+													</Avatar>
+												</MessageAvatar>
+												<MessageContent>
+													<Bubble variant="destructive">
+														<BubbleContent>
+															Failed to generate response
+														</BubbleContent>
+													</Bubble>
+													<MessageFooter>
+														<Button
+															variant="outline"
+															size="sm"
+															onClick={handleRegenerate}
+															className="w-fit"
+														>
+															<RefreshCwIcon className="size-3.5" />
+															Try again
+														</Button>
+													</MessageFooter>
+												</MessageContent>
+											</Message>
+										</MessageScrollerItem>
+									)}
+							</MessageScrollerContent>
+						</MessageScrollerViewport>
+						<MessageScrollerButton direction="end" />
+					</MessageScroller>
+				</MessageScrollerProvider>
 
 				{/* Input Area - Fixed at bottom */}
 				<div className="shrink-0 bg-background/80 p-4 backdrop-blur-sm">

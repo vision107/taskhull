@@ -233,19 +233,20 @@ const result = streamText({
 
 ### Customize the UI
 
-The chat components are modular:
+The chat UI composes the official shadcn chat primitives with Achromatic's
+existing prompt input:
 
 ```tsx
 import {
-	Conversation,
-	ConversationContent,
-} from "@/components/ai/conversation";
-
-import {
-	Message,
-	MessageContent,
-	MessageResponse,
-} from "@/components/ai/message";
+	MessageScroller,
+	MessageScrollerContent,
+	MessageScrollerItem,
+	MessageScrollerProvider,
+	MessageScrollerViewport,
+} from "@/components/ui/message-scroller";
+import { Message, MessageContent } from "@/components/ui/message";
+import { Bubble, BubbleContent } from "@/components/ui/bubble";
+import { MessageResponse } from "@/components/ai/message";
 
 import {
 	PromptInput,
@@ -271,17 +272,24 @@ Features:
 - Auto-creates chat if none exist
 - Streaming status indicator
 
-### Conversation
+### MessageScroller
 
 Scrollable message container with auto-scroll.
 
 ```tsx
-<Conversation>
-  <ConversationContent>
-    {messages.map(msg => ...)}
-  </ConversationContent>
-  <ConversationScrollButton />
-</Conversation>
+<MessageScrollerProvider autoScroll defaultScrollPosition="end">
+	<MessageScroller>
+		<MessageScrollerViewport>
+			<MessageScrollerContent>
+				{messages.map((message) => (
+					<MessageScrollerItem key={message.id} messageId={message.id}>
+						{/* Message */}
+					</MessageScrollerItem>
+				))}
+			</MessageScrollerContent>
+		</MessageScrollerViewport>
+	</MessageScroller>
+</MessageScrollerProvider>
 ```
 
 ### Message
@@ -289,13 +297,21 @@ Scrollable message container with auto-scroll.
 Individual message display with role-based styling.
 
 ```tsx
-<Message from="user">
-  <MessageContent>Hello!</MessageContent>
+<Message align="end">
+  <MessageContent>
+    <Bubble variant="secondary">
+      <BubbleContent>Hello!</BubbleContent>
+    </Bubble>
+  </MessageContent>
 </Message>
 
-<Message from="assistant">
+<Message>
   <MessageContent>
-    <MessageResponse>{markdownContent}</MessageResponse>
+    <Bubble variant="ghost">
+      <BubbleContent>
+        <MessageResponse>{markdownContent}</MessageResponse>
+      </BubbleContent>
+    </Bubble>
   </MessageContent>
 </Message>
 ```
