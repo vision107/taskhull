@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, lte, or } from "drizzle-orm";
 import type Stripe from "stripe";
 
 import {
@@ -22,6 +22,10 @@ import {
 	SubscriptionStatus,
 } from "@/lib/db/schema/enums";
 
+import {
+	BILLING_EVENT_PROCESSING_LEASE_MS,
+	canRetryBillingEvent,
+} from "./event-claim";
 import type { ActivePlanInfo } from "./types";
 
 // ============================================================================
@@ -589,6 +593,20 @@ export async function deleteOrderItemsByOrderId(
 export type BillingEventInsert = typeof billingEventTable.$inferInsert;
 export type BillingEventSelect = typeof billingEventTable.$inferSelect;
 
+export type BillingEventClaimInput = {
+	stripeEventId: string;
+	eventType: string;
+	organizationId?: string | null;
+	subscriptionId?: string | null;
+	orderId?: string | null;
+	eventData?: string | null;
+};
+
+export type BillingEventClaimResult =
+	| { status: "claimed"; eventId: string }
+	| { status: "already_processed" }
+	| { status: "already_processing" };
+
 /**
  * Create a billing event log entry
  */
@@ -602,6 +620,88 @@ export async function createBillingEvent(
 	}
 
 	return event;
+}
+
+/**
+ * Atomically claim a Stripe event for processing.
+ *
+ * A failed event can be retried immediately. An event left in the processing
+ * state can be reclaimed after its lease expires, which covers terminated
+ * serverless invocations without allowing concurrent handlers to run.
+ */
+export async function claimBillingEvent(
+	data: BillingEventClaimInput,
+	now = new Date(),
+): Promise<BillingEventClaimResult> {
+	const [created] = await db
+		.insert(billingEventTable)
+		.values({
+			...data,
+			processed: false,
+			error: null,
+			updatedAt: now,
+		})
+		.onConflictDoNothing({ target: billingEventTable.stripeEventId })
+		.returning({ id: billingEventTable.id });
+
+	if (created) return { status: "claimed", eventId: created.id };
+
+	const existing = await db.query.billingEventTable.findFirst({
+		where: eq(billingEventTable.stripeEventId, data.stripeEventId),
+		columns: {
+			id: true,
+			processed: true,
+			error: true,
+			updatedAt: true,
+		},
+	});
+
+	if (!existing) {
+		throw new Error("Billing event disappeared while claiming it");
+	}
+
+	if (existing.processed) return { status: "already_processed" };
+	if (!canRetryBillingEvent(existing, now)) {
+		return { status: "already_processing" };
+	}
+
+	const staleBefore = new Date(
+		now.getTime() - BILLING_EVENT_PROCESSING_LEASE_MS,
+	);
+	const claimedAt = new Date(
+		Math.max(now.getTime(), existing.updatedAt.getTime() + 1),
+	);
+	const [claimed] = await db
+		.update(billingEventTable)
+		.set({
+			eventType: data.eventType,
+			eventData: data.eventData,
+			error: null,
+			updatedAt: claimedAt,
+		})
+		.where(
+			and(
+				eq(billingEventTable.id, existing.id),
+				eq(billingEventTable.processed, false),
+				lte(billingEventTable.updatedAt, existing.updatedAt),
+				or(
+					isNotNull(billingEventTable.error),
+					lte(billingEventTable.updatedAt, staleBefore),
+				),
+			),
+		)
+		.returning({ id: billingEventTable.id });
+
+	if (claimed) return { status: "claimed", eventId: claimed.id };
+
+	const current = await db.query.billingEventTable.findFirst({
+		where: eq(billingEventTable.id, existing.id),
+		columns: { processed: true },
+	});
+
+	return {
+		status: current?.processed ? "already_processed" : "already_processing",
+	};
 }
 
 /**
@@ -638,10 +738,22 @@ export async function getBillingEventsByOrganizationId(
 export async function markBillingEventError(
 	id: string,
 	error: string,
+	retryable = true,
 ): Promise<void> {
 	await db
 		.update(billingEventTable)
-		.set({ processed: false, error })
+		.set({
+			processed: !retryable,
+			error,
+			updatedAt: new Date(),
+		})
+		.where(eq(billingEventTable.id, id));
+}
+
+export async function markBillingEventProcessed(id: string): Promise<void> {
+	await db
+		.update(billingEventTable)
+		.set({ processed: true, error: null, updatedAt: new Date() })
 		.where(eq(billingEventTable.id, id));
 }
 

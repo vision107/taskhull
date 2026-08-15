@@ -31,6 +31,7 @@ export {
 	type BillingEventSelect,
 	// Billing event queries
 	billingEventExists,
+	claimBillingEvent,
 	createBillingEvent,
 	// Order queries
 	createOrder,
@@ -66,6 +67,7 @@ export {
 	hasSpecificPlan,
 	type LifetimeOrderResult,
 	markBillingEventError,
+	markBillingEventProcessed,
 	type OrderInsert,
 	type OrderItemInsert,
 	type OrderItemSelect,

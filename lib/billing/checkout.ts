@@ -4,6 +4,7 @@ import type Stripe from "stripe";
 import { creditPackages } from "@/config/billing.config";
 import { getPriceByStripePriceId } from "@/lib/billing/plans";
 
+import { buildCheckoutMetadata } from "./checkout-metadata";
 import { getOrCreateStripeCustomer } from "./customer";
 import { getStripe } from "./stripe";
 import type { CreateCheckoutParams } from "./types";
@@ -83,12 +84,12 @@ export async function createCheckoutSession(
 		line_items: lineItems,
 		success_url: successUrl,
 		cancel_url: cancelUrl,
-		metadata: {
+		metadata: buildCheckoutMetadata({
 			organizationId,
 			planId: plan.id,
 			priceId: price.id,
-			...metadata,
-		},
+			metadata,
+		}),
 		// Allow promo codes
 		allow_promotion_codes: true,
 		// Collect billing address for tax

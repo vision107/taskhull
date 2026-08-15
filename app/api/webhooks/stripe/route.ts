@@ -5,8 +5,7 @@ import type Stripe from "stripe";
 
 import { creditPackages } from "@/config/billing.config";
 import {
-	billingEventExists,
-	createBillingEvent,
+	claimBillingEvent,
 	createOrder,
 	createOrderItems,
 	createSubscription,
@@ -16,6 +15,7 @@ import {
 	getSubscriptionById,
 	getWebhookSecret,
 	markBillingEventError,
+	markBillingEventProcessed,
 	safeTsToDate,
 	stripeItemsToDb,
 	stripeSubscriptionToDb,
@@ -146,36 +146,29 @@ export async function POST(request: Request) {
 		);
 	}
 
-	// Idempotency check - skip if we've already processed this event
-	const alreadyProcessed = await billingEventExists(event.id);
-	if (alreadyProcessed) {
+	const claim = await claimBillingEvent({
+		stripeEventId: event.id,
+		eventType: event.type,
+		organizationId: null,
+		subscriptionId: null,
+		orderId: null,
+		eventData: JSON.stringify({ status: "processing" }),
+	});
+
+	if (claim.status === "already_processed") {
 		logger.info("Event already processed", { eventId: event.id });
 		return NextResponse.json({ received: true, status: "already_processed" });
 	}
 
-	// Create billing event record FIRST to prevent race conditions
-	// This acts as a lock - if another request tries to process the same event,
-	// the billingEventExists check above will catch it
-	let billingEventId: string | null = null;
-	try {
-		const billingEvent = await createBillingEvent({
-			stripeEventId: event.id,
-			eventType: event.type,
-			organizationId: null, // Will be updated during processing
-			subscriptionId: null,
-			orderId: null,
-			eventData: JSON.stringify({ status: "processing" }),
-			processed: false,
-		});
-		billingEventId = billingEvent.id;
-	} catch (err) {
-		// If we can't create the event record (e.g., duplicate key), another process is handling it
-		logger.info("Event already being processed by another request", {
-			eventId: event.id,
-			error: err instanceof Error ? err.message : String(err),
-		});
-		return NextResponse.json({ received: true, status: "already_processing" });
+	if (claim.status === "already_processing") {
+		logger.info("Event is already being processed", { eventId: event.id });
+		return NextResponse.json(
+			{ received: false, status: "already_processing" },
+			{ status: 409 },
+		);
 	}
+
+	const billingEventId = claim.eventId;
 
 	// Process the event
 	try {
@@ -185,26 +178,14 @@ export async function POST(request: Request) {
 		// This is a safety net - individual handlers also call logBillingEvent()
 		// but this ensures processed=true even if handler exits early or
 		// the logBillingEvent call at the end of handler fails
-		if (billingEventId) {
-			try {
-				await upsertBillingEvent({
-					stripeEventId: event.id,
-					eventType: event.type,
-					organizationId: null, // Already set by handler's logBillingEvent if available
-					subscriptionId: null,
-					orderId: null,
-					eventData: JSON.stringify({ status: "completed" }),
-					processed: true,
-					error: null,
-				});
-			} catch (updateErr) {
-				// Log but don't fail - the event was processed successfully
-				logger.warn("Failed to mark event as processed", {
-					eventId: event.id,
-					error:
-						updateErr instanceof Error ? updateErr.message : "Unknown error",
-				});
-			}
+		try {
+			await markBillingEventProcessed(billingEventId);
+		} catch (updateErr) {
+			// Log but don't fail - the event was processed successfully
+			logger.warn("Failed to mark event as processed", {
+				eventId: event.id,
+				error: updateErr instanceof Error ? updateErr.message : "Unknown error",
+			});
 		}
 
 		return NextResponse.json({ received: true, status: "processed" });
@@ -216,14 +197,12 @@ export async function POST(request: Request) {
 			error: message,
 		});
 
-		// Mark the event as failed
-		if (billingEventId) {
-			await markBillingEventError(billingEventId, message);
-		}
-
 		// Return 500 for transient errors so Stripe will retry
 		// Only return 200 for permanent failures (e.g., invalid data)
-		if (isTransientError(err)) {
+		const retryable = isTransientError(err);
+		await markBillingEventError(billingEventId, message, retryable);
+
+		if (retryable) {
 			return NextResponse.json(
 				{ received: false, status: "error", error: message },
 				{ status: 500 },
