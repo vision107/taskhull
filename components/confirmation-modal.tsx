@@ -45,14 +45,17 @@ export const ConfirmationModal = NiceModal.create<ConfirmationModalProps>(
 		const modal = useEnhancedModal();
 		const [textInput, setTextInput] = useState("");
 		const [showError, setShowError] = useState(false);
+		const [isPending, setIsPending] = useState(false);
 
 		const isTextValid = !requiredText || textInput === requiredText;
 
 		const handleConfirm = async () => {
+			if (isPending) return;
 			if (!!requiredText && textInput !== requiredText) {
 				setShowError(true);
 				return;
 			}
+			setIsPending(true);
 			try {
 				const result = await onConfirm();
 				if (result !== false) {
@@ -61,7 +64,13 @@ export const ConfirmationModal = NiceModal.create<ConfirmationModalProps>(
 			} catch (error) {
 				console.error("Confirmation modal action failed", error);
 				toast.error("Something went wrong. Please try again.");
+			} finally {
+				setIsPending(false);
 			}
+		};
+		const handleOpenChange = (open: boolean) => {
+			if (!open && isPending) return;
+			modal.handleOpenChange(open);
 		};
 
 		const handleTextInputChange = (value: string) => {
@@ -74,7 +83,7 @@ export const ConfirmationModal = NiceModal.create<ConfirmationModalProps>(
 		return (
 			<AlertDialog
 				open={modal.visible}
-				onOpenChange={modal.handleOpenChange}
+				onOpenChange={handleOpenChange}
 				onOpenChangeComplete={modal.handleOpenChangeComplete}
 			>
 				<AlertDialogContent>
@@ -103,11 +112,17 @@ export const ConfirmationModal = NiceModal.create<ConfirmationModalProps>(
 						</div>
 					)}
 					<AlertDialogFooter>
-						<Button onClick={modal.handleClose} type="button" variant="outline">
+						<Button
+							disabled={isPending}
+							onClick={modal.handleClose}
+							type="button"
+							variant="outline"
+						>
 							{cancelLabel ?? "Cancel"}
 						</Button>
 						<Button
-							disabled={!isTextValid}
+							disabled={!isTextValid || isPending}
+							loading={isPending}
 							onClick={handleConfirm}
 							type="button"
 							variant={destructive ? "destructive" : "default"}

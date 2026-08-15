@@ -1,5 +1,6 @@
 "use client";
 
+import NiceModal from "@ebay/nice-modal-react";
 import type {
 	ColumnDef,
 	ColumnFiltersState,
@@ -17,6 +18,7 @@ import { MoreVerticalIcon } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 
+import { ConfirmationModal } from "@/components/confirmation-modal";
 import { OrganizationRoleSelect } from "@/components/organization/organization-role-select";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,23 +79,64 @@ export function OrganizationMembersTable({
 		);
 	};
 
-	const removeMember = (memberId: string) => {
-		toast.promise(
-			async () => {
-				await authClient.organization.removeMember({
-					memberIdOrEmail: memberId,
-					organizationId,
-				});
-			},
-			{
-				loading: "Removing member...",
-				success: () => {
-					void utils.organization.get.invalidate({ id: organizationId });
-					return "Member removed successfully.";
-				},
-				error: "Could not remove member. Please try again.",
-			},
+	const removeMember = async (
+		memberId: string,
+		isCurrentUser: boolean,
+	): Promise<boolean> => {
+		const toastId = toast.loading(
+			isCurrentUser ? "Leaving organization..." : "Removing member...",
 		);
+
+		try {
+			const { error } = await authClient.organization.removeMember({
+				memberIdOrEmail: memberId,
+				organizationId,
+			});
+
+			if (error) {
+				throw error;
+			}
+
+			await Promise.all([
+				utils.organization.get.invalidate({ id: organizationId }),
+				utils.organization.list.invalidate(),
+			]);
+			toast.success(
+				isCurrentUser
+					? "You left the organization."
+					: "Member removed successfully.",
+				{ id: toastId },
+			);
+			return true;
+		} catch {
+			toast.error(
+				isCurrentUser
+					? "Could not leave the organization. Please try again."
+					: "Could not remove member. Please try again.",
+				{ id: toastId },
+			);
+			return false;
+		}
+	};
+
+	const confirmMemberRemoval = ({
+		memberId,
+		memberName,
+		isCurrentUser,
+	}: {
+		memberId: string;
+		memberName: string;
+		isCurrentUser: boolean;
+	}) => {
+		void NiceModal.show(ConfirmationModal, {
+			title: isCurrentUser ? "Leave organization" : "Remove member",
+			message: isCurrentUser
+				? `Are you sure you want to leave "${organization?.name ?? "this organization"}"? You will immediately lose access to it.`
+				: `Are you sure you want to remove ${memberName} from "${organization?.name ?? "this organization"}"? They will immediately lose access to it.`,
+			destructive: true,
+			confirmLabel: isCurrentUser ? "Leave organization" : "Remove member",
+			onConfirm: () => removeMember(memberId, isCurrentUser),
+		});
 	};
 
 	const columns: ColumnDef<
@@ -162,7 +205,16 @@ export function OrganizationMembersTable({
 											<DropdownMenuItem
 												className="text-destructive"
 												disabled={!isOrganizationAdmin(organization, user)}
-												onClick={async () => removeMember(row.original.id)}
+												onClick={() =>
+													confirmMemberRemoval({
+														memberId: row.original.id,
+														memberName:
+															row.original.user?.name ??
+															row.original.user?.email ??
+															"this member",
+														isCurrentUser: false,
+													})
+												}
 											>
 												Remove member
 											</DropdownMenuItem>
@@ -170,7 +222,16 @@ export function OrganizationMembersTable({
 										{row.original.userId === user?.id && (
 											<DropdownMenuItem
 												className="text-destructive"
-												onClick={async () => removeMember(row.original.id)}
+												onClick={() =>
+													confirmMemberRemoval({
+														memberId: row.original.id,
+														memberName:
+															row.original.user?.name ??
+															row.original.user?.email ??
+															"your account",
+														isCurrentUser: true,
+													})
+												}
 											>
 												Leave organization
 											</DropdownMenuItem>
