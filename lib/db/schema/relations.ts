@@ -10,6 +10,7 @@ import {
 	invitationTable,
 	leadTable,
 	memberTable,
+	notificationTable,
 	orderItemTable,
 	orderTable,
 	organizationTable,
@@ -87,7 +88,29 @@ export const userRelations = relations(userTable, ({ many }) => ({
 	aiChats: many(aiChatTable),
 	assignedLeads: many(leadTable),
 	creditTransactions: many(creditTransactionTable),
+	notifications: many(notificationTable, {
+		relationName: "notificationRecipient",
+	}),
+	notificationsCreated: many(notificationTable, {
+		relationName: "notificationCreator",
+	}),
 }));
+
+export const notificationRelations = relations(
+	notificationTable,
+	({ one }) => ({
+		user: one(userTable, {
+			fields: [notificationTable.userId],
+			references: [userTable.id],
+			relationName: "notificationRecipient",
+		}),
+		createdBy: one(userTable, {
+			fields: [notificationTable.createdById],
+			references: [userTable.id],
+			relationName: "notificationCreator",
+		}),
+	}),
+);
 
 // Billing relations
 export const subscriptionRelations = relations(

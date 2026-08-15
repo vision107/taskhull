@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2Icon, FileCog2Icon, UsersIcon } from "lucide-react";
+import { BellIcon, Building2Icon, FileCog2Icon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type * as React from "react";
@@ -42,6 +42,11 @@ export function AdminMenuItems(): React.JSX.Element {
 					label: "Organizations",
 					href: "/dashboard/admin/organizations",
 					icon: Building2Icon,
+				},
+				{
+					label: "Notifications",
+					href: "/dashboard/admin/notifications",
+					icon: BellIcon,
 				},
 
 				{

@@ -15,6 +15,13 @@
       "when": 1784494260250,
       "tag": "20260719205100_steep_maestro",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786310338775,
+      "tag": "20260809211858_add_notifications",
+      "breakpoints": true
     }
   ]
 }

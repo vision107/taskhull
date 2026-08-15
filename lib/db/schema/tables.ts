@@ -239,6 +239,39 @@ export const userTable = pgTable(
 	],
 );
 
+export const notificationTable = pgTable(
+	"notification",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => userTable.id, { onDelete: "cascade" }),
+		createdById: uuid("created_by_id").references(() => userTable.id, {
+			onDelete: "set null",
+		}),
+		title: text("title").notNull(),
+		message: text("message").notNull(),
+		type: text("type").notNull().default("info"),
+		actionUrl: text("action_url"),
+		readAt: timestamp("read_at", { withTimezone: true }),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.notNull()
+			.defaultNow()
+			.$onUpdate(() => new Date()),
+	},
+	(table) => [
+		index("notification_user_created_at_idx").on(
+			table.userId,
+			table.createdAt.desc(),
+		),
+		index("notification_user_read_at_idx").on(table.userId, table.readAt),
+		index("notification_created_by_id_idx").on(table.createdById),
+	],
+);
+
 export const verificationTable = pgTable(
 	"verification",
 	{

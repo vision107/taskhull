@@ -2,6 +2,7 @@
 
 import type * as React from "react";
 
+import { NotificationCenter } from "@/components/notifications/notification-center";
 import { OrganizationSwitcher } from "@/components/organization/organization-switcher";
 import {
 	Sidebar,
@@ -35,8 +36,16 @@ export function SidebarLayout({
 		<div className="flex h-screen w-screen flex-col overflow-hidden">
 			<SidebarProvider defaultOpen={defaultOpen} defaultWidth={defaultWidth}>
 				<Sidebar collapsible="icon">
-					<SidebarHeader>
-						<OrganizationSwitcher />
+					<SidebarHeader className="h-14 justify-center">
+						<div className="flex w-full min-w-0 items-center justify-between gap-2">
+							<div className="min-w-0 flex-1">
+								<OrganizationSwitcher />
+							</div>
+							<NotificationCenter
+								className="size-9 shrink-0 group-data-[collapsible=icon]:hidden"
+								placement="sidebar"
+							/>
+						</div>
 					</SidebarHeader>
 					<SidebarContent className="flex flex-col overflow-hidden">
 						<div className="flex-1 overflow-hidden">{menuItems}</div>
