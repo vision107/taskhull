@@ -59,6 +59,9 @@ function getNotificationActionUrl(actionUrl: string | null) {
 
 const allNotificationsInput = { limit: 20, status: "all" as const };
 const unreadNotificationsInput = { limit: 20, status: "unread" as const };
+const notificationSkeletonRows = [
+	{ titleWidth: "w-2/5", messageWidth: "w-4/5" },
+] as const;
 
 type NotificationListProps = {
 	notifications: Notification[];
@@ -178,21 +181,37 @@ function NotificationList({
 }
 
 function NotificationListSkeleton() {
+	const [visible, setVisible] = React.useState(false);
+
+	React.useEffect(() => {
+		const timeout = window.setTimeout(() => setVisible(true), 200);
+		return () => window.clearTimeout(timeout);
+	}, []);
+
+	if (!visible) {
+		return <div aria-hidden="true" className="min-h-20" />;
+	}
+
 	return (
-		<div aria-label="Loading notifications" role="status">
-			{Array.from({ length: 3 }, (_, index) => (
+		<div
+			aria-label="Loading notifications"
+			aria-live="polite"
+			className="min-h-20"
+			role="status"
+		>
+			{notificationSkeletonRows.map((row) => (
 				<div
-					key={index}
+					key={row.titleWidth}
 					className="flex gap-3 border-b border-border/50 px-4 py-3.5 last:border-b-0"
 				>
 					<Skeleton className="mt-0.5 size-7 shrink-0 rounded-md" />
-					<div className="min-w-0 flex-1 space-y-2">
+					<div className="min-w-0 flex-1 space-y-2.5 pt-0.5">
 						<div className="flex items-center justify-between gap-3">
-							<Skeleton className="h-3.5 w-2/3" />
-							<Skeleton className="h-3 w-7 shrink-0" />
+							<Skeleton className={cn("h-3.5", row.titleWidth)} />
+							<Skeleton className="h-2.5 w-6 shrink-0" />
 						</div>
-						<Skeleton className="h-3 w-full" />
-						<Skeleton className="h-3 w-4/5" />
+						<Skeleton className="h-2.5 w-full" />
+						<Skeleton className={cn("h-2.5", row.messageWidth)} />
 					</div>
 				</div>
 			))}
@@ -248,7 +267,7 @@ export function NotificationCenter({
 		refetchOnWindowFocus: true,
 	});
 	const list = trpc.notification.list.useQuery(allNotificationsInput, {
-		enabled: open,
+		staleTime: 30_000,
 		refetchInterval: open ? 30_000 : false,
 	});
 	const unreadList = trpc.notification.list.useQuery(unreadNotificationsInput, {
@@ -260,10 +279,7 @@ export function NotificationCenter({
 		if (nextOpen) {
 			setActiveTab("all");
 			setHasOpened(true);
-			void Promise.allSettled([
-				utils.notification.unreadCount.invalidate(),
-				utils.notification.list.invalidate(allNotificationsInput),
-			]);
+			void utils.notification.list.prefetch(unreadNotificationsInput);
 		} else {
 			void utils.notification.list.invalidate(unreadNotificationsInput);
 		}
@@ -447,21 +463,22 @@ export function NotificationCenter({
 					}
 					className="gap-0"
 				>
-					{list.isPending || notifications.length > 0 ? (
-						<TabsList
-							variant="line"
-							className="h-8 w-full justify-start border-b px-3"
-						>
-							<TabsTrigger value="all" className="flex-none px-2.5">
-								All
-							</TabsTrigger>
-							<TabsTrigger value="unread" className="flex-none px-2.5">
-								Unread
-							</TabsTrigger>
-						</TabsList>
-					) : null}
+					<TabsList
+						variant="line"
+						className="h-8 w-full justify-start border-b px-3"
+					>
+						<TabsTrigger value="all" className="flex-none px-2.5">
+							All
+						</TabsTrigger>
+						<TabsTrigger value="unread" className="flex-none px-2.5">
+							Unread
+						</TabsTrigger>
+					</TabsList>
 
-					<TabsContent value="all" className="max-h-80 overflow-y-auto">
+					<TabsContent
+						value="all"
+						className="max-h-80 min-h-20 overflow-y-auto"
+					>
 						{list.isPending ? (
 							<NotificationListSkeleton />
 						) : list.isError && !list.data ? (
@@ -477,7 +494,10 @@ export function NotificationCenter({
 							/>
 						)}
 					</TabsContent>
-					<TabsContent value="unread" className="max-h-80 overflow-y-auto">
+					<TabsContent
+						value="unread"
+						className="max-h-80 min-h-20 overflow-y-auto"
+					>
 						{unreadList.isPending ? (
 							<NotificationListSkeleton />
 						) : unreadList.isError && !unreadList.data ? (
