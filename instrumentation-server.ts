@@ -1,6 +1,7 @@
 import { init } from "@sentry/nextjs";
 
 import { env } from "@/lib/env";
+import { isExpectedTrpcError } from "@/lib/sentry/expected-errors";
 
 const enableSentry = process.env.NODE_ENV !== "development";
 
@@ -21,6 +22,10 @@ if (enableSentry && env.NEXT_PUBLIC_SENTRY_DSN) {
 		sendDefaultPii: true,
 
 		beforeSend: (event) => {
+			if (isExpectedTrpcError(event)) {
+				return null;
+			}
+
 			const exception = event.exception?.values?.[0];
 
 			// Filter out TRPCError NOT_FOUND

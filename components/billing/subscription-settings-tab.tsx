@@ -328,7 +328,7 @@ export function SubscriptionSettingsTab({
 			</Card>
 
 			{/* Upgrade Plan Section - Only for Free Plans */}
-			{isFreePlan && (
+			{isFreePlan && isAdmin && (
 				<div className="space-y-4">
 					<div>
 						<h3 className="text-lg font-semibold">Upgrade Your Plan</h3>
@@ -347,6 +347,14 @@ export function SubscriptionSettingsTab({
 						className="w-full"
 					/>
 				</div>
+			)}
+			{isFreePlan && !isAdmin && (
+				<Alert>
+					<AlertTitle>Billing access required</AlertTitle>
+					<AlertDescription>
+						Only organization owners and admins can choose or change a plan.
+					</AlertDescription>
+				</Alert>
 			)}
 
 			{/* Invoices */}

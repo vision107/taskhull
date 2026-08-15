@@ -7,7 +7,12 @@ import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/ui/custom/theme-toggle";
 import { appConfig } from "@/config/app.config";
 import { billingConfig } from "@/config/billing.config";
-import { getOrganizationList, getSession } from "@/lib/auth/server";
+import { canManageOrganizationBilling } from "@/lib/auth/organization-permissions";
+import {
+	getOrganizationById,
+	getOrganizationList,
+	getSession,
+} from "@/lib/auth/server";
 import { getFreePlan } from "@/lib/billing/plans";
 import { getActivePlanForOrganization } from "@/lib/billing/queries";
 
@@ -78,6 +83,12 @@ export default async function ChoosePlanPage() {
 		redirect("/dashboard?reason=invalid-organization");
 	}
 
+	const activeOrganization = await getOrganizationById(organization.id);
+	const membership = activeOrganization?.members.find(
+		(member) => member.userId === session.user.id,
+	);
+	const canManageBilling = canManageOrganizationBilling(membership?.role);
+
 	// Check if organization already has an active plan
 	let activePlan: Awaited<ReturnType<typeof getActivePlanForOrganization>>;
 	try {
@@ -107,7 +118,7 @@ export default async function ChoosePlanPage() {
 					</p>
 				</div>
 
-				<PlanSelection />
+				<PlanSelection canManageBilling={canManageBilling} />
 			</div>
 			<ThemeToggle className="fixed right-2 bottom-2 rounded-full" />
 		</main>
