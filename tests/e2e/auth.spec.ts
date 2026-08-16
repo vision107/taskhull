@@ -48,7 +48,12 @@ test.describe("Authentication Pages", () => {
 		// Check form elements
 		await expect(page.getByLabel("Email")).toBeVisible();
 		await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
-		await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Sign in", exact: true }),
+		).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Sign in with passkey" }),
+		).toBeVisible();
 
 		// Check links
 		await expect(

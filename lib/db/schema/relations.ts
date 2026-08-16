@@ -11,6 +11,7 @@ import {
 	leadTable,
 	memberTable,
 	notificationTable,
+	passkeyTable,
 	orderItemTable,
 	orderTable,
 	organizationTable,
@@ -72,6 +73,13 @@ export const sessionRelations = relations(sessionTable, ({ one }) => ({
 	}),
 }));
 
+export const passkeyRelations = relations(passkeyTable, ({ one }) => ({
+	user: one(userTable, {
+		fields: [passkeyTable.userId],
+		references: [userTable.id],
+	}),
+}));
+
 export const twoFactorRelations = relations(twoFactorTable, ({ one }) => ({
 	user: one(userTable, {
 		fields: [twoFactorTable.userId],
@@ -82,6 +90,7 @@ export const twoFactorRelations = relations(twoFactorTable, ({ one }) => ({
 export const userRelations = relations(userTable, ({ many }) => ({
 	sessions: many(sessionTable),
 	accounts: many(accountTable),
+	passkeys: many(passkeyTable),
 	invitations: many(invitationTable),
 	memberships: many(memberTable),
 	twoFactors: many(twoFactorTable),

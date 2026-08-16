@@ -25,6 +25,7 @@ async function seedUser({
 	);
 	const userId = result.rows[0].id;
 	await pool.query(`DELETE FROM two_factor WHERE user_id = $1`, [userId]);
+	await pool.query(`DELETE FROM passkey WHERE user_id = $1`, [userId]);
 	await pool.query(
 		`INSERT INTO account (account_id, provider_id, user_id, password)
 		 VALUES ($1, 'credential', $2, $3)

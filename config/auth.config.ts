@@ -33,6 +33,7 @@ export const authConfig = {
 	// When false, only users with invitations can sign up (invitation-only mode)
 	enableSignup: true,
 	enableSocialLogin: true,
+	enablePasskeys: true,
 	cors: {
 		allowedOrigins: [...origins, /^https:\/\/.*\.vercel\.app$/],
 		allowedMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -88,5 +89,6 @@ export type AuthConfig = {
 	trustedOrigins: string[];
 	enableSignup: boolean;
 	enableSocialLogin: boolean;
+	enablePasskeys: boolean;
 	cors: CorsConfig;
 };

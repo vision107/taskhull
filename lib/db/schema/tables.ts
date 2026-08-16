@@ -151,6 +151,31 @@ export const organizationTable = pgTable(
 	],
 );
 
+export const passkeyTable = pgTable(
+	"passkey",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		name: text("name"),
+		publicKey: text("public_key").notNull(),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => userTable.id, { onDelete: "cascade" }),
+		credentialID: text("credential_id").notNull(),
+		counter: integer("counter").notNull(),
+		deviceType: text("device_type").notNull(),
+		backedUp: boolean("backed_up").notNull(),
+		transports: text("transports"),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+		aaguid: text("aaguid"),
+	},
+	(table) => [
+		index("passkey_user_id_idx").on(table.userId),
+		uniqueIndex("passkey_credential_id_idx").on(table.credentialID),
+	],
+);
+
 export const sessionTable = pgTable(
 	"session",
 	{

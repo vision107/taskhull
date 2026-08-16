@@ -56,6 +56,20 @@ export const authErrorMessages: { [K in keyof AuthClientErrorCodes]?: string } =
 		ACCOUNT_NOT_FOUND: "Account not found",
 		USER_BANNED:
 			"Your account has been suspended. Please contact support for assistance.",
+		AUTH_CANCELLED: "Passkey sign-in was cancelled.",
+		ERROR_CEREMONY_ABORTED: "Passkey request was cancelled.",
+		ERROR_AUTHENTICATOR_GENERAL_ERROR:
+			"Verify your identity with a PIN or biometric to use this passkey.",
+		ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED:
+			"This passkey is already registered.",
+		ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY:
+			"Verify your identity with a PIN or biometric to use this passkey.",
+		REGISTRATION_CANCELLED: "Passkey registration was cancelled.",
+		AUTHENTICATION_FAILED: "Passkey sign-in failed. Please try again.",
+		PASSKEY_NOT_FOUND: "No matching passkey was found.",
+		PASSKEY_USER_VERIFICATION_REQUIRED:
+			"Verify your identity with a PIN or biometric to use this passkey.",
+		PREVIOUSLY_REGISTERED: "This passkey is already registered.",
 	};
 
 /**

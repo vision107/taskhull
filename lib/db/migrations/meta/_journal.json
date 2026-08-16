@@ -22,6 +22,13 @@
       "when": 1786310338775,
       "tag": "20260809211858_add_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786833174248,
+      "tag": "20260815223254_add_passkeys",
+      "breakpoints": true
     }
   ]
 }

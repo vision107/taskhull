@@ -1,6 +1,6 @@
 # Authentication System
 
-This template uses **Better Auth** for authentication, supporting email/password, social login (Google), two-factor authentication, organizations with role-based access control and user management features.
+This template uses **Better Auth** for authentication, supporting email/password, passkeys, social login (Google), two-factor authentication, organizations with role-based access control and user management features.
 
 ---
 
@@ -58,6 +58,16 @@ That's it! Authentication is ready.
 - TOTP-based (Google Authenticator, Authy, etc.)
 - Backup codes for recovery
 - Can be enabled per user in account settings
+
+### Passkeys
+
+- Passwordless sign-in with platform authenticators such as Touch ID, Face ID and Windows Hello
+- User verification with a biometric or device PIN is required for every passkey sign-in
+- Security-key support through the browser WebAuthn API
+- Add, rename and remove passkeys from **Account settings → Security**
+- Passkey metadata is stored in the `passkey` table; private key material never leaves the authenticator
+
+Passkeys require HTTPS in production. Browsers also allow WebAuthn on `localhost` during development. A verified passkey completes sign-in without an additional TOTP prompt; password sign-in still follows the user's configured two-factor flow.
 
 ---
 

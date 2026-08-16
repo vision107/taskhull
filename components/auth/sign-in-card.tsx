@@ -1,6 +1,6 @@
 "use client";
 
-import { LockIcon, MailIcon } from "lucide-react";
+import { FingerprintIcon, LockIcon, MailIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -75,6 +75,7 @@ export function SignInCard(): React.JSX.Element {
 			password: "",
 		},
 	});
+	const [isPasskeyPending, setIsPasskeyPending] = React.useState(false);
 
 	const redirectPath = getAuthRedirectPath({
 		invitationId,
@@ -150,6 +151,28 @@ export function SignInCard(): React.JSX.Element {
 			}
 		}
 	});
+
+	const signInWithPasskey = async () => {
+		methods.clearErrors("root");
+		setIsPasskeyPending(true);
+
+		try {
+			const { error } = await authClient.signIn.passkey();
+			if (error) throw error;
+
+			window.location.href = redirectPath;
+		} catch (error) {
+			methods.setError("root", {
+				message: getAuthErrorMessage(
+					error && typeof error === "object" && "code" in error
+						? (error.code as string)
+						: undefined,
+				),
+			});
+		} finally {
+			setIsPasskeyPending(false);
+		}
+	};
 
 	return (
 		<Card className="w-full border-transparent px-0 py-8 [--card-spacing:--spacing(8)] dark:border-border">
@@ -236,44 +259,40 @@ export function SignInCard(): React.JSX.Element {
 								onExpire={handleExpire}
 							/>
 						)}
-						{methods.formState.isSubmitted &&
-							methods.formState.errors.root?.message && (
-								<Alert variant="destructive">
-									<AlertDescription>
-										{(() => {
-											const message = methods.formState.errors.root.message;
-											if (message.startsWith("USER_BANNED|")) {
-												const baseMessage = getAuthErrorMessage("USER_BANNED");
-												const serverMessage = message.replace(
-													"USER_BANNED|",
-													"",
-												);
-												const [reason, expiresInfo] =
-													serverMessage.split("|expires:");
+						{methods.formState.errors.root?.message && (
+							<Alert variant="destructive">
+								<AlertDescription>
+									{(() => {
+										const message = methods.formState.errors.root.message;
+										if (message.startsWith("USER_BANNED|")) {
+											const baseMessage = getAuthErrorMessage("USER_BANNED");
+											const serverMessage = message.replace("USER_BANNED|", "");
+											const [reason, expiresInfo] =
+												serverMessage.split("|expires:");
 
-												return (
-													<div className="space-y-2">
-														<p>{baseMessage}</p>
-														{reason &&
-															reason !== "Your account has been suspended" && (
-																<p>
-																	<span className="font-medium">Reason:</span>{" "}
-																	{reason}
-																</p>
-															)}
-														{expiresInfo && (
-															<p className="text-sm opacity-90">
-																This suspension will be lifted on {expiresInfo}.
+											return (
+												<div className="space-y-2">
+													<p>{baseMessage}</p>
+													{reason &&
+														reason !== "Your account has been suspended" && (
+															<p>
+																<span className="font-medium">Reason:</span>{" "}
+																{reason}
 															</p>
 														)}
-													</div>
-												);
-											}
-											return message;
-										})()}
-									</AlertDescription>
-								</Alert>
-							)}
+													{expiresInfo && (
+														<p className="text-sm opacity-90">
+															This suspension will be lifted on {expiresInfo}.
+														</p>
+													)}
+												</div>
+											);
+										}
+										return message;
+									})()}
+								</AlertDescription>
+							</Alert>
+						)}
 						<Button
 							className="w-full"
 							loading={methods.formState.isSubmitting}
@@ -287,7 +306,8 @@ export function SignInCard(): React.JSX.Element {
 						</Button>
 					</form>
 				</Form>
-				{authConfig.enableSignup && authConfig.enableSocialLogin && (
+				{(authConfig.enablePasskeys ||
+					(authConfig.enableSignup && authConfig.enableSocialLogin)) && (
 					<>
 						<div className="relative my-1 h-4">
 							<hr className="relative top-2" />
@@ -296,12 +316,25 @@ export function SignInCard(): React.JSX.Element {
 							</p>
 						</div>
 						<div className="grid grid-cols-1 items-stretch gap-2">
-							{Object.keys(oAuthProviders).map((providerId) => (
-								<SocialSigninButton
-									key={providerId}
-									provider={providerId as OAuthProvider}
-								/>
-							))}
+							{authConfig.enableSignup &&
+								authConfig.enableSocialLogin &&
+								Object.keys(oAuthProviders).map((providerId) => (
+									<SocialSigninButton
+										key={providerId}
+										provider={providerId as OAuthProvider}
+									/>
+								))}
+							{authConfig.enablePasskeys && (
+								<Button
+									loading={isPasskeyPending}
+									onClick={signInWithPasskey}
+									type="button"
+									variant="outline"
+								>
+									<FingerprintIcon data-icon="inline-start" />
+									Sign in with passkey
+								</Button>
+							)}
 						</div>
 					</>
 				)}

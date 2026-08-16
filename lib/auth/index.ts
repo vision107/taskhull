@@ -1,3 +1,4 @@
+import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError, createAuthMiddleware } from "better-auth/api";
@@ -44,6 +45,7 @@ export const auth = betterAuth({
 			member: schema.memberTable,
 			organization: schema.organizationTable,
 			session: schema.sessionTable,
+			passkey: schema.passkeyTable,
 			twoFactor: schema.twoFactorTable,
 			user: schema.userTable,
 			verification: schema.verificationTable,
@@ -278,6 +280,26 @@ export const auth = betterAuth({
 			},
 		}),
 		openAPI(),
+		...(authConfig.enablePasskeys
+			? [
+					passkey({
+						authenticatorSelection: {
+							userVerification: "required",
+						},
+						authentication: {
+							afterVerification: async ({ verification }) => {
+								if (!verification.authenticationInfo.userVerified) {
+									throw new APIError("UNAUTHORIZED", {
+										code: "PASSKEY_USER_VERIFICATION_REQUIRED",
+										message:
+											"Verify your identity with a PIN or biometric to use this passkey.",
+									});
+								}
+							},
+						},
+					}),
+				]
+			: []),
 		twoFactor(),
 	],
 	databaseHooks: {
