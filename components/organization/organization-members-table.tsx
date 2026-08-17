@@ -31,7 +31,6 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { useSession } from "@/hooks/use-session";
 import { authClient } from "@/lib/auth/client";
-import { organizationMemberRoleLabels } from "@/lib/auth/constants";
 import { canChangeOrganizationRole } from "@/lib/auth/organization-permissions";
 import { isOrganizationAdmin } from "@/lib/auth/utils";
 import { trpc } from "@/trpc/client";
@@ -171,84 +170,71 @@ export function OrganizationMembersTable({
 			cell: ({ row }) => {
 				return (
 					<div className="flex flex-row justify-end gap-2">
-						{userIsOrganizationAdmin ? (
-							<>
-								<OrganizationRoleSelect
-									allowOwner={currentMemberRole === "owner"}
+						<OrganizationRoleSelect
+							allowOwner={currentMemberRole === "owner"}
+							disabled={
+								!canChangeOrganizationRole({
+									actorRole: currentMemberRole,
+									currentRole: row.original.role,
+									nextRole: row.original.role,
+								})
+							}
+							onSelect={async (value) =>
+								updateMemberRole(row.original.id, value)
+							}
+							value={row.original.role}
+						/>
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button
 									disabled={
-										!canChangeOrganizationRole({
-											actorRole: currentMemberRole,
-											currentRole: row.original.role,
-											nextRole: row.original.role,
-										})
+										organization?.members && organization.members.length < 2
 									}
-									onSelect={async (value) =>
-										updateMemberRole(row.original.id, value)
-									}
-									value={row.original.role}
-								/>
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<Button
-											disabled={
-												organization?.members && organization.members.length < 2
-											}
-											size="icon"
-											type="button"
-											variant="ghost"
-										>
-											<MoreVerticalIcon className="size-4 shrink-0" />
-										</Button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent>
-										{row.original.userId !== user?.id && (
-											<DropdownMenuItem
-												className="text-destructive"
-												disabled={!isOrganizationAdmin(organization, user)}
-												onClick={() =>
-													confirmMemberRemoval({
-														memberId: row.original.id,
-														memberName:
-															row.original.user?.name ??
-															row.original.user?.email ??
-															"this member",
-														isCurrentUser: false,
-													})
-												}
-											>
-												Remove member
-											</DropdownMenuItem>
-										)}
-										{row.original.userId === user?.id && (
-											<DropdownMenuItem
-												className="text-destructive"
-												onClick={() =>
-													confirmMemberRemoval({
-														memberId: row.original.id,
-														memberName:
-															row.original.user?.name ??
-															row.original.user?.email ??
-															"your account",
-														isCurrentUser: true,
-													})
-												}
-											>
-												Leave organization
-											</DropdownMenuItem>
-										)}
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</>
-						) : (
-							<span className="text-sm font-medium text-foreground/60">
-								{
-									organizationMemberRoleLabels[
-										row.original
-											.role as keyof typeof organizationMemberRoleLabels
-									]
-								}
-							</span>
-						)}
+									size="icon"
+									type="button"
+									variant="ghost"
+								>
+									<MoreVerticalIcon className="size-4 shrink-0" />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent>
+								{row.original.userId !== user?.id && (
+									<DropdownMenuItem
+										className="text-destructive"
+										disabled={!userIsOrganizationAdmin}
+										onClick={() =>
+											confirmMemberRemoval({
+												memberId: row.original.id,
+												memberName:
+													row.original.user?.name ??
+													row.original.user?.email ??
+													"this member",
+												isCurrentUser: false,
+											})
+										}
+									>
+										Remove member
+									</DropdownMenuItem>
+								)}
+								{row.original.userId === user?.id && (
+									<DropdownMenuItem
+										className="text-destructive"
+										onClick={() =>
+											confirmMemberRemoval({
+												memberId: row.original.id,
+												memberName:
+													row.original.user?.name ??
+													row.original.user?.email ??
+													"your account",
+												isCurrentUser: true,
+											})
+										}
+									>
+										Leave organization
+									</DropdownMenuItem>
+								)}
+							</DropdownMenuContent>
+						</DropdownMenu>
 					</div>
 				);
 			},

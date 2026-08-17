@@ -62,6 +62,8 @@ export function CurrentPlanCard({
 	const hasPaymentIssue = isPastDue || isUnpaid;
 
 	const handleManageBilling = () => {
+		if (!isAdmin) return;
+
 		if (onManageBilling) {
 			onManageBilling();
 		} else {
@@ -79,7 +81,9 @@ export function CurrentPlanCard({
 							Current Plan
 						</CardTitle>
 						<CardDescription>
-							Manage your subscription and billing
+							{isAdmin
+								? "Manage your subscription and billing"
+								: "Only organization owners and admins can manage billing"}
 						</CardDescription>
 					</div>
 					{subscription && (
@@ -118,12 +122,13 @@ export function CurrentPlanCard({
 								</p>
 							)}
 					</div>
-					{!isFreePlan && !activePlan?.isLifetime && isAdmin && (
+					{!isFreePlan && !activePlan?.isLifetime && (
 						<Button
 							variant="outline"
 							size="sm"
 							onClick={handleManageBilling}
 							loading={createPortalSession.isPending}
+							disabled={!isAdmin}
 						>
 							Manage
 						</Button>
@@ -147,16 +152,15 @@ export function CurrentPlanCard({
 									unpaid. Please update your payment method to restore access.
 								</>
 							)}
-							{isAdmin && (
-								<Button
-									variant="link"
-									size="sm"
-									className="ml-1 h-auto p-0 text-destructive-foreground underline"
-									onClick={handleManageBilling}
-								>
-									Update payment method
-								</Button>
-							)}
+							<Button
+								variant="link"
+								size="sm"
+								className="ml-1 h-auto p-0 text-destructive-foreground underline"
+								onClick={handleManageBilling}
+								disabled={!isAdmin}
+							>
+								Update payment method
+							</Button>
 						</AlertDescription>
 					</Alert>
 				)}
@@ -200,7 +204,7 @@ export function CurrentPlanCard({
 			</CardContent>
 			{isFreePlan && (
 				<CardFooter>
-					<Button className="w-full" onClick={onUpgrade}>
+					<Button className="w-full" onClick={onUpgrade} disabled={!isAdmin}>
 						<Sparkles className="mr-2 h-4 w-4" />
 						Upgrade
 					</Button>

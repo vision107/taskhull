@@ -154,6 +154,8 @@ export function SubscriptionSettingsTab({
 		});
 
 	const handleSelectPlan = (priceId: string) => {
+		if (!isAdmin) return;
+
 		setLoadingPriceId(priceId);
 		createCheckout.mutate({ priceId });
 	};
@@ -208,7 +210,9 @@ export function SubscriptionSettingsTab({
 						<div>
 							<CardTitle>Current Plan</CardTitle>
 							<CardDescription>
-								Your current subscription and billing information
+								{isAdmin
+									? "Your current subscription and billing information"
+									: "Only organization owners and admins can manage billing"}
 							</CardDescription>
 						</div>
 						{subscription && (
@@ -249,12 +253,13 @@ export function SubscriptionSettingsTab({
 									</p>
 								)}
 						</div>
-						{!isFreePlan && !activePlan?.isLifetime && isAdmin && (
+						{!isFreePlan && !activePlan?.isLifetime && (
 							<Button
 								variant="outline"
 								size="sm"
 								onClick={() => createPortalSession.mutate({})}
 								loading={createPortalSession.isPending}
+								disabled={!isAdmin}
 							>
 								Manage Billing
 							</Button>
@@ -272,17 +277,16 @@ export function SubscriptionSettingsTab({
 										format(new Date(subscription.currentPeriodEnd), "PPP")}
 									.
 								</span>
-								{isAdmin && (
-									<Button
-										variant="outline"
-										size="sm"
-										onClick={() => reactivateSubscription.mutate()}
-										loading={reactivateSubscription.isPending}
-									>
-										<RefreshCw className="mr-1 h-4 w-4" />
-										Reactivate
-									</Button>
-								)}
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => reactivateSubscription.mutate()}
+									loading={reactivateSubscription.isPending}
+									disabled={!isAdmin}
+								>
+									<RefreshCw className="mr-1 h-4 w-4" />
+									Reactivate
+								</Button>
 							</AlertDescription>
 						</Alert>
 					)}
@@ -302,7 +306,7 @@ export function SubscriptionSettingsTab({
 						</div>
 					)}
 				</CardContent>
-				{isAdmin && !isFreePlan && !activePlan?.isLifetime && !isCanceling && (
+				{!isFreePlan && !activePlan?.isLifetime && !isCanceling && (
 					<CardFooter className="border-t pt-6">
 						<Button
 							variant="destructive"
@@ -320,6 +324,7 @@ export function SubscriptionSettingsTab({
 								});
 							}}
 							loading={cancelSubscription.isPending}
+							disabled={!isAdmin}
 						>
 							Cancel Subscription
 						</Button>
@@ -328,7 +333,7 @@ export function SubscriptionSettingsTab({
 			</Card>
 
 			{/* Upgrade Plan Section - Only for Free Plans */}
-			{isFreePlan && isAdmin && (
+			{isFreePlan && (
 				<div className="space-y-4">
 					<div>
 						<h3 className="text-lg font-semibold">Upgrade Your Plan</h3>
@@ -337,10 +342,20 @@ export function SubscriptionSettingsTab({
 						</p>
 					</div>
 
+					{!isAdmin && (
+						<Alert>
+							<AlertTitle>Billing access required</AlertTitle>
+							<AlertDescription>
+								Only organization owners and admins can choose or change a plan.
+							</AlertDescription>
+						</Alert>
+					)}
+
 					<PricingTable
 						plans={plans}
 						currentPlanId={activePlan?.planId}
-						onSelectPlan={handleSelectPlan}
+						onSelectPlan={isAdmin ? handleSelectPlan : undefined}
+						selectionDisabled={!isAdmin}
 						loadingPriceId={loadingPriceId}
 						showFreePlans={false}
 						showEnterprisePlans={true}
@@ -348,21 +363,16 @@ export function SubscriptionSettingsTab({
 					/>
 				</div>
 			)}
-			{isFreePlan && !isAdmin && (
-				<Alert>
-					<AlertTitle>Billing access required</AlertTitle>
-					<AlertDescription>
-						Only organization owners and admins can choose or change a plan.
-					</AlertDescription>
-				</Alert>
-			)}
-
 			{/* Invoices */}
 			{!isFreePlan && (
 				<Card>
 					<CardHeader>
 						<CardTitle>Recent Invoices</CardTitle>
-						<CardDescription>View and download your invoices</CardDescription>
+						<CardDescription>
+							{isAdmin
+								? "View and download your invoices"
+								: "You can view invoices, but only owners and admins can open the billing portal"}
+						</CardDescription>
 					</CardHeader>
 					<CardContent>
 						{invoicesLoading ? (
@@ -415,12 +425,13 @@ export function SubscriptionSettingsTab({
 							<p className="text-sm text-muted-foreground">No invoices yet</p>
 						)}
 					</CardContent>
-					{isAdmin && billingStatus.hasStripeCustomer && (
+					{billingStatus.hasStripeCustomer && (
 						<CardFooter className="border-t pt-6">
 							<Button
 								variant="outline"
 								onClick={() => createPortalSession.mutate({})}
 								loading={createPortalSession.isPending}
+								disabled={!isAdmin}
 							>
 								View All Invoices
 							</Button>

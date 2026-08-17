@@ -13,6 +13,7 @@ interface PricingCardProps {
 	plan: PlanDisplay;
 	selectedInterval: "month" | "year";
 	onSelect?: (priceId: string) => void;
+	selectionDisabled?: boolean;
 	loadingPriceId?: string | null;
 	currentPlanId?: string | null;
 	enterpriseContactEmail?: string;
@@ -22,6 +23,7 @@ export function PricingCard({
 	plan,
 	selectedInterval,
 	onSelect,
+	selectionDisabled = false,
 	loadingPriceId,
 	currentPlanId,
 	enterpriseContactEmail = appConfig.contact.email,
@@ -117,14 +119,15 @@ export function PricingCard({
 				</button>
 			);
 		}
-		if (selectedPrice && onSelect) {
+		if (selectedPrice && (onSelect || selectionDisabled)) {
 			const isLoading = loadingPriceId === selectedPrice.stripePriceId;
 			const isDisabled =
-				!!loadingPriceId && loadingPriceId !== selectedPrice.stripePriceId;
+				selectionDisabled ||
+				(!!loadingPriceId && loadingPriceId !== selectedPrice.stripePriceId);
 			return (
 				<button
 					type="button"
-					onClick={() => onSelect(selectedPrice.stripePriceId)}
+					onClick={() => onSelect?.(selectedPrice.stripePriceId)}
 					disabled={isDisabled || isLoading}
 					className={cn(
 						"inline-flex w-full shrink-0 items-center justify-center gap-1 rounded-full px-4 py-2 text-sm font-medium transition-colors",

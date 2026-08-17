@@ -31,7 +31,13 @@ import { trpc } from "@/trpc/client";
  * Card component for changing the organization name.
  * Uses the active organization from session.
  */
-export function OrganizationChangeNameCard(): React.JSX.Element {
+interface OrganizationChangeNameCardProps {
+	canManage: boolean;
+}
+
+export function OrganizationChangeNameCard({
+	canManage,
+}: OrganizationChangeNameCardProps): React.JSX.Element {
 	const router = useProgressRouter();
 	const utils = trpc.useUtils();
 	const { data: organization } = authClient.useActiveOrganization();
@@ -44,7 +50,7 @@ export function OrganizationChangeNameCard(): React.JSX.Element {
 	});
 
 	const onSubmit = methods.handleSubmit(async ({ name }) => {
-		if (!organization) {
+		if (!organization || !canManage) {
 			return;
 		}
 
@@ -74,7 +80,11 @@ export function OrganizationChangeNameCard(): React.JSX.Element {
 		<Card>
 			<CardHeader>
 				<CardTitle>Organization Name</CardTitle>
-				<CardDescription>Update your organization's name.</CardDescription>
+				<CardDescription>
+					{canManage
+						? "Update your organization's name."
+						: "Only organization owners and admins can update the name."}
+				</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<Form {...methods}>
@@ -90,6 +100,7 @@ export function OrganizationChangeNameCard(): React.JSX.Element {
 												placeholder={""}
 												required
 												autoComplete="organization"
+												disabled={!canManage}
 												{...field}
 											/>
 										</FormControl>
@@ -102,6 +113,7 @@ export function OrganizationChangeNameCard(): React.JSX.Element {
 							<Button
 								className="w-full md:w-auto"
 								disabled={
+									!canManage ||
 									!(
 										methods.formState.isValid &&
 										methods.formState.dirtyFields.name

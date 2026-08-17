@@ -11,6 +11,7 @@ export interface PricingTableProps {
 	plans: PlanDisplay[];
 	currentPlanId?: string | null;
 	onSelectPlan?: (priceId: string) => void;
+	selectionDisabled?: boolean;
 	loadingPriceId?: string | null;
 	showFreePlans?: boolean;
 	showEnterprisePlans?: boolean;
@@ -24,6 +25,7 @@ export function PricingTable({
 	plans,
 	currentPlanId,
 	onSelectPlan,
+	selectionDisabled = false,
 	loadingPriceId,
 	showFreePlans = false,
 	showEnterprisePlans = true,
@@ -120,6 +122,7 @@ export function PricingTable({
 							selectedInterval={selectedInterval}
 							currentPlanId={currentPlanId}
 							onSelect={onSelectPlan}
+							selectionDisabled={selectionDisabled}
 							loadingPriceId={loadingPriceId}
 							enterpriseContactEmail={enterpriseContactEmail}
 						/>

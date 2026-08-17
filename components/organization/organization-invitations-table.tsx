@@ -136,24 +136,22 @@ export function OrganizationInvitationsTable({
 								value={row.original.role}
 							/>
 
-							{canUserEditInvitations && (
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<Button size="icon" type="button" variant="ghost">
-											<MoreVerticalIcon className="size-4 shrink-0" />
-										</Button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent>
-										<DropdownMenuItem
-											disabled={!isPending}
-											onClick={() => revokeInvitation(row.original.id)}
-											variant="destructive"
-										>
-											Revoke Invitation
-										</DropdownMenuItem>
-									</DropdownMenuContent>
-								</DropdownMenu>
-							)}
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button size="icon" type="button" variant="ghost">
+										<MoreVerticalIcon className="size-4 shrink-0" />
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent>
+									<DropdownMenuItem
+										disabled={!canUserEditInvitations || !isPending}
+										onClick={() => revokeInvitation(row.original.id)}
+										variant="destructive"
+									>
+										Revoke Invitation
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
 					);
 				},

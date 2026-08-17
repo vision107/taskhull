@@ -31,7 +31,13 @@ import { trpc } from "@/trpc/client";
  * Card component for inviting members to the organization.
  * Uses the active organization from session.
  */
-export function OrganizationInviteMemberCard(): React.JSX.Element {
+interface OrganizationInviteMemberCardProps {
+	canManage: boolean;
+}
+
+export function OrganizationInviteMemberCard({
+	canManage,
+}: OrganizationInviteMemberCardProps): React.JSX.Element {
 	const { data: organization } = authClient.useActiveOrganization();
 	const utils = trpc.useUtils();
 
@@ -44,7 +50,7 @@ export function OrganizationInviteMemberCard(): React.JSX.Element {
 	});
 
 	const onSubmit = methods.handleSubmit(async (values) => {
-		if (!organization) return;
+		if (!organization || !canManage) return;
 
 		try {
 			// Better Auth uses the active organization from session when organizationId is not provided
@@ -97,7 +103,9 @@ export function OrganizationInviteMemberCard(): React.JSX.Element {
 				<div className="flex flex-col space-y-1.5">
 					<CardTitle>Invite Member</CardTitle>
 					<CardDescription>
-						Send an invite to a team mate by email and assign them a role.
+						{canManage
+							? "Send an invite to a team mate by email and assign them a role."
+							: "Only organization owners and admins can invite members."}
 					</CardDescription>
 				</div>
 			</CardHeader>
@@ -114,7 +122,12 @@ export function OrganizationInviteMemberCard(): React.JSX.Element {
 											<Field>
 												<FormLabel>Email address</FormLabel>
 												<FormControl>
-													<Input type="email" autoComplete="email" {...field} />
+													<Input
+														type="email"
+														autoComplete="email"
+														disabled={!canManage}
+														{...field}
+													/>
 												</FormControl>
 												<FormMessage />
 											</Field>
@@ -134,6 +147,7 @@ export function OrganizationInviteMemberCard(): React.JSX.Element {
 													<OrganizationRoleSelect
 														value={field.value ?? "member"}
 														onSelect={field.onChange}
+														disabled={!canManage}
 													/>
 												</FormControl>
 												<FormMessage />
@@ -144,7 +158,11 @@ export function OrganizationInviteMemberCard(): React.JSX.Element {
 							</div>
 						</FieldGroup>
 						<div className="mt-4">
-							<Button type="submit" loading={methods.formState.isSubmitting}>
+							<Button
+								type="submit"
+								loading={methods.formState.isSubmitting}
+								disabled={!canManage}
+							>
 								Send Invite
 							</Button>
 						</div>

@@ -19,16 +19,23 @@ import { authClient } from "@/lib/auth/client";
 import { trpc } from "@/trpc/client";
 import { clearOrganizationScopedQueries } from "@/trpc/query-client";
 
-export function DeleteOrganizationCard(): React.JSX.Element | null {
+interface DeleteOrganizationCardProps {
+	canDelete: boolean;
+}
+
+export function DeleteOrganizationCard({
+	canDelete,
+}: DeleteOrganizationCardProps): React.JSX.Element {
 	const router = useProgressRouter();
 	const queryClient = useQueryClient();
 	const utils = trpc.useUtils();
 	const { data: organization } = authClient.useActiveOrganization();
-	if (!organization) {
-		return null;
-	}
 
 	const handleDelete = () => {
+		if (!canDelete || !organization) {
+			return;
+		}
+
 		void NiceModal.show(ConfirmationModal, {
 			title: "Delete Organization",
 			message: `Are you sure you want to delete the organization "${organization.name}"? This action cannot be undone and all data will be permanently deleted.`,
@@ -70,7 +77,9 @@ export function DeleteOrganizationCard(): React.JSX.Element | null {
 			<CardHeader>
 				<CardTitle>Danger Zone</CardTitle>
 				<CardDescription>
-					This section contains actions that are irreversible.
+					{canDelete
+						? "This section contains actions that are irreversible."
+						: "Only the organization owner can delete this organization."}
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -83,7 +92,12 @@ export function DeleteOrganizationCard(): React.JSX.Element | null {
 						</p>
 					</div>
 					<div>
-						<Button type="button" variant="destructive" onClick={handleDelete}>
+						<Button
+							type="button"
+							variant="destructive"
+							onClick={handleDelete}
+							disabled={!canDelete}
+						>
 							Delete Organization
 						</Button>
 					</div>

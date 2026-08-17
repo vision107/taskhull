@@ -84,6 +84,7 @@ export function PlanSelection({
 			<PricingTable
 				plans={plans}
 				onSelectPlan={canManageBilling ? handleSelectPlan : undefined}
+				selectionDisabled={!canManageBilling}
 				loadingPriceId={loadingPriceId}
 				showFreePlans={false}
 				showEnterprisePlans={true}

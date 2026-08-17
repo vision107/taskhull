@@ -12,7 +12,7 @@ async function signIn(page: Page, email: string) {
 	await page.goto("/auth/sign-in");
 	await page.getByLabel("Email").fill(email);
 	await page.getByLabel("Password", { exact: true }).fill("E2e-password-123!");
-	await page.getByRole("button", { name: "Sign in" }).click();
+	await page.getByRole("button", { name: "Sign in", exact: true }).click();
 	await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
 }
 
@@ -205,7 +205,7 @@ test("owner can enroll in and authenticate with TOTP", async ({ page }) => {
 	await page.goto("/auth/sign-in");
 	await page.getByLabel("Email").fill("owner@e2e.local");
 	await page.getByLabel("Password", { exact: true }).fill("E2e-password-123!");
-	await page.getByRole("button", { name: "Sign in" }).click();
+	await page.getByRole("button", { name: "Sign in", exact: true }).click();
 	await expect(page).toHaveURL(/\/auth\/verify/);
 	await page.getByLabel("One-time password").fill(await stableTotp(secret!));
 	await expect(page).toHaveURL(/\/dashboard/);
@@ -289,13 +289,21 @@ test("administrator can access every admin surface", async ({ page }) => {
 	await expect(organizationMenuTrigger).toBeFocused();
 });
 
-test("organization and global admins cannot delete an organization", async ({
+test("non-owners see but cannot delete an organization", async ({
 	browser,
 }) => {
-	test.setTimeout(90_000);
+	test.setTimeout(120_000);
 	await new Promise((resolve) => setTimeout(resolve, 10_500));
 
-	for (const email of ["organization-admin@e2e.local", "admin@e2e.local"]) {
+	for (const [index, email] of [
+		"organization-admin@e2e.local",
+		"admin@e2e.local",
+		"member@e2e.local",
+	].entries()) {
+		if (index > 0) {
+			await new Promise((resolve) => setTimeout(resolve, 10_500));
+		}
+
 		const context = await browser.newContext();
 		const page = await context.newPage();
 		await signIn(page, email);
@@ -323,7 +331,10 @@ test("organization and global admins cannot delete an organization", async ({
 		expect(setActiveResponse.ok()).toBe(true);
 
 		await page.goto("/dashboard/organization/settings?tab=general");
-		await expect(page.getByText("Danger Zone", { exact: true })).toBeHidden();
+		await expect(page.getByText("Danger Zone", { exact: true })).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Delete Organization" }),
+		).toBeDisabled();
 
 		const deleteResponse = await page.request.post(
 			"/api/auth/organization/delete",

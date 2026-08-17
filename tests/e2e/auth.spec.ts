@@ -130,7 +130,7 @@ test.describe("Authentication Pages", () => {
 		await page.goto("/auth/sign-in");
 
 		// Try to submit empty form
-		await page.getByRole("button", { name: "Sign in" }).click();
+		await page.getByRole("button", { name: "Sign in", exact: true }).click();
 
 		// Should show validation errors (form won't submit with empty fields)
 		// The form uses HTML5 validation, so we check that the email field is invalid

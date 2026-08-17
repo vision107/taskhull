@@ -60,6 +60,13 @@ await seedUser({
 	organizationRole: "admin",
 });
 await seedUser({
+	email: "member@e2e.local",
+	name: "E2E Member",
+	role: "user",
+	organization: { name: "E2E Organization", slug: "e2e-organization" },
+	organizationRole: "member",
+});
+await seedUser({
 	email: "admin@e2e.local",
 	name: "E2E Admin",
 	role: "admin",

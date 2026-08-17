@@ -57,14 +57,14 @@ export function OrganizationSettingsTabs({
 			</UnderlinedTabsList>
 			<UnderlinedTabsContent value="general">
 				<div className="space-y-4">
-					{canUploadLogo && <OrganizationLogoCard />}
-					<OrganizationChangeNameCard />
-					{isOwner && <DeleteOrganizationCard />}
+					<OrganizationLogoCard canManage={canUploadLogo} />
+					<OrganizationChangeNameCard canManage={isAdmin} />
+					<DeleteOrganizationCard canDelete={isOwner} />
 				</div>
 			</UnderlinedTabsContent>
 			<UnderlinedTabsContent value="members">
 				<div className="space-y-4">
-					{isAdmin && <OrganizationInviteMemberCard />}
+					<OrganizationInviteMemberCard canManage={isAdmin} />
 					<OrganizationMembersCard />
 				</div>
 			</UnderlinedTabsContent>

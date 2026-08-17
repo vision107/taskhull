@@ -130,18 +130,19 @@ export function CreditsSettingsTab({ isAdmin }: CreditsSettingsTabProps) {
 						<div className="space-y-1">
 							<CardTitle>Credit Balance</CardTitle>
 							<CardDescription>
-								Credits are used for AI features like chat and document analysis
+								{isAdmin
+									? "Credits are used for AI features like chat and document analysis"
+									: "Only organization owners and admins can buy credits"}
 							</CardDescription>
 						</div>
-						{isAdmin && (
-							<Button
-								onClick={() => NiceModal.show(PurchaseCreditsModal)}
-								size="sm"
-							>
-								<PlusIcon className="size-4 shrink-0" />
-								Buy Credits
-							</Button>
-						)}
+						<Button
+							onClick={() => NiceModal.show(PurchaseCreditsModal)}
+							size="sm"
+							disabled={!isAdmin}
+						>
+							<PlusIcon className="size-4 shrink-0" />
+							Buy Credits
+						</Button>
 					</div>
 				</CardHeader>
 				<CardContent className="space-y-4">

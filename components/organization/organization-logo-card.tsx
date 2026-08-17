@@ -22,7 +22,13 @@ import { authClient } from "@/lib/auth/client";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 
-export function OrganizationLogoCard(): React.JSX.Element | null {
+interface OrganizationLogoCardProps {
+	canManage: boolean;
+}
+
+export function OrganizationLogoCard({
+	canManage,
+}: OrganizationLogoCardProps): React.JSX.Element | null {
 	const router = useProgressRouter();
 	const [deleting, setDeleting] = React.useState(false);
 	const [uploading, setUploading] = React.useState(false);
@@ -33,7 +39,7 @@ export function OrganizationLogoCard(): React.JSX.Element | null {
 
 	const handleRemove = async (e: React.MouseEvent) => {
 		e.stopPropagation();
-		if (!organization) return;
+		if (!organization || !canManage) return;
 
 		setDeleting(true);
 		try {
@@ -60,6 +66,10 @@ export function OrganizationLogoCard(): React.JSX.Element | null {
 
 	const { getRootProps, getInputProps } = useDropzone({
 		onDrop: (acceptedFiles) => {
+			if (!canManage) {
+				return;
+			}
+
 			void NiceModal.show(CropImageModal, {
 				image: acceptedFiles[0],
 				onCrop: async (croppedImageData: Blob | null) => {
@@ -112,7 +122,7 @@ export function OrganizationLogoCard(): React.JSX.Element | null {
 			"image/jpeg": [".jpg", ".jpeg"],
 		},
 		multiple: false,
-		disabled: uploading || deleting,
+		disabled: !canManage || uploading || deleting,
 	});
 
 	return (
@@ -120,7 +130,9 @@ export function OrganizationLogoCard(): React.JSX.Element | null {
 			<CardHeader>
 				<CardTitle>Organization Logo</CardTitle>
 				<CardDescription>
-					Update your organization's logo to make it easier to identify.
+					{canManage
+						? "Update your organization's logo to make it easier to identify."
+						: "The logo is visible to your team. Only organization owners and admins can update it."}
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -128,12 +140,17 @@ export function OrganizationLogoCard(): React.JSX.Element | null {
 					<div
 						className={cn(
 							"relative size-20 shrink-0 rounded-md transition-colors",
-							!organization?.logo &&
+							canManage &&
+								!organization?.logo &&
 								"cursor-pointer border border-border hover:border-primary",
 						)}
 						{...getRootProps()}
 					>
-						<input {...getInputProps()} id="logo-upload-input" />
+						<input
+							{...getInputProps()}
+							id="logo-upload-input"
+							disabled={!canManage}
+						/>
 						{organization?.logo ? (
 							<OrganizationLogo
 								name={organization.name}
@@ -162,7 +179,7 @@ export function OrganizationLogoCard(): React.JSX.Element | null {
 										const input = document.getElementById("logo-upload-input");
 										input?.click();
 									}}
-									disabled={uploading || deleting}
+									disabled={!canManage || uploading || deleting}
 								>
 									Change
 								</Button>
@@ -171,7 +188,7 @@ export function OrganizationLogoCard(): React.JSX.Element | null {
 									variant="ghost"
 									type="button"
 									onClick={handleRemove}
-									disabled={uploading || deleting}
+									disabled={!canManage || uploading || deleting}
 								>
 									Remove
 								</Button>
