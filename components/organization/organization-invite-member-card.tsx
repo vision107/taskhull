@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useZodForm } from "@/hooks/use-zod-form";
 import { authClient } from "@/lib/auth/client";
+import { getInviteMemberErrorMessage } from "@/lib/auth/invitation-errors";
 import { inviteMemberSchema } from "@/schemas/organization-schemas";
 import { trpc } from "@/trpc/client";
 
@@ -51,49 +52,23 @@ export function OrganizationInviteMemberCard({
 
 	const onSubmit = methods.handleSubmit(async (values) => {
 		if (!organization || !canManage) return;
+		const email = values.email.trim().toLowerCase();
 
 		try {
 			// Better Auth uses the active organization from session when organizationId is not provided
 			const { error } = await authClient.organization.inviteMember({
 				...values,
+				email,
 				organizationId: organization.id,
 			});
 
-			if (error) {
-				if (error.code === "USER_IS_ALREADY_INVITED_TO_THIS_ORGANIZATION") {
-					toast.error("User is already invited to this organization.");
-					return;
-				}
-				if (error.code === "USER_IS_ALREADY_A_MEMBER_OF_THIS_ORGANIZATION") {
-					toast.error("User is already a member of this organization.");
-					return;
-				}
-				// Check for member limit errors - the code is dynamically generated from the message
-				// so we check both the code pattern and the status
-				if (
-					error.code === "FORBIDDEN" ||
-					error.status === 403 ||
-					error.code?.includes("MAXIMUM_NUMBER_OF_TEAM_MEMBERS")
-				) {
-					toast.error(
-						error.message ||
-							"You have reached the member limit for your plan. Please upgrade to invite more members.",
-					);
-					return;
-				}
-				throw error;
-			}
+			if (error) throw error;
 
 			methods.reset();
 			await utils.organization.get.invalidate({ id: organization.id });
 			toast.success("Invitation sent successfully.");
 		} catch (err) {
-			// Handle any thrown errors that have a message
-			const message =
-				err && typeof err === "object" && "message" in err
-					? String(err.message)
-					: "Something went wrong. Please try again.";
-			toast.error(message);
+			toast.error(getInviteMemberErrorMessage(err, email));
 		}
 	});
 

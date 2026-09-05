@@ -15,17 +15,20 @@ import {
 } from "@/components/ui/card";
 import { useProgressRouter } from "@/hooks/use-progress-router";
 import { authClient } from "@/lib/auth/client";
+import { getInvitationActionErrorMessage } from "@/lib/auth/invitation-errors";
 import { trpc } from "@/trpc/client";
 
 export type OrganizationInvitationModalProps = {
 	invitationId: string;
 	organizationName: string;
+	expiresAt: Date;
 	logoUrl?: string;
 };
 
 export function OrganizationInvitationCard({
 	invitationId,
 	organizationName,
+	expiresAt,
 	logoUrl,
 }: OrganizationInvitationModalProps): React.JSX.Element {
 	const router = useProgressRouter();
@@ -64,11 +67,7 @@ export function OrganizationInvitationCard({
 				router.replace("/dashboard");
 			}
 		} catch (err) {
-			const message =
-				err && typeof err === "object" && "message" in err
-					? String(err.message)
-					: "Something went wrong. Please try again.";
-			toast.error(message);
+			toast.error(getInvitationActionErrorMessage(err, expiresAt));
 		} finally {
 			setSubmitting(false);
 		}

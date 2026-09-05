@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { useSession } from "@/hooks/use-session";
-import { authClient } from "@/lib/auth/client";
 import { isOrganizationAdmin } from "@/lib/auth/utils";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
@@ -56,25 +55,20 @@ export function OrganizationInvitationsTable({
 				),
 		[organization?.invitations],
 	);
+	const revokeInvitationMutation =
+		trpc.organization.revokeInvitation.useMutation();
 
 	const revokeInvitation = (invitationId: string) => {
 		toast.promise(
-			async () => {
-				const { error } = await authClient.organization.cancelInvitation({
-					invitationId,
-				});
-
-				if (error) {
-					throw error;
-				}
-			},
+			() => revokeInvitationMutation.mutateAsync({ invitationId }),
 			{
 				loading: "Revoking invitation...",
 				success: () => {
 					void utils.organization.get.invalidate({ id: organizationId });
 					return "Invitation successfully revoked.";
 				},
-				error: "Failed to revoke invitation. Please try again.",
+				error: (error) =>
+					error.message || "Failed to revoke invitation. Please try again.",
 			},
 		);
 	};

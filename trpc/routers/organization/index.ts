@@ -1,20 +1,26 @@
 import slugify from "@sindresorhus/slugify";
 import { TRPCError } from "@trpc/server";
-import { asc, eq, getTableColumns } from "drizzle-orm";
+import { and, asc, eq, getTableColumns } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { headers } from "next/headers";
+import { z } from "zod/v4";
 
 import { appConfig } from "@/config/app.config";
 import { auth } from "@/lib/auth";
+import { canManageOrganizationMembers } from "@/lib/auth/organization-permissions";
 import { assertUserIsOrgMember } from "@/lib/auth/server";
 import { db, memberTable, organizationTable } from "@/lib/db";
-import { creditBalanceTable } from "@/lib/db/schema";
+import { creditBalanceTable, InvitationStatus } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
 import {
 	createOrganizationSchema,
 	getOrganizationByIdSchema,
 } from "@/schemas/organization-schemas";
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import {
+	createTRPCRouter,
+	protectedOrganizationProcedure,
+	protectedProcedure,
+} from "@/trpc/init";
 import { organizationAiRouter } from "@/trpc/routers/organization/organization-ai-router";
 import { organizationCreditRouter } from "@/trpc/routers/organization/organization-credit-router";
 import { organizationLeadRouter } from "@/trpc/routers/organization/organization-lead-router";
@@ -135,6 +141,40 @@ export const organizationRouter = createTRPCRouter({
 			}
 
 			return organization;
+		}),
+	revokeInvitation: protectedOrganizationProcedure
+		.input(z.object({ invitationId: z.uuid() }))
+		.mutation(async ({ ctx, input }) => {
+			if (!canManageOrganizationMembers(ctx.membership.role)) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "You do not have permission to revoke invitations.",
+				});
+			}
+
+			const invitation = await db.query.invitationTable.findFirst({
+				where: (table) =>
+					and(
+						eq(table.id, input.invitationId),
+						eq(table.organizationId, ctx.organization.id),
+						eq(table.status, InvitationStatus.pending),
+					),
+				columns: { id: true },
+			});
+
+			if (!invitation) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "This pending invitation no longer exists.",
+				});
+			}
+
+			await auth.api.cancelInvitation({
+				headers: await headers(),
+				body: { invitationId: invitation.id },
+			});
+
+			return { success: true };
 		}),
 
 	// Context-specific sub-routers

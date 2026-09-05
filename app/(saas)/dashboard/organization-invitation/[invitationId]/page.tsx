@@ -1,9 +1,12 @@
+import { AlertCircleIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type * as React from "react";
 
 import { OrganizationInvitationCard } from "@/components/invitations/organization-invitation-card";
+import { buttonVariants } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -13,8 +16,13 @@ import {
 } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ui/custom/theme-toggle";
 import { auth } from "@/lib/auth";
+import {
+	getInvitationPageErrorKind,
+	type InvitationPageErrorKind,
+} from "@/lib/auth/invitation-errors";
 import { getSession } from "@/lib/auth/server";
 import { db } from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export const metadata: Metadata = {
 	title: "Organization Invitation",
@@ -24,64 +32,117 @@ export type OrganizationInvitationPageProps = {
 	params: Promise<{ invitationId: string }>;
 };
 
+const invitationErrorContent: Record<
+	Exclude<InvitationPageErrorKind, "wrong-recipient" | "unknown">,
+	{ title: string; description: string }
+> = {
+	invalid: {
+		title: "Invitation no longer valid",
+		description:
+			"This invitation has expired, was canceled or has already been used.",
+	},
+	"verification-required": {
+		title: "Verify your email first",
+		description:
+			"Please verify your email address, then open this invitation again.",
+	},
+	"organization-unavailable": {
+		title: "Organization unavailable",
+		description: "The organization for this invitation is no longer available.",
+	},
+	"inviter-unavailable": {
+		title: "Invitation no longer valid",
+		description:
+			"The person who invited you is no longer a member of this organization.",
+	},
+};
+
+function InvitationErrorCard({
+	kind,
+	currentEmail,
+}: {
+	kind: Exclude<InvitationPageErrorKind, "unknown">;
+	currentEmail?: string;
+}): React.JSX.Element {
+	const content =
+		kind === "wrong-recipient"
+			? {
+					title: "Wrong account",
+					description:
+						"This invitation was sent to a different email address. Sign in with the invited address and open the link again.",
+				}
+			: invitationErrorContent[kind];
+
+	return (
+		<Card className="w-full border-transparent px-4 py-8 dark:border-border">
+			<CardHeader>
+				<div className="flex items-center gap-2">
+					<AlertCircleIcon className="size-5 text-destructive" />
+					<CardTitle className="text-base lg:text-lg">
+						{content.title}
+					</CardTitle>
+				</div>
+				<CardDescription>{content.description}</CardDescription>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				{kind === "wrong-recipient" && currentEmail ? (
+					<p className="text-sm text-muted-foreground">
+						You are currently signed in as{" "}
+						<span className="font-medium text-foreground">{currentEmail}</span>.
+					</p>
+				) : null}
+				<Link
+					className={buttonVariants({ className: "w-full" })}
+					href="/dashboard"
+				>
+					Go to dashboard
+				</Link>
+			</CardContent>
+		</Card>
+	);
+}
+
 export default async function OrganizationInvitationPage({
 	params,
 }: OrganizationInvitationPageProps): Promise<React.JSX.Element> {
 	const { invitationId } = await params;
+	const session = await getSession();
 
-	const [invitation, session] = await Promise.all([
-		auth.api.getInvitation({
-			query: {
-				id: invitationId,
-			},
+	let invitation: Awaited<ReturnType<typeof auth.api.getInvitation>>;
+	try {
+		invitation = await auth.api.getInvitation({
+			query: { id: invitationId },
 			headers: await headers(),
-		}),
-		getSession(),
-	]);
+		});
+	} catch (error) {
+		const kind = getInvitationPageErrorKind(error);
 
-	// Redirect if invitation not found, not pending, or expired
-	if (
-		!invitation ||
-		invitation.status !== "pending" ||
-		new Date(invitation.expiresAt) < new Date()
-	) {
+		if (kind !== "unknown") {
+			logger.warn(
+				{ invitationId, userId: session?.user.id, kind },
+				"Invitation could not be opened",
+			);
+			return (
+				<>
+					<InvitationErrorCard currentEmail={session?.user.email} kind={kind} />
+					<ThemeToggle className="fixed right-2 bottom-2 rounded-full" />
+				</>
+			);
+		}
+
+		logger.error({ invitationId, error }, "Failed to load invitation");
 		redirect("/dashboard");
 	}
 
-	// Check if logged-in user's email matches the invitation email
-	const isRecipient =
-		session?.user?.email?.toLowerCase() === invitation.email.toLowerCase();
-
 	const organization = await db.query.organizationTable.findFirst({
-		where: (org, { eq }) => eq(org.id, invitation.organizationId),
-		with: {
-			members: true,
-			invitations: true,
-		},
+		where: (table, { eq }) => eq(table.id, invitation.organizationId),
+		columns: { logo: true },
 	});
 
-	// Show error message if user is not the recipient
-	if (!isRecipient) {
+	if (!organization) {
 		return (
 			<>
-				<Card className="w-full border-transparent px-4 py-8 dark:border-border">
-					<CardHeader>
-						<CardTitle className="text-center text-base lg:text-lg">
-							Wrong Account
-						</CardTitle>
-						<CardDescription className="text-center">
-							This invitation was sent to{" "}
-							<span className="font-medium">{invitation.email}</span>. Please
-							sign in with that email address to accept this invitation.
-						</CardDescription>
-					</CardHeader>
-					<CardContent className="flex flex-col items-center gap-4">
-						<p className="text-center text-sm text-muted-foreground">
-							You are currently signed in as{" "}
-							<span className="font-medium">{session?.user?.email}</span>.
-						</p>
-					</CardContent>
-				</Card>
+				<InvitationErrorCard kind="organization-unavailable" />
 				<ThemeToggle className="fixed right-2 bottom-2 rounded-full" />
 			</>
 		);
@@ -90,8 +151,9 @@ export default async function OrganizationInvitationPage({
 	return (
 		<>
 			<OrganizationInvitationCard
+				expiresAt={new Date(invitation.expiresAt)}
 				invitationId={invitationId}
-				logoUrl={organization?.logo || undefined}
+				logoUrl={organization.logo || undefined}
 				organizationName={invitation.organizationName}
 			/>
 			<ThemeToggle className="fixed right-2 bottom-2 rounded-full" />
