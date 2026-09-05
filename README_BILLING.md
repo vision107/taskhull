@@ -1,6 +1,6 @@
 # Billing System
 
-This template includes a full-featured Stripe billing integration supporting subscriptions, one-time payments (lifetime deals), per-seat pricing, trial periods and plan limits.
+This template includes a full-featured Stripe billing integration supporting subscriptions, one-time payments (lifetime deals), per-seat pricing, trial periods, structured entitlements and plan limits.
 
 **Key Architecture**: Billing is tied to **organizations**, not individual users. Each organization has its own subscription and billing settings.
 
@@ -48,6 +48,11 @@ export const billingConfig = {
 			description: "Get started with basic features",
 			isFree: true,
 			features: ["Up to 3 team members", "Basic analytics"],
+			entitlements: {
+				advancedAnalytics: false,
+				customIntegrations: false,
+				apiAccess: false,
+			},
 			limits: { maxMembers: 3, maxStorage: 1 },
 		},
 		pro: {
@@ -56,6 +61,11 @@ export const billingConfig = {
 			description: "For growing teams",
 			recommended: true,
 			features: ["Unlimited team members", "Advanced analytics"],
+			entitlements: {
+				advancedAnalytics: true,
+				customIntegrations: true,
+				apiAccess: true,
+			},
 			limits: { maxMembers: -1, maxStorage: 100 }, // -1 = unlimited
 			prices: [
 				{
@@ -137,6 +147,11 @@ free: {
   name: "Free",
   isFree: true,
   features: [...],
+  entitlements: {
+    advancedAnalytics: false,
+    customIntegrations: false,
+    apiAccess: false,
+  },
   limits: { maxMembers: 3, maxStorage: 1 },
 }
 ```
@@ -151,6 +166,11 @@ pro: {
   name: "Pro",
   recommended: true,
   features: [...],
+  entitlements: {
+    advancedAnalytics: true,
+    customIntegrations: true,
+    apiAccess: true,
+  },
   limits: { maxMembers: -1, maxStorage: 100 },
   prices: [
     {
@@ -176,6 +196,11 @@ lifetime: {
   id: "lifetime",
   name: "Lifetime",
   features: [...],
+  entitlements: {
+    advancedAnalytics: true,
+    customIntegrations: true,
+    apiAccess: true,
+  },
   limits: { maxMembers: -1, maxStorage: 100 },
   prices: [
     {
@@ -199,6 +224,11 @@ enterprise: {
   name: "Enterprise",
   isEnterprise: true,
   features: [...],
+  entitlements: {
+    advancedAnalytics: true,
+    customIntegrations: true,
+    apiAccess: true,
+  },
   limits: { maxMembers: -1, maxStorage: -1 },
 }
 ```
@@ -206,6 +236,32 @@ enterprise: {
 ---
 
 ## Protecting Features
+
+### Require a Structured Entitlement
+
+Entitlements keep feature checks independent from plan IDs. Define stable keys in
+`config/billing.config.ts`, set their values on every plan and guard server-side
+operations with the same key:
+
+```typescript
+import { BillingEntitlement } from "@/config/billing.config";
+import { requirePlanEntitlement } from "@/lib/billing/guards";
+
+export const myRouter = createTRPCRouter({
+	advancedReport: protectedOrganizationProcedure.query(async ({ ctx }) => {
+		await requirePlanEntitlement(
+			ctx.organization.id,
+			BillingEntitlement.advancedAnalytics,
+		);
+
+		// Entitled feature logic...
+	}),
+});
+```
+
+Use `hasOrganizationEntitlement` when you need a boolean check. Both helpers
+allow access when billing or Stripe is disabled, matching the other billing
+guards used in local development.
 
 ### Require Any Paid Plan
 
@@ -485,6 +541,11 @@ import { BillingSettingsTab } from "@/components/billing/billing-settings-tab";
      id: "team",
      name: "Team",
      features: [...],
+     entitlements: {
+       advancedAnalytics: true,
+       customIntegrations: true,
+       apiAccess: true,
+     },
      limits: { maxMembers: 10, maxStorage: 50 },
      prices: [{
        id: "team_monthly",
@@ -603,6 +664,25 @@ stripe trigger invoice.payment_failed
 - Verify subscription status is `past_due` (not `active`)
 - Check `GRACE_PERIOD_DAYS` constant in guards.ts
 - Ensure `currentPeriodEnd` is set on subscription
+
+---
+
+## Admin: Subscription Access Controls
+
+Admins can manage exceptional access from **Admin Panel > Organizations**:
+
+- **Grant temporary access** creates a Stripe trial for a configured recurring
+  plan. Seat-based prices use the organization's current member count with a
+  minimum quantity of one.
+- **Extend trial access** moves the end of an active Stripe trial forward by the
+  selected number of days.
+- **Reactivate subscription** removes a scheduled end-of-period cancellation
+  from a current subscription.
+
+These actions verify organization ownership of the Stripe customer and
+subscription, use idempotency keys and immediately sync the resulting Stripe
+state back to the local database. Stripe webhooks remain the fallback if that
+sync is temporarily unavailable.
 
 ---
 
