@@ -6,6 +6,10 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Blocked account deletion when it would leave an organization without an owner.
+
 ## [2.5.0] - 2026-09-05
 
 ### Added

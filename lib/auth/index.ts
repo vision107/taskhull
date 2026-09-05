@@ -13,6 +13,7 @@ import { and, eq } from "drizzle-orm";
 
 import { appConfig } from "@/config/app.config";
 import { authConfig } from "@/config/auth.config";
+import { assertAccountDeletionAllowedForUser } from "@/lib/auth/account-deletion";
 import { ORGANIZATION_INVITATION_ID_HEADER } from "@/lib/auth/constants";
 import { assertInvitationSignUpAllowed } from "@/lib/auth/invitation-signup";
 import { getOrganizationPlanLimits } from "@/lib/billing/guards";
@@ -97,6 +98,9 @@ export const auth = betterAuth({
 		},
 		deleteUser: {
 			enabled: true,
+			beforeDelete: async (user) => {
+				await assertAccountDeletionAllowedForUser(user.id);
+			},
 		},
 		changeEmail: {
 			enabled: true,

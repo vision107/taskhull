@@ -16,6 +16,10 @@ import {
 } from "@/components/ui/card";
 import { authConfig } from "@/config/auth.config";
 import { useProgressRouter } from "@/hooks/use-progress-router";
+import {
+	ACCOUNT_DELETION_BLOCKED_MESSAGE,
+	isAccountDeletionBlockedError,
+} from "@/lib/auth/account-deletion-errors";
 import { authClient } from "@/lib/auth/client";
 
 export function DeleteAccountCard(): React.JSX.Element {
@@ -53,17 +57,28 @@ export function DeleteAccountCard(): React.JSX.Element {
 				window.location.origin,
 			).toString();
 		},
-		onError: () => {
-			toast.error("Could not delete account");
+		onError: (error) => {
+			toast.error(
+				isAccountDeletionBlockedError(error)
+					? ACCOUNT_DELETION_BLOCKED_MESSAGE
+					: "Could not delete account",
+			);
 		},
 	});
 
 	const confirmDelete = () => {
 		void NiceModal.show(ConfirmationModal, {
 			title: "Delete account",
-			message: "Are you sure you want to delete your account?",
+			message:
+				"Are you sure you want to delete your account? You must transfer ownership or delete any organization you solely own first.",
+			destructive: true,
+			confirmLabel: "Delete account",
 			onConfirm: async () => {
-				await deleteUserMutation.mutateAsync();
+				try {
+					await deleteUserMutation.mutateAsync();
+				} catch {
+					return false;
+				}
 			},
 		});
 	};
@@ -81,8 +96,9 @@ export function DeleteAccountCard(): React.JSX.Element {
 					<div className="flex flex-col space-y-1">
 						<span className="text-sm font-medium">Delete your Account</span>
 						<p className="text-sm text-muted-foreground">
-							This will delete your account and the accounts you own. This
-							action cannot be undone.
+							This permanently deletes your account. Organizations you solely
+							own must be transferred or deleted first. This action cannot be
+							undone.
 						</p>
 					</div>
 					<div>
