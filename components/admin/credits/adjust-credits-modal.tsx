@@ -72,6 +72,9 @@ export const AdjustCreditsModal = NiceModal.create(
 					`Credits adjusted. New balance: ${data.newBalance.toLocaleString()}`,
 				);
 				void utils.admin.organization.list.invalidate();
+				void utils.organization.credit.getBalance.invalidate();
+				void utils.organization.credit.getTransactions.invalidate();
+				void utils.organization.get.invalidate();
 				modal.handleClose();
 			},
 			onError: (error) => {
