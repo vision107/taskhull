@@ -35,6 +35,14 @@ export const otpSchema = z.object({
 	code: z.string().min(6).max(6),
 });
 
+// Two-factor backup code verification form
+export const backupCodeSchema = z.object({
+	code: z
+		.string()
+		.trim()
+		.regex(/^[A-Za-z0-9]{5}-[A-Za-z0-9]{5}$/, "Enter a valid backup code."),
+});
+
 // Forgot password form
 export const forgotPasswordSchema = z.object({
 	email: z
@@ -60,5 +68,6 @@ export const resetPasswordSchema = z.object({
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
 export type OtpInput = z.infer<typeof otpSchema>;
+export type BackupCodeInput = z.infer<typeof backupCodeSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
