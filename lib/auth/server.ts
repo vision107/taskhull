@@ -36,8 +36,8 @@ export const getOrganizationById = cache(async (id: string) => {
 
 		return activeOrganization;
 	} catch (error) {
-		logger.debug({ error, organizationId: id }, "Failed to get organization");
-		return null;
+		logger.error({ error, organizationId: id }, "Failed to get organization");
+		throw error;
 	}
 });
 
