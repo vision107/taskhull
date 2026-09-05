@@ -31,6 +31,7 @@ export function getPlansForPricingTable() {
 			name: plan.name,
 			description: plan.description,
 			features: plan.features,
+			entitlements: plan.entitlements,
 			prices,
 			isFree: "isFree" in plan ? Boolean(plan.isFree) : false,
 			isEnterprise: "isEnterprise" in plan ? Boolean(plan.isEnterprise) : false,

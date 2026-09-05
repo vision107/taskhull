@@ -1,8 +1,16 @@
 import "server-only";
 import { TRPCError } from "@trpc/server";
 
-import { billingConfig, type PlanLimits } from "@/config/billing.config";
-import { DEFAULT_PLAN_LIMITS, getPlanById } from "@/lib/billing/plans";
+import {
+	type BillingEntitlement,
+	billingConfig,
+	type PlanLimits,
+} from "@/config/billing.config";
+import {
+	DEFAULT_PLAN_LIMITS,
+	getPlanById,
+	planHasEntitlement,
+} from "@/lib/billing/plans";
 import { SubscriptionStatus } from "@/lib/db/schema/enums";
 import { logger } from "@/lib/logger";
 
@@ -81,6 +89,47 @@ export async function requireSpecificPlan(
 	return {
 		planId: activePlan.planId,
 		planName: activePlan.planName,
+	};
+}
+
+/**
+ * Check a configured feature entitlement for the organization's current plan.
+ * Billing-disabled local environments keep full access, matching the existing
+ * paid-plan guards.
+ */
+export async function hasOrganizationEntitlement(
+	organizationId: string,
+	entitlement: BillingEntitlement,
+): Promise<boolean> {
+	if (!billingConfig.enabled || !isStripeConfigured()) {
+		return true;
+	}
+
+	const activePlan = await getActivePlanForOrganization(organizationId);
+	return planHasEntitlement(activePlan?.planId ?? "free", entitlement);
+}
+
+/** Require a machine-readable feature entitlement for the current plan. */
+export async function requirePlanEntitlement(
+	organizationId: string,
+	entitlement: BillingEntitlement,
+): Promise<{ planId: string; planName: string }> {
+	if (!billingConfig.enabled || !isStripeConfigured()) {
+		return { planId: "free", planName: "Free" };
+	}
+
+	const activePlan = await getActivePlanForOrganization(organizationId);
+	const planId = activePlan?.planId ?? "free";
+	if (!planHasEntitlement(planId, entitlement)) {
+		throw new TRPCError({
+			code: "FORBIDDEN",
+			message: `This feature requires the "${entitlement}" entitlement. Current plan: ${planId}.`,
+		});
+	}
+
+	return {
+		planId,
+		planName: activePlan?.planName ?? getPlanById(planId)?.name ?? "Free",
 	};
 }
 

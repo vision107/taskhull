@@ -1,5 +1,7 @@
 import {
+	type BillingEntitlement,
 	billingConfig,
+	DEFAULT_PLAN_ENTITLEMENTS,
 	type Plan,
 	type PlanLimits,
 	type PriceConfig,
@@ -20,6 +22,25 @@ export const DEFAULT_PLAN_LIMITS: PlanLimits = {
 export function getPlanById(planId: string): Plan | undefined {
 	const plans = billingConfig.plans as Record<string, Plan>;
 	return plans[planId];
+}
+
+/** Return all machine-readable feature entitlements configured for a plan. */
+export function getPlanEntitlements(
+	planId: string,
+): Readonly<Record<BillingEntitlement, boolean>> {
+	return (
+		getPlanById(planId)?.entitlements ??
+		getPlanById("free")?.entitlements ??
+		DEFAULT_PLAN_ENTITLEMENTS
+	);
+}
+
+/** Check a feature entitlement without coupling application code to plan IDs. */
+export function planHasEntitlement(
+	planId: string,
+	entitlement: BillingEntitlement,
+): boolean {
+	return getPlanEntitlements(planId)[entitlement] === true;
 }
 
 /**

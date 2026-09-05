@@ -176,6 +176,7 @@ export interface PlanDisplay {
 	name: string;
 	description: string;
 	features: string[];
+	entitlements: Record<string, boolean>;
 	prices: PriceDisplay[]; // Required - use empty array for free/enterprise plans
 	isFree?: boolean;
 	isEnterprise?: boolean;

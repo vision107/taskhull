@@ -641,6 +641,7 @@ export const organizationSubscriptionRouter = createTRPCRouter({
 			name: plan.name,
 			description: plan.description,
 			features: plan.features,
+			entitlements: plan.entitlements,
 			limits: plan.limits ?? null,
 			isFree: "isFree" in plan ? (plan.isFree as boolean) : false,
 			isEnterprise:

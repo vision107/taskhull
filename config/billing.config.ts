@@ -1,5 +1,27 @@
 import { env } from "@/lib/env";
 
+/**
+ * Stable feature keys used by server guards and client-side visibility checks.
+ * Add application-specific entitlements here instead of coupling features to
+ * plan IDs throughout the codebase.
+ */
+export const BillingEntitlement = {
+	advancedAnalytics: "advancedAnalytics",
+	customIntegrations: "customIntegrations",
+	apiAccess: "apiAccess",
+} as const;
+
+export type BillingEntitlement =
+	(typeof BillingEntitlement)[keyof typeof BillingEntitlement];
+
+export type PlanEntitlements = Record<BillingEntitlement, boolean>;
+
+export const DEFAULT_PLAN_ENTITLEMENTS: PlanEntitlements = {
+	[BillingEntitlement.advancedAnalytics]: false,
+	[BillingEntitlement.customIntegrations]: false,
+	[BillingEntitlement.apiAccess]: false,
+};
+
 export const billingConfig = {
 	// Enable/disable billing feature
 	enabled: true,
@@ -21,6 +43,7 @@ export const billingConfig = {
 				"Community support",
 				"1 GB storage",
 			],
+			entitlements: DEFAULT_PLAN_ENTITLEMENTS,
 			limits: {
 				maxMembers: 3,
 				maxStorage: 1, // GB
@@ -40,6 +63,11 @@ export const billingConfig = {
 				"Custom integrations",
 				"API access",
 			],
+			entitlements: {
+				[BillingEntitlement.advancedAnalytics]: true,
+				[BillingEntitlement.customIntegrations]: true,
+				[BillingEntitlement.apiAccess]: true,
+			},
 			limits: {
 				maxMembers: -1, // unlimited
 				maxStorage: 100, // GB
@@ -86,6 +114,11 @@ export const billingConfig = {
 		// 		"Audit logs",
 		// 		"Custom contracts",
 		// 	],
+		// 	entitlements: {
+		// 		[BillingEntitlement.advancedAnalytics]: true,
+		// 		[BillingEntitlement.customIntegrations]: true,
+		// 		[BillingEntitlement.apiAccess]: true,
+		// 	},
 		// 	limits: {
 		// 		maxMembers: -1,
 		// 		maxStorage: -1,
@@ -102,6 +135,11 @@ export const billingConfig = {
 				"Priority support for 1 year",
 				"100 GB storage",
 			],
+			entitlements: {
+				[BillingEntitlement.advancedAnalytics]: true,
+				[BillingEntitlement.customIntegrations]: true,
+				[BillingEntitlement.apiAccess]: true,
+			},
 			limits: {
 				maxMembers: -1,
 				maxStorage: 100,
@@ -690,6 +728,7 @@ type BasePlan = {
 	name: string;
 	description: string;
 	features: string[];
+	entitlements: PlanEntitlements;
 	limits?: PlanLimits;
 };
 

@@ -150,11 +150,15 @@ const PlanLimitsSchema = z.object({
 
 export type PlanLimits = z.infer<typeof PlanLimitsSchema>;
 
+export const PlanEntitlementsSchema = z.record(z.string(), z.boolean());
+export type PlanEntitlements = z.infer<typeof PlanEntitlementsSchema>;
+
 const BasePlanSchema = z.object({
 	id: z.string().min(1),
 	name: z.string().min(1),
 	description: z.string().min(1),
 	features: z.array(z.string()),
+	entitlements: PlanEntitlementsSchema,
 	limits: PlanLimitsSchema.optional(),
 });
 

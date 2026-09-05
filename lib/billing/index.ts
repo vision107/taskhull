@@ -17,11 +17,14 @@ export {
 export {
 	getCurrentPlanInfo,
 	getOrganizationPlanLimits,
+	hasOrganizationEntitlement,
 	isOverMemberLimit,
 	requireMemberSlot,
 	requirePaidPlan,
+	requirePlanEntitlement,
 	requireSpecificPlan,
 } from "./guards";
+export { getPlanEntitlements, planHasEntitlement } from "./plans";
 // Customer portal
 export { createCustomerPortalSession, getPortalConfiguration } from "./portal";
 // Database queries
