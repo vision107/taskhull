@@ -1,7 +1,10 @@
 import { init } from "@sentry/nextjs";
 
 import { env } from "@/lib/env";
-import { isExpectedTrpcError } from "@/lib/sentry/expected-errors";
+import {
+	isExpectedTrpcError,
+	tagTrpcError,
+} from "@/lib/sentry/expected-errors";
 
 const enableSentry = process.env.NODE_ENV !== "development";
 
@@ -21,8 +24,9 @@ if (enableSentry && env.NEXT_PUBLIC_SENTRY_DSN) {
 
 		sendDefaultPii: true,
 
-		beforeSend: (event) => {
-			if (isExpectedTrpcError(event)) {
+		beforeSend: (event, hint) => {
+			tagTrpcError(event, hint);
+			if (isExpectedTrpcError(event, hint)) {
 				return null;
 			}
 
