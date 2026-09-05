@@ -14,6 +14,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RegenerateBackupCodesModal } from "@/components/user/regenerate-backup-codes-modal";
 import { TwoFactorModal } from "@/components/user/two-factor-modal";
 import { useSession } from "@/hooks/use-session";
 import { trpc } from "@/trpc/client";
@@ -44,6 +45,9 @@ export function TwoFactorCard({
 
 	const handleShowTwoFactorModal = () => {
 		void NiceModal.show(TwoFactorModal);
+	};
+	const handleShowRegenerateBackupCodesModal = () => {
+		void NiceModal.show(RegenerateBackupCodesModal);
 	};
 
 	return (
@@ -85,13 +89,22 @@ export function TwoFactorCard({
 								You have two-factor authentication enabled for your account.
 							</AlertDescription>
 						</Alert>
-						<Button
-							type="button"
-							variant="default"
-							onClick={handleShowTwoFactorModal}
-						>
-							Disable Two-factor Authentication
-						</Button>
+						<div className="flex flex-wrap gap-2">
+							<Button
+								onClick={handleShowRegenerateBackupCodesModal}
+								type="button"
+								variant="outline"
+							>
+								Regenerate backup codes
+							</Button>
+							<Button
+								onClick={handleShowTwoFactorModal}
+								type="button"
+								variant="default"
+							>
+								Disable Two-factor Authentication
+							</Button>
+						</div>
 					</div>
 				) : (
 					<div className="flex flex-col items-start gap-4">
