@@ -11,10 +11,12 @@ export type EmailVerificationError =
 
 export function getEmailVerificationCallbackPath(
 	redirectTo: string | null | undefined,
+	email?: string,
 ): string {
 	return withQuery(EMAIL_VERIFICATION_PATH, {
 		status: "verified",
 		redirectTo: getSafeRedirectPath(redirectTo),
+		...(email ? { email: email.trim().toLowerCase() } : {}),
 	});
 }
 

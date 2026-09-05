@@ -3,10 +3,8 @@
 import { LockIcon, MailIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import * as React from "react";
 import { withQuery } from "ufo";
 
-import { EmailVerificationCard } from "@/components/auth/email-verification-card";
 import { PasswordFormMessage } from "@/components/auth/password-form-message";
 import { SocialSigninButton } from "@/components/auth/social-signin-button";
 import { OrganizationInvitationAlert } from "@/components/invitations/organization-invitation-alert";
@@ -38,6 +36,7 @@ import {
 	InputGroupText,
 } from "@/components/ui/input-group";
 import { authConfig } from "@/config/auth.config";
+import { useProgressRouter } from "@/hooks/use-progress-router";
 import { useTurnstile } from "@/hooks/use-turnstile";
 import { useZodForm } from "@/hooks/use-zod-form";
 import { authClient } from "@/lib/auth/client";
@@ -52,10 +51,8 @@ import { getAuthRedirectPath, getValidInvitationId } from "@/lib/auth/redirect";
 import { signUpSchema } from "@/schemas/auth-schemas";
 
 export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
+	const router = useProgressRouter();
 	const searchParams = useSearchParams();
-	const [verificationEmail, setVerificationEmail] = React.useState<
-		string | null
-	>(null);
 
 	const {
 		turnstileRef,
@@ -85,16 +82,17 @@ export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
 		redirectTo,
 		fallback: authConfig.redirectAfterSignIn,
 	});
-	const verificationCallbackURL =
-		getEmailVerificationCallbackPath(redirectPath);
-
 	const onSubmit = methods.handleSubmit(async ({ email, password, name }) => {
+		const normalizedEmail = email.trim().toLowerCase();
 		try {
 			const { error } = await authClient.signUp.email({
-				email,
+				email: normalizedEmail,
 				password,
 				name,
-				callbackURL: verificationCallbackURL,
+				callbackURL: getEmailVerificationCallbackPath(
+					redirectPath,
+					normalizedEmail,
+				),
 				fetchOptions:
 					captchaEnabled || invitationId
 						? {
@@ -114,7 +112,12 @@ export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
 			if (error) {
 				throw error;
 			}
-			setVerificationEmail(email.trim().toLowerCase());
+			router.replace(
+				withQuery("/auth/verify-email", {
+					email: normalizedEmail,
+					redirectTo: redirectPath,
+				}),
+			);
 		} catch (e) {
 			resetCaptcha();
 			methods.setError("root", {
@@ -126,15 +129,6 @@ export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
 			});
 		}
 	});
-
-	if (verificationEmail) {
-		return (
-			<EmailVerificationCard
-				email={verificationEmail}
-				redirectTo={redirectPath}
-			/>
-		);
-	}
 
 	return (
 		<Card className="w-full border-transparent px-0 py-8 [--card-spacing:--spacing(8)] dark:border-border">

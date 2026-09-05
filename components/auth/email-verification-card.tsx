@@ -1,6 +1,6 @@
 "use client";
 
-import { MailCheckIcon, MailIcon } from "lucide-react";
+import { Loader2Icon, MailCheckIcon, MailIcon } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { withQuery } from "ufo";
@@ -40,33 +40,45 @@ type EmailVerificationCardProps = {
 	redirectTo: string;
 	email?: string;
 	errorMessage?: string;
+	showSignUpAgain?: boolean;
 };
 
 export function EmailVerificationCard({
 	redirectTo,
 	email,
 	errorMessage,
+	showSignUpAgain = false,
 }: EmailVerificationCardProps): React.JSX.Element {
-	const callbackURL = getEmailVerificationCallbackPath(redirectTo);
 	const methods = useZodForm({
 		schema: forgotPasswordSchema,
 		defaultValues: { email: email ?? "" },
 	});
-	const [sentTo, setSentTo] = React.useState<string | null>(
-		errorMessage ? null : (email ?? null),
-	);
+	const [resendSucceeded, setResendSucceeded] = React.useState(false);
+	const submittingRef = React.useRef(false);
+	const successHeadingRef = React.useRef<HTMLSpanElement>(null);
+
+	React.useEffect(() => {
+		if (resendSucceeded) {
+			successHeadingRef.current?.focus();
+		}
+	}, [resendSucceeded]);
 
 	const resend = methods.handleSubmit(async (values) => {
+		if (submittingRef.current) return;
+		submittingRef.current = true;
 		methods.clearErrors("root");
 
 		try {
-			const normalizedEmail = values.email.trim().toLowerCase();
+			const normalizedEmail = (email ?? values.email).trim().toLowerCase();
 			const { error: resendError } = await authClient.sendVerificationEmail({
 				email: normalizedEmail,
-				callbackURL,
+				callbackURL: getEmailVerificationCallbackPath(
+					redirectTo,
+					normalizedEmail,
+				),
 			});
 			if (resendError) throw resendError;
-			setSentTo(normalizedEmail);
+			setResendSucceeded(true);
 		} catch (error) {
 			methods.setError("root", {
 				message: getAuthErrorMessage(
@@ -75,6 +87,8 @@ export function EmailVerificationCard({
 						: undefined,
 				),
 			});
+		} finally {
+			submittingRef.current = false;
 		}
 	});
 
@@ -85,82 +99,113 @@ export function EmailVerificationCard({
 					<MailCheckIcon className="size-5" />
 				</div>
 				<CardTitle className="text-base lg:text-lg">
-					{errorMessage ? "Verification link issue" : "Check your email"}
+					<span
+						ref={successHeadingRef}
+						tabIndex={resendSucceeded ? -1 : undefined}
+					>
+						{resendSucceeded
+							? "Check your inbox"
+							: errorMessage
+								? "Verification link issue"
+								: "Verify your email"}
+					</span>
 				</CardTitle>
 				<CardDescription>
-					{errorMessage ??
-						"Open the verification link we sent to finish setting up your account."}
+					{resendSucceeded ? (
+						"We sent a new verification link. Check spam if it does not appear."
+					) : errorMessage ? (
+						errorMessage
+					) : email ? (
+						<>
+							We sent a link to{" "}
+							<span className="font-medium text-foreground">{email}</span>.
+							Check your inbox to continue.
+						</>
+					) : (
+						"Enter your email address to request a new verification link."
+					)}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
-				{sentTo ? (
-					<Alert variant="info">
-						<AlertDescription>
-							If an unverified account exists for{" "}
-							<span className="font-medium text-foreground">{sentTo}</span>, a
-							new verification link is on its way.
-						</AlertDescription>
-					</Alert>
-				) : null}
-				<Form {...methods}>
-					<form className="space-y-4" noValidate onSubmit={resend}>
-						{email ? null : (
-							<FormField
-								control={methods.control}
-								name="email"
-								render={({ field }) => (
-									<FormItem asChild>
-										<Field>
-											<FormLabel>Email</FormLabel>
-											<FormControl>
-												<InputGroup>
-													<InputGroupAddon align="inline-start">
-														<InputGroupText>
-															<MailIcon className="size-4 shrink-0" />
-														</InputGroupText>
-													</InputGroupAddon>
-													<InputGroupInput
-														{...field}
-														autoCapitalize="off"
-														autoComplete="email"
-														disabled={methods.formState.isSubmitting}
-														maxLength={255}
-														type="email"
-													/>
-												</InputGroup>
-											</FormControl>
-											<FormMessage />
-										</Field>
-									</FormItem>
-								)}
-							/>
-						)}
-						{methods.formState.errors.root?.message ? (
-							<Alert variant="destructive">
-								<AlertDescription>
-									{methods.formState.errors.root.message}
-								</AlertDescription>
-							</Alert>
-						) : null}
-						<Button
-							className="w-full"
-							disabled={methods.formState.isSubmitting}
-							loading={methods.formState.isSubmitting}
-							type="submit"
-							variant={sentTo ? "outline" : "default"}
-						>
-							{sentTo ? "Resend verification email" : "Send verification email"}
-						</Button>
-					</form>
-				</Form>
+				{resendSucceeded ? (
+					<p aria-live="polite" className="sr-only" role="status">
+						New verification link sent.
+					</p>
+				) : (
+					<Form {...methods}>
+						<form className="space-y-4" noValidate onSubmit={resend}>
+							{email ? null : (
+								<FormField
+									control={methods.control}
+									name="email"
+									render={({ field }) => (
+										<FormItem asChild>
+											<Field>
+												<FormLabel>Email</FormLabel>
+												<FormControl>
+													<InputGroup>
+														<InputGroupAddon align="inline-start">
+															<InputGroupText>
+																<MailIcon className="size-4 shrink-0" />
+															</InputGroupText>
+														</InputGroupAddon>
+														<InputGroupInput
+															{...field}
+															autoCapitalize="off"
+															autoComplete="email"
+															disabled={methods.formState.isSubmitting}
+															maxLength={255}
+															type="email"
+														/>
+													</InputGroup>
+												</FormControl>
+												<FormMessage />
+											</Field>
+										</FormItem>
+									)}
+								/>
+							)}
+							{methods.formState.errors.root?.message ? (
+								<Alert variant="destructive">
+									<AlertDescription>
+										{methods.formState.errors.root.message}
+									</AlertDescription>
+								</Alert>
+							) : null}
+							<Button
+								aria-disabled={methods.formState.isSubmitting}
+								className="w-full"
+								type="submit"
+							>
+								{methods.formState.isSubmitting ? (
+									<Loader2Icon className="size-4 animate-spin" />
+								) : null}
+								{methods.formState.isSubmitting
+									? "Sending..."
+									: "Resend verification email"}
+							</Button>
+						</form>
+					</Form>
+				)}
 			</CardContent>
-			<CardFooter className="flex justify-center py-4 text-sm text-muted-foreground">
-				<Link
-					className="text-foreground underline"
-					href={withQuery("/auth/sign-in", { redirectTo })}
-				>
-					Back to sign in
-				</Link>
+			<CardFooter className="flex flex-wrap justify-center gap-x-4 gap-y-2 py-4 text-sm text-muted-foreground">
+				<span>
+					Already verified?{" "}
+					<Link
+						className="text-foreground underline"
+						href={withQuery("/auth/sign-in", { redirectTo })}
+					>
+						Sign in
+					</Link>
+				</span>
+				{showSignUpAgain && !resendSucceeded ? (
+					<span>
+						Wrong email?{" "}
+						<Link className="text-foreground underline" href="/auth/sign-up">
+							Sign up again
+						</Link>
+					</span>
+				) : null}
 			</CardFooter>
 		</Card>
 	);

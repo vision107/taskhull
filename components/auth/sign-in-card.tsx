@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import { withQuery } from "ufo";
 
-import { EmailVerificationCard } from "@/components/auth/email-verification-card";
 import { SocialSigninButton } from "@/components/auth/social-signin-button";
 import { OrganizationInvitationAlert } from "@/components/invitations/organization-invitation-alert";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -78,18 +77,12 @@ export function SignInCard(): React.JSX.Element {
 		},
 	});
 	const [isPasskeyPending, setIsPasskeyPending] = React.useState(false);
-	const [verificationEmail, setVerificationEmail] = React.useState<
-		string | null
-	>(null);
 
 	const redirectPath = getAuthRedirectPath({
 		invitationId,
 		redirectTo,
 		fallback: authConfig.redirectAfterSignIn,
 	});
-	const verificationCallbackURL =
-		getEmailVerificationCallbackPath(redirectPath);
-
 	React.useEffect(() => {
 		if (sessionLoaded && user) {
 			router.replace(redirectPath);
@@ -100,7 +93,10 @@ export function SignInCard(): React.JSX.Element {
 		try {
 			const { data, error } = await authClient.signIn.email({
 				...values,
-				callbackURL: verificationCallbackURL,
+				callbackURL: getEmailVerificationCallbackPath(
+					redirectPath,
+					values.email,
+				),
 				fetchOptions: captchaEnabled
 					? {
 							headers: {
@@ -133,7 +129,12 @@ export function SignInCard(): React.JSX.Element {
 				"code" in e &&
 				e.code === "EMAIL_NOT_VERIFIED"
 			) {
-				setVerificationEmail(values.email.trim().toLowerCase());
+				router.replace(
+					withQuery("/auth/verify-email", {
+						email: values.email.trim().toLowerCase(),
+						redirectTo: redirectPath,
+					}),
+				);
 			} else if (
 				e &&
 				typeof e === "object" &&
@@ -188,15 +189,6 @@ export function SignInCard(): React.JSX.Element {
 			setIsPasskeyPending(false);
 		}
 	};
-
-	if (verificationEmail) {
-		return (
-			<EmailVerificationCard
-				email={verificationEmail}
-				redirectTo={redirectPath}
-			/>
-		);
-	}
 
 	return (
 		<Card className="w-full border-transparent px-0 py-8 [--card-spacing:--spacing(8)] dark:border-border">

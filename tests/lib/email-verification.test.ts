@@ -11,6 +11,14 @@ describe("email verification", () => {
 		expect(getEmailVerificationCallbackPath("/dashboard/settings")).toBe(
 			"/auth/verify-email?status=verified&redirectTo=%2Fdashboard%2Fsettings",
 		);
+		expect(
+			getEmailVerificationCallbackPath(
+				"/dashboard/settings",
+				" Person@Example.com ",
+			),
+		).toBe(
+			"/auth/verify-email?status=verified&redirectTo=%2Fdashboard%2Fsettings&email=person@example.com",
+		);
 		expect(getEmailVerificationCallbackPath("https://attacker.example")).toBe(
 			"/auth/verify-email?status=verified&redirectTo=%2Fdashboard",
 		);

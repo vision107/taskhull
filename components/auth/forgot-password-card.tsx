@@ -89,7 +89,11 @@ export function ForgotPasswordCard(): React.JSX.Element {
 					</Alert>
 				) : (
 					<Form {...methods}>
-						<form className="flex flex-col gap-4" onSubmit={onSubmit}>
+						<form
+							className="flex flex-col gap-4"
+							noValidate
+							onSubmit={onSubmit}
+						>
 							<FormField
 								control={methods.control}
 								name="email"

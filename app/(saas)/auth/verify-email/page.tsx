@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 type VerifyEmailPageProps = {
 	searchParams: Promise<{
 		error?: string | string[];
+		email?: string | string[];
 		redirectTo?: string | string[];
 		status?: string | string[];
 	}>;
@@ -37,18 +38,30 @@ export default async function VerifyEmailPage({
 		authConfig.redirectAfterSignIn,
 	);
 	const error = getEmailVerificationError(params.error);
+	const email = first(params.email);
 
 	if (error) {
 		return (
 			<EmailVerificationCard
 				errorMessage={getEmailVerificationErrorMessage(error)}
 				redirectTo={redirectTo}
+				showSignUpAgain={error === "USER_NOT_FOUND" && authConfig.enableSignup}
 			/>
 		);
 	}
 
 	if (first(params.status) !== "verified") {
-		redirect("/auth/sign-in");
+		if (!email) {
+			redirect("/auth/sign-in");
+		}
+
+		return (
+			<EmailVerificationCard
+				email={email}
+				redirectTo={redirectTo}
+				showSignUpAgain
+			/>
+		);
 	}
 
 	const session = await getSession();
