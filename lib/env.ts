@@ -43,6 +43,7 @@ export const env = createEnv({
 		// Stripe / Billing
 		STRIPE_SECRET_KEY: z.string().optional(),
 		STRIPE_WEBHOOK_SECRET: z.string().optional(),
+		STRIPE_CHECKOUT_MODE: z.enum(["embedded", "hosted"]).default("embedded"),
 
 		// Cloudflare Turnstile (Captcha)
 		TURNSTILE_SECRET_KEY: z.string().optional(),
@@ -124,6 +125,7 @@ export const env = createEnv({
 		S3_REGION: process.env.S3_REGION,
 		STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
 		STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+		STRIPE_CHECKOUT_MODE: process.env.STRIPE_CHECKOUT_MODE,
 		TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
 		ANALYZE: process.env.ANALYZE,
 		CI: process.env.CI,

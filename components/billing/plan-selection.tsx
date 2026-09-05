@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { presentCheckout } from "@/components/billing/present-checkout";
 import { PricingTable } from "@/components/billing/pricing-table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { appConfig } from "@/config/app.config";
@@ -37,14 +38,8 @@ export function PlanSelection({
 	const createCheckout =
 		trpc.organization.subscription.createCheckout.useMutation({
 			onSuccess: (data) => {
-				if (data.url) {
-					window.location.href = data.url;
-				} else {
-					// No URL returned - something went wrong
-					console.error("Checkout session created but no URL returned");
-					toast.error("Failed to create checkout session. Please try again.");
-					setLoadingPriceId(null);
-				}
+				setLoadingPriceId(null);
+				void presentCheckout(data);
 			},
 			onError: (error) => {
 				toast.error(error.message || "Failed to create checkout session");

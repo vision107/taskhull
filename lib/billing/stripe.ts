@@ -4,6 +4,8 @@ import Stripe from "stripe";
 import { appConfig } from "@/config/app.config";
 import { env } from "@/lib/env";
 
+const STRIPE_API_VERSION = "2025-12-15.clover" as const;
+
 // Singleton Stripe client
 let stripeClient: Stripe | null = null;
 
@@ -28,6 +30,7 @@ export function getStripe(): Stripe {
 	}
 
 	stripeClient = new Stripe(secretKey, {
+		apiVersion: STRIPE_API_VERSION,
 		typescript: true,
 		// Add app info for Stripe Dashboard
 		appInfo: {

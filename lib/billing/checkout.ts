@@ -3,11 +3,68 @@ import type Stripe from "stripe";
 
 import { creditPackages } from "@/config/billing.config";
 import { getPriceByStripePriceId } from "@/lib/billing/plans";
+import type { CheckoutResult } from "@/lib/billing/types";
+import { env } from "@/lib/env";
 
 import { buildCheckoutMetadata } from "./checkout-metadata";
 import { getOrCreateStripeCustomer } from "./customer";
 import { getStripe } from "./stripe";
 import type { CreateCheckoutParams } from "./types";
+
+export type StripeCheckoutMode = "embedded" | "hosted";
+
+export function buildCheckoutRedirectParams(
+	checkoutMode: StripeCheckoutMode,
+	successUrl: string,
+	cancelUrl: string,
+): Pick<
+	Stripe.Checkout.SessionCreateParams,
+	"cancel_url" | "return_url" | "success_url" | "ui_mode"
+> {
+	if (checkoutMode === "embedded") {
+		return {
+			ui_mode: "embedded",
+			return_url: successUrl,
+		};
+	}
+
+	return {
+		ui_mode: "hosted",
+		success_url: successUrl,
+		cancel_url: cancelUrl,
+	};
+}
+
+export function buildCheckoutResult(
+	checkoutMode: StripeCheckoutMode,
+	session: Pick<Stripe.Checkout.Session, "client_secret" | "id" | "url">,
+): CheckoutResult {
+	if (checkoutMode === "embedded") {
+		if (!session.client_secret) {
+			throw new Error(
+				"Failed to create embedded checkout session: no client secret returned",
+			);
+		}
+
+		return {
+			mode: "embedded",
+			clientSecret: session.client_secret,
+			sessionId: session.id,
+		};
+	}
+
+	if (!session.url) {
+		throw new Error(
+			"Failed to create hosted checkout session: no URL returned",
+		);
+	}
+
+	return {
+		mode: "hosted",
+		url: session.url,
+		sessionId: session.id,
+	};
+}
 
 /**
  * Create a Stripe Checkout session for a subscription or one-time order.
@@ -15,7 +72,7 @@ import type { CreateCheckoutParams } from "./types";
  */
 export async function createCheckoutSession(
 	params: CreateCheckoutParams,
-): Promise<{ url: string; sessionId: string }> {
+): Promise<CheckoutResult> {
 	const {
 		organizationId,
 		stripePriceId,
@@ -79,11 +136,22 @@ export async function createCheckoutSession(
 		: "payment";
 
 	// Build session params
+	const checkoutMode = env.STRIPE_CHECKOUT_MODE;
+	if (checkoutMode === "embedded" && !env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+		throw new Error(
+			"Embedded checkout requires NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+		);
+	}
+	const redirectParams = buildCheckoutRedirectParams(
+		checkoutMode,
+		successUrl,
+		cancelUrl,
+	);
+
 	const sessionParams: Stripe.Checkout.SessionCreateParams = {
 		mode,
 		line_items: lineItems,
-		success_url: successUrl,
-		cancel_url: cancelUrl,
+		...redirectParams,
 		metadata: buildCheckoutMetadata({
 			organizationId,
 			planId: plan.id,
@@ -147,14 +215,7 @@ export async function createCheckoutSession(
 		idempotencyKey,
 	});
 
-	if (!session.url) {
-		throw new Error("Failed to create checkout session: no URL returned");
-	}
-
-	return {
-		url: session.url,
-		sessionId: session.id,
-	};
+	return buildCheckoutResult(checkoutMode, session);
 }
 
 /**
@@ -171,7 +232,7 @@ export async function createCheckoutWithCustomer(params: {
 	quantity?: number;
 	trialDays?: number;
 	metadata?: Record<string, string>;
-}): Promise<{ url: string; sessionId: string }> {
+}): Promise<CheckoutResult> {
 	const {
 		organizationId,
 		organizationName,

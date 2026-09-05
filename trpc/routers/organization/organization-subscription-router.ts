@@ -435,7 +435,7 @@ export const organizationSubscriptionRouter = createTRPCRouter({
 			}
 
 			// Create checkout session
-			const { url, sessionId } = await createCheckoutSession({
+			const checkout = await createCheckoutSession({
 				organizationId: organization.id,
 				stripePriceId: input.priceId,
 				stripeCustomerId: customer.id,
@@ -449,7 +449,7 @@ export const organizationSubscriptionRouter = createTRPCRouter({
 				},
 			});
 
-			return { url, sessionId };
+			return checkout;
 		}),
 
 	/**

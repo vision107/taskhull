@@ -17,7 +17,17 @@ This template includes a full-featured Stripe billing integration supporting sub
 # .env
 STRIPE_SECRET_KEY="sk_test_xxxxx"
 STRIPE_WEBHOOK_SECRET="whsec_xxxxx"
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_xxxxx"
+
+# Keep customers in the app with Stripe's embedded Checkout (recommended),
+# or use "hosted" to redirect to Stripe's hosted Checkout page.
+STRIPE_CHECKOUT_MODE="embedded"
 ```
+
+Embedded and hosted Checkout use the same server-side price validation,
+organization authorization, idempotency and webhook fulfillment. Changing the
+mode does not change which system is authoritative: always grant access from
+verified Stripe webhook events, never from the browser return page alone.
 
 ### 2. Create Products & Prices
 

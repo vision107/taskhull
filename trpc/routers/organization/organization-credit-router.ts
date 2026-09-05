@@ -119,7 +119,7 @@ export const organizationCreditRouter = createTRPCRouter({
 
 			// Create checkout session
 			const baseUrl = appConfig.baseUrl;
-			const { url } = await createCheckoutSession({
+			const checkout = await createCheckoutSession({
 				organizationId: organization.id,
 				stripePriceId: pkg.stripePriceId,
 				stripeCustomerId: customer.id,
@@ -134,6 +134,6 @@ export const organizationCreditRouter = createTRPCRouter({
 				},
 			});
 
-			return { url };
+			return checkout;
 		}),
 });

@@ -98,6 +98,18 @@ export interface CreateCheckoutParams {
 	metadata?: Record<string, string>;
 }
 
+export type CheckoutResult =
+	| {
+			mode: "embedded";
+			clientSecret: string;
+			sessionId: string;
+	  }
+	| {
+			mode: "hosted";
+			url: string;
+			sessionId: string;
+	  };
+
 /**
  * Parameters for creating a customer portal session
  */

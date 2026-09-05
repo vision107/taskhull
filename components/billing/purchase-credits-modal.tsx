@@ -5,6 +5,7 @@ import { AlertCircleIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { presentCheckout } from "@/components/billing/present-checkout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,9 +37,9 @@ export const PurchaseCreditsModal = NiceModal.create<PurchaseCreditsModalProps>(
 		const purchaseMutation =
 			trpc.organization.credit.purchaseCredits.useMutation({
 				onSuccess: (data) => {
-					if (data.url) {
-						window.location.href = data.url;
-					}
+					setSelectedPackage(null);
+					modal.dismissForNavigation();
+					void presentCheckout(data);
 				},
 				onError: (error) => {
 					toast.error(error.message);

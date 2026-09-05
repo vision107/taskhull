@@ -13,6 +13,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { presentCheckout } from "@/components/billing/present-checkout";
 import { PricingTable } from "@/components/billing/pricing-table";
 import { SubscriptionStatusBadge } from "@/components/billing/subscription-status-badge";
 import { ConfirmationModal } from "@/components/confirmation-modal";
@@ -145,7 +146,7 @@ export function SubscriptionSettingsTab({
 		trpc.organization.subscription.createCheckout.useMutation({
 			onSuccess: (data) => {
 				setLoadingPriceId(null);
-				window.location.href = data.url;
+				void presentCheckout(data);
 			},
 			onError: (error) => {
 				toast.error(error.message);
