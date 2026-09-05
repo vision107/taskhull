@@ -57,77 +57,71 @@ const loggingMiddleware = t.middleware(
 		const session = (ctx as { session?: { impersonatedBy?: string | null } })
 			.session;
 
-		// Extract organizationId from input if available
-		const organizationId = (input as { organizationId?: string })
-			?.organizationId;
+		const organizationId =
+			(ctx as { activeOrganizationId?: string | null }).activeOrganizationId ??
+			(input as { organizationId?: string })?.organizationId;
 
 		// Check for impersonation from the session object
 		const impersonatedBy = session?.impersonatedBy ?? null;
 		const isImpersonated = !!impersonatedBy;
 
-		// Set Sentry context for better error reporting
-		const scope = Sentry.getCurrentScope();
+		return Sentry.withIsolationScope(async (scope) => {
+			if (userId) {
+				scope.setUser({
+					id: userId,
+					email: userEmail,
+				});
+			}
 
-		// Set user context
-		if (userId) {
-			scope.setUser({
-				id: userId,
-				email: userEmail,
+			scope.setContext("trpc", {
+				procedure: path,
+				type,
+				organizationId,
+				userRole,
+				isImpersonated,
+				impersonatedBy,
+				requestId: ctx.requestId,
 			});
-		}
 
-		// Set additional context
-		scope.setContext("trpc", {
-			procedure: path,
-			type,
-			organizationId,
-			userRole,
-			isImpersonated,
-			impersonatedBy,
-			requestId: ctx.requestId,
+			if (organizationId) {
+				scope.setTag("organizationId", organizationId);
+			}
+			if (userRole) {
+				scope.setTag("userRole", userRole);
+			}
+			if (isImpersonated) {
+				scope.setTag("isImpersonated", "true");
+				scope.setTag("impersonatedBy", impersonatedBy || "unknown");
+			}
+			scope.setTag("procedure", path);
+			scope.setTag("procedureType", type);
+
+			try {
+				return await next();
+			} catch (error) {
+				const duration = Date.now() - startTime;
+
+				logger.error(
+					{
+						procedure: path,
+						type,
+						duration,
+						success: false,
+						error: getErrorMessage(error),
+						errorCode: error instanceof TRPCError ? error.code : undefined,
+						userId,
+						userEmail,
+						organizationId,
+						requestId: ctx.requestId,
+						userAgent: ctx.userAgent,
+						ip: ctx.ip,
+					},
+					"tRPC procedure failed",
+				);
+
+				throw error;
+			}
 		});
-
-		// Set tags for filtering in Sentry
-		if (organizationId) {
-			scope.setTag("organizationId", organizationId);
-		}
-		if (userRole) {
-			scope.setTag("userRole", userRole);
-		}
-		if (isImpersonated) {
-			scope.setTag("isImpersonated", "true");
-			scope.setTag("impersonatedBy", impersonatedBy || "unknown");
-		}
-		scope.setTag("procedure", path);
-		scope.setTag("procedureType", type);
-
-		try {
-			const result = await next();
-			return result;
-		} catch (error) {
-			const duration = Date.now() - startTime;
-
-			// Log procedure error with additional data
-			logger.error(
-				{
-					procedure: path,
-					type,
-					duration,
-					success: false,
-					error: getErrorMessage(error),
-					errorCode: error instanceof TRPCError ? error.code : undefined,
-					userId,
-					userEmail,
-					organizationId,
-					requestId: ctx.requestId,
-					userAgent: ctx.userAgent,
-					ip: ctx.ip,
-				},
-				"tRPC procedure failed",
-			);
-
-			throw error;
-		}
 	},
 );
 
