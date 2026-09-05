@@ -31,6 +31,12 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { useSession } from "@/hooks/use-session";
 import { authClient } from "@/lib/auth/client";
+import {
+	getLeaveOrganizationRestriction,
+	getLeaveOrganizationRestrictionMessage,
+	isOnlyOwnerLeaveError,
+	ONLY_OWNER_LEAVE_MESSAGE,
+} from "@/lib/auth/organization-membership";
 import { canChangeOrganizationRole } from "@/lib/auth/organization-permissions";
 import { isOrganizationAdmin } from "@/lib/auth/utils";
 import { trpc } from "@/trpc/client";
@@ -107,11 +113,13 @@ export function OrganizationMembersTable({
 				{ id: toastId },
 			);
 			return true;
-		} catch {
+		} catch (error) {
 			toast.error(
-				isCurrentUser
-					? "Could not leave the organization. Please try again."
-					: "Could not remove member. Please try again.",
+				isCurrentUser && isOnlyOwnerLeaveError(error)
+					? ONLY_OWNER_LEAVE_MESSAGE
+					: isCurrentUser
+						? "Could not leave the organization. Please try again."
+						: "Could not remove member. Please try again.",
 				{ id: toastId },
 			);
 			return false;
@@ -168,6 +176,14 @@ export function OrganizationMembersTable({
 			accessorKey: "actions",
 			header: "",
 			cell: ({ row }) => {
+				const isCurrentUser = row.original.userId === user?.id;
+				const leaveRestriction = isCurrentUser
+					? getLeaveOrganizationRestriction(
+							organization?.members ?? [],
+							row.original.userId,
+						)
+					: null;
+
 				return (
 					<div className="flex flex-row justify-end gap-2">
 						<OrganizationRoleSelect
@@ -186,19 +202,12 @@ export function OrganizationMembersTable({
 						/>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button
-									disabled={
-										organization?.members && organization.members.length < 2
-									}
-									size="icon"
-									type="button"
-									variant="ghost"
-								>
+								<Button size="icon" type="button" variant="ghost">
 									<MoreVerticalIcon className="size-4 shrink-0" />
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
-								{row.original.userId !== user?.id && (
+								{!isCurrentUser && (
 									<DropdownMenuItem
 										className="text-destructive"
 										disabled={!userIsOrganizationAdmin}
@@ -216,22 +225,34 @@ export function OrganizationMembersTable({
 										Remove member
 									</DropdownMenuItem>
 								)}
-								{row.original.userId === user?.id && (
-									<DropdownMenuItem
-										className="text-destructive"
-										onClick={() =>
-											confirmMemberRemoval({
-												memberId: row.original.id,
-												memberName:
-													row.original.user?.name ??
-													row.original.user?.email ??
-													"your account",
-												isCurrentUser: true,
-											})
-										}
-									>
-										Leave organization
-									</DropdownMenuItem>
+								{isCurrentUser && (
+									<>
+										<DropdownMenuItem
+											className="text-destructive"
+											disabled={leaveRestriction !== null}
+											onClick={() => {
+												if (leaveRestriction) return;
+
+												confirmMemberRemoval({
+													memberId: row.original.id,
+													memberName:
+														row.original.user?.name ??
+														row.original.user?.email ??
+														"your account",
+													isCurrentUser: true,
+												});
+											}}
+										>
+											Leave organization
+										</DropdownMenuItem>
+										{leaveRestriction ? (
+											<p className="max-w-64 px-2 pb-1.5 text-xs text-muted-foreground">
+												{getLeaveOrganizationRestrictionMessage(
+													leaveRestriction,
+												)}
+											</p>
+										) : null}
+									</>
 								)}
 							</DropdownMenuContent>
 						</DropdownMenu>
