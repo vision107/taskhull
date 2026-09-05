@@ -6,6 +6,28 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-09-05
+
+### Added
+
+- Added backup-code sign-in and backup-code regeneration for complete two-factor recovery.
+- Added an administrator recovery action for disabling a user's two-factor authentication with confirmation.
+
+### Changed
+
+- Displayed backup codes during two-factor setup so users can save them before closing the flow.
+- Added explicit pending, successful, expired and already-used email-verification states with resend handling.
+- Added clear invalid, expired and revoked organization invitation states with secure server-side revocation.
+- Explained why a sole owner cannot leave an organization before the action is attempted.
+- Made browser Back close the top modal layer while preserving protected pending actions and restoring focus.
+
+### Fixed
+
+- Prevented malformed invitation identifiers from reaching the database query path.
+- Prevented temporary organization lookup failures from appearing as not-found pages.
+- Isolated Sentry user and organization context per request to prevent stale tags.
+- Added proper page headings to verification and invitation error states.
+
 ## [2.4.1] - 2026-08-25
 
 ### Security
@@ -110,7 +132,8 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial release of the Achromatic Pro Next.js Drizzle starter kit.
 
-[Unreleased]: https://github.com/achromaticlabs/pro-nextjs-drizzle/compare/v2.4.1...HEAD
+[Unreleased]: https://github.com/achromaticlabs/pro-nextjs-drizzle/compare/v2.5.0...HEAD
+[2.5.0]: https://github.com/achromaticlabs/pro-nextjs-drizzle/compare/v2.4.1...v2.5.0
 [2.4.1]: https://github.com/achromaticlabs/pro-nextjs-drizzle/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/achromaticlabs/pro-nextjs-drizzle/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/achromaticlabs/pro-nextjs-drizzle/compare/v2.2.0...v2.3.0
