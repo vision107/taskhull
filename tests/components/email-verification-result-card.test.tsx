@@ -13,6 +13,7 @@ describe("EmailVerificationResultCard", () => {
 		);
 
 		expect(markup).toContain("Email verified");
+		expect(markup).toContain("<h1>Email verified</h1>");
 		expect(markup).toContain('href="/dashboard/settings"');
 	});
 
@@ -25,6 +26,7 @@ describe("EmailVerificationResultCard", () => {
 		);
 
 		expect(markup).toContain("Email already verified");
+		expect(markup).toContain("<h1>Email already verified</h1>");
 		expect(markup).toContain(
 			'href="/auth/sign-in?redirectTo=%2Fdashboard%2Fsettings"',
 		);

@@ -14,6 +14,7 @@ describe("EmailVerificationCard", () => {
 		);
 
 		expect(markup).toContain("Verify your email");
+		expect(markup).toContain("<h1>Verify your email</h1>");
 		expect(markup).toContain("person@example.com");
 		expect(markup).toContain('noValidate=""');
 		expect(markup).toContain("Resend verification email");
@@ -29,6 +30,7 @@ describe("EmailVerificationCard", () => {
 		);
 
 		expect(markup).toContain("Verification link issue");
+		expect(markup).toContain("<h1>Verification link issue</h1>");
 		expect(markup).toContain('type="email"');
 		expect(markup).not.toContain("Sign up again");
 	});

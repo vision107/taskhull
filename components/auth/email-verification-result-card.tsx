@@ -30,7 +30,7 @@ export function EmailVerificationResultCard({
 					<Icon className="size-5" />
 				</div>
 				<CardTitle className="text-base lg:text-lg">
-					{verifiedNow ? "Email verified" : "Email already verified"}
+					<h1>{verifiedNow ? "Email verified" : "Email already verified"}</h1>
 				</CardTitle>
 				<CardDescription>
 					{verifiedNow

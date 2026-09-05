@@ -55,7 +55,7 @@ export function EmailVerificationCard({
 	});
 	const [resendSucceeded, setResendSucceeded] = React.useState(false);
 	const submittingRef = React.useRef(false);
-	const successHeadingRef = React.useRef<HTMLSpanElement>(null);
+	const successHeadingRef = React.useRef<HTMLHeadingElement>(null);
 
 	React.useEffect(() => {
 		if (resendSucceeded) {
@@ -99,7 +99,7 @@ export function EmailVerificationCard({
 					<MailCheckIcon className="size-5" />
 				</div>
 				<CardTitle className="text-base lg:text-lg">
-					<span
+					<h1
 						ref={successHeadingRef}
 						tabIndex={resendSucceeded ? -1 : undefined}
 					>
@@ -108,7 +108,7 @@ export function EmailVerificationCard({
 							: errorMessage
 								? "Verification link issue"
 								: "Verify your email"}
-					</span>
+					</h1>
 				</CardTitle>
 				<CardDescription>
 					{resendSucceeded ? (

@@ -20,6 +20,7 @@ import {
 	getInvitationPageErrorKind,
 	type InvitationPageErrorKind,
 } from "@/lib/auth/invitation-errors";
+import { getValidInvitationId } from "@/lib/auth/redirect";
 import { getSession } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
@@ -79,7 +80,7 @@ function InvitationErrorCard({
 				<div className="flex items-center gap-2">
 					<AlertCircleIcon className="size-5 text-destructive" />
 					<CardTitle className="text-base lg:text-lg">
-						{content.title}
+						<h1>{content.title}</h1>
 					</CardTitle>
 				</div>
 				<CardDescription>{content.description}</CardDescription>
@@ -106,12 +107,21 @@ export default async function OrganizationInvitationPage({
 	params,
 }: OrganizationInvitationPageProps): Promise<React.JSX.Element> {
 	const { invitationId } = await params;
+	const validInvitationId = getValidInvitationId(invitationId);
+	if (!validInvitationId) {
+		return (
+			<>
+				<InvitationErrorCard kind="invalid" />
+				<ThemeToggle className="fixed right-2 bottom-2 rounded-full" />
+			</>
+		);
+	}
 	const session = await getSession();
 
 	let invitation: Awaited<ReturnType<typeof auth.api.getInvitation>>;
 	try {
 		invitation = await auth.api.getInvitation({
-			query: { id: invitationId },
+			query: { id: validInvitationId },
 			headers: await headers(),
 		});
 	} catch (error) {
@@ -152,7 +162,7 @@ export default async function OrganizationInvitationPage({
 		<>
 			<OrganizationInvitationCard
 				expiresAt={new Date(invitation.expiresAt)}
-				invitationId={invitationId}
+				invitationId={validInvitationId}
 				logoUrl={organization.logo || undefined}
 				organizationName={invitation.organizationName}
 			/>
