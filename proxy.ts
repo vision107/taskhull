@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { withQuery } from "ufo";
 
 import { auth } from "@/lib/auth";
+import { getEmailVerificationError } from "@/lib/auth/email-verification";
 
 import { appConfig } from "./config/app.config";
 import { authConfig } from "./config/auth.config";
@@ -135,6 +136,21 @@ export default async function proxy(req: NextRequest) {
 
 	// Protected routes that require authentication
 	if (isProtectedPath(pathname)) {
+		const verificationError = getEmailVerificationError(
+			searchParams.get("error"),
+		);
+		if (verificationError) {
+			return NextResponse.redirect(
+				new URL(
+					withQuery("/auth/verify-email", {
+						error: verificationError,
+						redirectTo: pathname,
+					}),
+					origin,
+				),
+			);
+		}
+
 		const session = await getSession(req);
 
 		if (!session) {
@@ -182,11 +198,12 @@ export default async function proxy(req: NextRequest) {
 	if (pathname.startsWith("/auth")) {
 		const session = await getSession(req);
 
-		// Allow reset-password and banned pages even when logged in
+		// Allow result pages that must explain the completed auth action.
 		if (
 			session &&
 			pathname !== "/auth/banned" &&
-			pathname !== "/auth/reset-password"
+			pathname !== "/auth/reset-password" &&
+			pathname !== "/auth/verify-email"
 		) {
 			// If user is logged in and has an invitation, redirect to invitation page
 			const invitationId = req.nextUrl.searchParams.get("invitationId");

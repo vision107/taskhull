@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import { withQuery } from "ufo";
 
+import { EmailVerificationCard } from "@/components/auth/email-verification-card";
 import { SocialSigninButton } from "@/components/auth/social-signin-button";
 import { OrganizationInvitationAlert } from "@/components/invitations/organization-invitation-alert";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -45,6 +46,7 @@ import {
 	CAPTCHA_RESPONSE_HEADER,
 	getAuthErrorMessage,
 } from "@/lib/auth/constants";
+import { getEmailVerificationCallbackPath } from "@/lib/auth/email-verification";
 import { type OAuthProvider, oAuthProviders } from "@/lib/auth/oauth-providers";
 import { getAuthRedirectPath, getValidInvitationId } from "@/lib/auth/redirect";
 import { signInSchema } from "@/schemas/auth-schemas";
@@ -76,12 +78,17 @@ export function SignInCard(): React.JSX.Element {
 		},
 	});
 	const [isPasskeyPending, setIsPasskeyPending] = React.useState(false);
+	const [verificationEmail, setVerificationEmail] = React.useState<
+		string | null
+	>(null);
 
 	const redirectPath = getAuthRedirectPath({
 		invitationId,
 		redirectTo,
 		fallback: authConfig.redirectAfterSignIn,
 	});
+	const verificationCallbackURL =
+		getEmailVerificationCallbackPath(redirectPath);
 
 	React.useEffect(() => {
 		if (sessionLoaded && user) {
@@ -93,6 +100,7 @@ export function SignInCard(): React.JSX.Element {
 		try {
 			const { data, error } = await authClient.signIn.email({
 				...values,
+				callbackURL: verificationCallbackURL,
 				fetchOptions: captchaEnabled
 					? {
 							headers: {
@@ -120,6 +128,13 @@ export function SignInCard(): React.JSX.Element {
 			resetCaptcha();
 
 			if (
+				e &&
+				typeof e === "object" &&
+				"code" in e &&
+				e.code === "EMAIL_NOT_VERIFIED"
+			) {
+				setVerificationEmail(values.email.trim().toLowerCase());
+			} else if (
 				e &&
 				typeof e === "object" &&
 				"code" in e &&
@@ -174,6 +189,15 @@ export function SignInCard(): React.JSX.Element {
 		}
 	};
 
+	if (verificationEmail) {
+		return (
+			<EmailVerificationCard
+				email={verificationEmail}
+				redirectTo={redirectPath}
+			/>
+		);
+	}
+
 	return (
 		<Card className="w-full border-transparent px-0 py-8 [--card-spacing:--spacing(8)] dark:border-border">
 			<CardHeader>
@@ -187,7 +211,7 @@ export function SignInCard(): React.JSX.Element {
 			<CardContent className="flex flex-col gap-4">
 				{invitationId && <OrganizationInvitationAlert className="mb-6" />}
 				<Form {...methods}>
-					<form className="space-y-4" onSubmit={onSubmit}>
+					<form className="space-y-4" noValidate onSubmit={onSubmit}>
 						<FormField
 							control={methods.control}
 							name="email"

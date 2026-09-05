@@ -3,8 +3,10 @@
 import { LockIcon, MailIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import * as React from "react";
 import { withQuery } from "ufo";
 
+import { EmailVerificationCard } from "@/components/auth/email-verification-card";
 import { PasswordFormMessage } from "@/components/auth/password-form-message";
 import { SocialSigninButton } from "@/components/auth/social-signin-button";
 import { OrganizationInvitationAlert } from "@/components/invitations/organization-invitation-alert";
@@ -44,12 +46,16 @@ import {
 	getAuthErrorMessage,
 	ORGANIZATION_INVITATION_ID_HEADER,
 } from "@/lib/auth/constants";
+import { getEmailVerificationCallbackPath } from "@/lib/auth/email-verification";
 import { type OAuthProvider, oAuthProviders } from "@/lib/auth/oauth-providers";
 import { getAuthRedirectPath, getValidInvitationId } from "@/lib/auth/redirect";
 import { signUpSchema } from "@/schemas/auth-schemas";
 
 export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
 	const searchParams = useSearchParams();
+	const [verificationEmail, setVerificationEmail] = React.useState<
+		string | null
+	>(null);
 
 	const {
 		turnstileRef,
@@ -79,6 +85,8 @@ export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
 		redirectTo,
 		fallback: authConfig.redirectAfterSignIn,
 	});
+	const verificationCallbackURL =
+		getEmailVerificationCallbackPath(redirectPath);
 
 	const onSubmit = methods.handleSubmit(async ({ email, password, name }) => {
 		try {
@@ -86,7 +94,7 @@ export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
 				email,
 				password,
 				name,
-				callbackURL: redirectPath,
+				callbackURL: verificationCallbackURL,
 				fetchOptions:
 					captchaEnabled || invitationId
 						? {
@@ -106,6 +114,7 @@ export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
 			if (error) {
 				throw error;
 			}
+			setVerificationEmail(email.trim().toLowerCase());
 		} catch (e) {
 			resetCaptcha();
 			methods.setError("root", {
@@ -118,6 +127,15 @@ export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
 		}
 	});
 
+	if (verificationEmail) {
+		return (
+			<EmailVerificationCard
+				email={verificationEmail}
+				redirectTo={redirectPath}
+			/>
+		);
+	}
+
 	return (
 		<Card className="w-full border-transparent px-0 py-8 [--card-spacing:--spacing(8)] dark:border-border">
 			<CardHeader>
@@ -129,7 +147,8 @@ export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-4">
-				{methods.formState.isSubmitSuccessful ? (
+				{methods.formState.isSubmitSuccessful &&
+				!methods.formState.errors.root ? (
 					<Alert variant="info">
 						<AlertDescription>
 							We have sent you a link to verify your email. Please check your
@@ -142,6 +161,7 @@ export function SignUpCard({ prefillEmail }: { prefillEmail?: string }) {
 						<Form {...methods}>
 							<form
 								className="flex flex-col items-stretch gap-4"
+								noValidate
 								onSubmit={onSubmit}
 							>
 								<FormField
