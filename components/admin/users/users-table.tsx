@@ -308,6 +308,26 @@ export function UsersTable(): React.JSX.Element {
 			void utils.admin.user.list.invalidate();
 		},
 	});
+	const disableTwoFactorMutation = trpc.admin.user.disableTwoFactor.useMutation(
+		{
+			onSuccess: (result) => {
+				void utils.admin.user.list.invalidate();
+				if (result.sessionsRevoked) {
+					toast.success("Two-factor authentication disabled for this user.");
+					return;
+				}
+
+				toast.warning(
+					"Two-factor authentication was disabled, but the user's sessions could not be signed out.",
+				);
+			},
+			onError: (error) => {
+				toast.error(
+					error.message || "Failed to disable two-factor authentication.",
+				);
+			},
+		},
+	);
 
 	const unbanUser = (id: string) => {
 		toast.promise(
@@ -503,6 +523,39 @@ export function UsersTable(): React.JSX.Element {
 								onClick={() => resendVerificationMail(row.original.email)}
 							>
 								Resend verification
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								disabled={
+									!row.original.twoFactorEnabled ||
+									row.original.role === "admin"
+								}
+								onClick={() => {
+									void NiceModal.show(ConfirmationModal, {
+										title: "Disable two-factor authentication?",
+										message: `This removes two-factor authentication from ${row.original.email} and signs them out on every device.`,
+										confirmLabel: "Disable",
+										destructive: true,
+										requiredText: row.original.email,
+										onConfirm: async () => {
+											try {
+												await disableTwoFactorMutation.mutateAsync({
+													userId: row.original.id,
+												});
+											} catch {
+												return false;
+											}
+										},
+									});
+								}}
+								title={
+									row.original.role === "admin"
+										? "Administrator 2FA cannot be disabled here"
+										: !row.original.twoFactorEnabled
+											? "Two-factor authentication is not enabled"
+											: undefined
+								}
+							>
+								Disable 2FA
 							</DropdownMenuItem>
 							{row.original.role !== "admin" ? (
 								<DropdownMenuItem

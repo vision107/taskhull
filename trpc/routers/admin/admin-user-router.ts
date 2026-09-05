@@ -9,15 +9,19 @@ import {
 	ilike,
 	inArray,
 	isNull,
+	like,
 	lte,
 	or,
 	type SQL,
 } from "drizzle-orm";
+import { headers } from "next/headers";
 
-import { db, userTable } from "@/lib/db";
+import { assertAdminCanResetTwoFactor } from "@/lib/auth/admin-two-factor";
+import { db, twoFactorTable, userTable, verificationTable } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import {
 	banUserAdminSchema,
+	disableTwoFactorAdminSchema,
 	exportUsersAdminSchema,
 	listUsersAdminSchema,
 	unbanUserAdminSchema,
@@ -335,5 +339,79 @@ export const adminUserRouter = createTRPCRouter({
 				},
 				"Admin unbanned user",
 			);
+		}),
+	disableTwoFactor: protectedAdminProcedure
+		.input(disableTwoFactorAdminSchema)
+		.mutation(async ({ ctx, input }) => {
+			const targetUser = await db.transaction(async (tx) => {
+				const [user] = await tx
+					.select({
+						id: userTable.id,
+						email: userTable.email,
+						role: userTable.role,
+						twoFactorEnabled: userTable.twoFactorEnabled,
+					})
+					.from(userTable)
+					.where(eq(userTable.id, input.userId))
+					.for("update");
+
+				if (!user) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "User not found",
+					});
+				}
+
+				assertAdminCanResetTwoFactor({
+					actorUserId: ctx.user.id,
+					isImpersonating: ctx.isImpersonating,
+					targetUser: user,
+				});
+
+				await tx
+					.delete(twoFactorTable)
+					.where(eq(twoFactorTable.userId, input.userId));
+				await tx
+					.delete(verificationTable)
+					.where(
+						and(
+							eq(verificationTable.value, input.userId),
+							like(verificationTable.identifier, "trust-device-%"),
+						),
+					);
+				await tx
+					.update(userTable)
+					.set({ twoFactorEnabled: false, updatedAt: new Date() })
+					.where(eq(userTable.id, input.userId));
+
+				return user;
+			});
+
+			const { auth } = await import("@/lib/auth");
+			let sessionsRevoked = true;
+			try {
+				await auth.api.revokeUserSessions({
+					body: { userId: input.userId },
+					headers: await headers(),
+				});
+			} catch (error) {
+				sessionsRevoked = false;
+				logger.error(
+					{ error, targetUserId: input.userId },
+					"Failed to revoke sessions after disabling two-factor authentication",
+				);
+			}
+
+			logger.info(
+				{
+					action: "user_two_factor_disabled_by_admin",
+					adminUserId: ctx.user.id,
+					targetUserEmail: targetUser.email,
+					targetUserId: targetUser.id,
+				},
+				"Admin disabled two-factor authentication for user",
+			);
+
+			return { success: true, sessionsRevoked };
 		}),
 });

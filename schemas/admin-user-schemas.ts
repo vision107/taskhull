@@ -47,8 +47,16 @@ export const unbanUserAdminSchema = z.object({
 	userId: z.string().uuid(),
 });
 
+// Disable two-factor authentication for account recovery (admin)
+export const disableTwoFactorAdminSchema = z.object({
+	userId: z.string().uuid(),
+});
+
 // Type exports
 export type GetUsersAdminInput = z.infer<typeof listUsersAdminSchema>;
 export type ExportUsersAdminInput = z.infer<typeof exportUsersAdminSchema>;
 export type BanUserAdminInput = z.infer<typeof banUserAdminSchema>;
 export type UnbanUserAdminInput = z.infer<typeof unbanUserAdminSchema>;
+export type DisableTwoFactorAdminInput = z.infer<
+	typeof disableTwoFactorAdminSchema
+>;
