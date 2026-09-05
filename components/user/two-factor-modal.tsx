@@ -7,6 +7,7 @@ import * as React from "react";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
 
+import { BackupCodesPanel } from "@/components/auth/backup-codes-panel";
 import { Button } from "@/components/ui/button";
 import { InputPassword } from "@/components/ui/custom/input-password";
 import {
@@ -20,6 +21,7 @@ import {
 import { FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useBackupCodesGuard } from "@/hooks/use-backup-codes-guard";
 import { useEnhancedModal } from "@/hooks/use-enhanced-modal";
 import { useSession } from "@/hooks/use-session";
 import { authClient } from "@/lib/auth/client";
@@ -29,11 +31,14 @@ export type TwoFactorModalProps = NiceModalHocProps;
 export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 	const modal = useEnhancedModal();
 	const { user, reloadSession } = useSession();
+	const actionPendingRef = React.useRef(false);
 
-	const [view, setDialogView] = React.useState<"password" | "totp-url">(
-		"password",
-	);
+	const [view, setDialogView] = React.useState<
+		"password" | "totp-url" | "backup-codes"
+	>("password");
 	const [totpURI, setTotpURI] = React.useState("");
+	const [backupCodes, setBackupCodes] = React.useState<string[]>([]);
+	const [savedBackupCodes, setSavedBackupCodes] = React.useState(false);
 	const [password, setPassword] = React.useState("");
 	const [totpCode, setTotpCode] = React.useState("");
 
@@ -58,6 +63,7 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 			}
 
 			setTotpURI(data.totpURI);
+			setBackupCodes(data.backupCodes);
 			setDialogView("totp-url");
 		},
 
@@ -65,6 +71,9 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 			toast.error(
 				"Could not verify your account with the provided password. Please try again.",
 			);
+		},
+		onSettled: () => {
+			actionPendingRef.current = false;
 		},
 	});
 
@@ -92,6 +101,9 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 				"Could not verify your account with the provided password. Please try again.",
 			);
 		},
+		onSettled: () => {
+			actionPendingRef.current = false;
+		},
 	});
 
 	const verifyTwoFactorMutation = useMutation({
@@ -106,16 +118,52 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 			}
 
 			await reloadSession();
-			modal.handleClose();
-			toast.success("Two-factor authentication has been enabled successfully.");
+			setDialogView("backup-codes");
 		},
 		onError: () => {
 			toast.error("Could not verify the one-time password. Please try again.");
 		},
+		onSettled: () => {
+			actionPendingRef.current = false;
+		},
 	});
+
+	const backupCodesMustBeSaved = view === "backup-codes" && !savedBackupCodes;
+	const mutationIsPending =
+		enableTwoFactorMutation.isPending ||
+		disableTwoFactorMutation.isPending ||
+		verifyTwoFactorMutation.isPending;
+	const dismissIsLocked = mutationIsPending || backupCodesMustBeSaved;
+	useBackupCodesGuard(dismissIsLocked);
+
+	const handleOpenChange = (open: boolean): void => {
+		if (!open && mutationIsPending) {
+			return;
+		}
+
+		if (!open && backupCodesMustBeSaved) {
+			toast.warning("Save your backup codes before closing this window.");
+			return;
+		}
+
+		modal.handleOpenChange(open);
+	};
+
+	const handleSetupComplete = (): void => {
+		if (!savedBackupCodes) {
+			return;
+		}
+
+		modal.handleClose();
+		toast.success("Two-factor authentication has been enabled successfully.");
+	};
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		if (actionPendingRef.current) {
+			return;
+		}
+		actionPendingRef.current = true;
 
 		if (user?.twoFactorEnabled) {
 			disableTwoFactorMutation.mutate();
@@ -134,20 +182,24 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 	return (
 		<Dialog
 			open={modal.visible}
-			onOpenChange={modal.handleOpenChange}
+			onOpenChange={handleOpenChange}
 			onOpenChangeComplete={modal.handleOpenChangeComplete}
 		>
-			<DialogContent className="max-w-md">
+			<DialogContent className="max-w-md" showCloseButton={!dismissIsLocked}>
 				<DialogHeader>
 					<DialogTitle>
 						{view === "password"
 							? "Verify with password"
-							: "Enable two-factor authentication"}
+							: view === "totp-url"
+								? "Enable two-factor authentication"
+								: "Save your backup codes"}
 					</DialogTitle>
 					<DialogDescription>
 						{view === "password"
 							? "Please verify your account by entering your password."
-							: "Use your preferred authenticator app and scan the QR code with it or enter the secret below manually to set up two-factor authentication."}
+							: view === "totp-url"
+								? "Use your preferred authenticator app and scan the QR code with it or enter the secret below manually to set up two-factor authentication."
+								: "These codes will not be shown again. Save them before you continue."}
 					</DialogDescription>
 				</DialogHeader>
 				{view === "password" ? (
@@ -177,7 +229,7 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 							</Button>
 						</DialogFooter>
 					</form>
-				) : (
+				) : view === "totp-url" ? (
 					<form onSubmit={handleSubmit}>
 						<div className="grid grid-cols-1 gap-4">
 							<div className="flex flex-col items-center gap-4 px-6">
@@ -204,6 +256,7 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 						</div>
 						<DialogFooter className="mt-4">
 							<Button
+								disabled={verifyTwoFactorMutation.isPending}
 								loading={verifyTwoFactorMutation.isPending}
 								onClick={modal.handleClose}
 								type="button"
@@ -220,6 +273,23 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 							</Button>
 						</DialogFooter>
 					</form>
+				) : (
+					<>
+						<BackupCodesPanel
+							backupCodes={backupCodes}
+							onSavedChange={setSavedBackupCodes}
+							saved={savedBackupCodes}
+						/>
+						<DialogFooter className="mt-4">
+							<Button
+								disabled={!savedBackupCodes}
+								onClick={handleSetupComplete}
+								type="button"
+							>
+								Done
+							</Button>
+						</DialogFooter>
+					</>
 				)}
 			</DialogContent>
 		</Dialog>
