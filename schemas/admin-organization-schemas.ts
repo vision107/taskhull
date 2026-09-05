@@ -72,6 +72,28 @@ export const cancelSubscriptionAdminSchema = z.object({
 	immediate: z.boolean().default(false),
 });
 
+const adminBillingRequestSchema = z.object({
+	organizationId: z.string().uuid(),
+	requestId: z.string().uuid(),
+});
+
+export const grantSubscriptionAccessAdminSchema =
+	adminBillingRequestSchema.extend({
+		stripePriceId: z.string().startsWith("price_"),
+		trialDays: z.number().int().min(1).max(365),
+	});
+
+export const extendSubscriptionAccessAdminSchema =
+	adminBillingRequestSchema.extend({
+		subscriptionId: z.string().startsWith("sub_"),
+		additionalDays: z.number().int().min(1).max(365),
+	});
+
+export const reactivateSubscriptionAccessAdminSchema =
+	adminBillingRequestSchema.extend({
+		subscriptionId: z.string().startsWith("sub_"),
+	});
+
 // Type exports
 export type GetOrganizationsAdminInput = z.infer<
 	typeof listOrganizationsAdminSchema
@@ -85,4 +107,13 @@ export type ExportOrganizationsAdminInput = z.infer<
 export type AdjustCreditsAdminInput = z.infer<typeof adjustCreditsAdminSchema>;
 export type CancelSubscriptionAdminInput = z.infer<
 	typeof cancelSubscriptionAdminSchema
+>;
+export type GrantSubscriptionAccessAdminInput = z.infer<
+	typeof grantSubscriptionAccessAdminSchema
+>;
+export type ExtendSubscriptionAccessAdminInput = z.infer<
+	typeof extendSubscriptionAccessAdminSchema
+>;
+export type ReactivateSubscriptionAccessAdminInput = z.infer<
+	typeof reactivateSubscriptionAccessAdminSchema
 >;

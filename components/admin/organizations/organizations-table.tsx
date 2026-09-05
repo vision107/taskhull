@@ -9,8 +9,11 @@ import type {
 import { format } from "date-fns";
 import {
 	AlertTriangleIcon,
+	CalendarPlusIcon,
 	ExternalLinkIcon,
 	MoreHorizontalIcon,
+	RefreshCcwIcon,
+	ShieldPlusIcon,
 } from "lucide-react";
 import {
 	parseAsArrayOf,
@@ -23,6 +26,10 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import { AdjustCreditsModal } from "@/components/admin/credits/adjust-credits-modal";
+import {
+	ExtendTrialAccessModal,
+	GrantSubscriptionAccessModal,
+} from "@/components/admin/organizations/manage-subscription-access-modal";
 import { OrganizationBulkActions } from "@/components/admin/organizations/organization-bulk-actions";
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { OrganizationLogo } from "@/components/organization/organization-logo";
@@ -48,6 +55,7 @@ import {
 import { appConfig } from "@/config/app.config";
 import { billingConfig } from "@/config/billing.config";
 import { useTableSelection } from "@/hooks/use-table-selection";
+import { getAdminSubscriptionActions } from "@/lib/billing/admin-subscription-actions";
 import {
 	getSubscriptionSnapshot,
 	optimisticallyCancelSubscription,
@@ -280,6 +288,25 @@ export function OrganizationsTable(): React.JSX.Element {
 			},
 			onSettled: () => {
 				void utils.admin.organization.list.invalidate();
+			},
+		});
+
+	const reactivateSubscriptionMutation =
+		trpc.admin.organization.reactivateSubscriptionAccess.useMutation({
+			onSuccess: (result) => {
+				toast.success("Subscription reactivated");
+				if (result.syncPending) {
+					toast.warning(
+						"Stripe was updated, but the local billing sync is still pending.",
+					);
+				}
+			},
+			onError: (error) => toast.error(error.message),
+			onSettled: () => {
+				void utils.admin.organization.list.invalidate();
+				void utils.organization.subscription.getStatus.invalidate();
+				void utils.organization.subscription.listInvoices.invalidate();
+				void utils.organization.get.invalidate();
 			},
 		});
 
@@ -623,6 +650,12 @@ export function OrganizationsTable(): React.JSX.Element {
 					subscriptionId,
 					subscriptionStatus: status,
 				} = row.original;
+				const { canGrantAccess, canExtendTrial, canReactivate } =
+					getAdminSubscriptionActions({
+						subscriptionId,
+						status,
+						cancelAtPeriodEnd: row.original.cancelAtPeriodEnd,
+					});
 				return (
 					<div className="flex justify-end">
 						<DropdownMenu>
@@ -695,8 +728,7 @@ export function OrganizationsTable(): React.JSX.Element {
 									Sync from Stripe
 								</DropdownMenuItem>
 								<DropdownMenuItem
-									onSelect={(e) => {
-										e.preventDefault();
+									onClick={() => {
 										void NiceModal.show(AdjustCreditsModal, {
 											organizationId: id,
 											organizationName: name,
@@ -706,6 +738,58 @@ export function OrganizationsTable(): React.JSX.Element {
 								>
 									Adjust credits
 								</DropdownMenuItem>
+
+								{canGrantAccess ? (
+									<DropdownMenuItem
+										onClick={() => {
+											void NiceModal.show(GrantSubscriptionAccessModal, {
+												organizationId: id,
+												organizationName: name,
+											});
+										}}
+									>
+										<ShieldPlusIcon className="mr-2 size-4 text-muted-foreground" />
+										Grant temporary access
+									</DropdownMenuItem>
+								) : null}
+
+								{canExtendTrial && subscriptionId ? (
+									<DropdownMenuItem
+										onClick={() => {
+											void NiceModal.show(ExtendTrialAccessModal, {
+												organizationId: id,
+												organizationName: name,
+												subscriptionId,
+												currentTrialEnd: row.original.trialEnd,
+											});
+										}}
+									>
+										<CalendarPlusIcon className="mr-2 size-4 text-muted-foreground" />
+										Extend trial access
+									</DropdownMenuItem>
+								) : null}
+
+								{canReactivate && subscriptionId ? (
+									<DropdownMenuItem
+										onClick={() => {
+											void NiceModal.show(ConfirmationModal, {
+												title: "Reactivate subscription?",
+												message: `Continue the subscription for ${name} instead of canceling it at the end of the current period?`,
+												confirmLabel: "Reactivate",
+												onConfirm: () => {
+													reactivateSubscriptionMutation.mutate({
+														organizationId: id,
+														subscriptionId,
+														requestId: crypto.randomUUID(),
+													});
+												},
+											});
+										}}
+									>
+										<RefreshCcwIcon className="mr-2 size-4 text-muted-foreground" />
+										Reactivate subscription
+									</DropdownMenuItem>
+								) : null}
 
 								{subscriptionId && (
 									<>
@@ -724,13 +808,12 @@ export function OrganizationsTable(): React.JSX.Element {
 											status !== SubscriptionStatus.canceled && (
 												<DropdownMenuItem
 													className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-													onSelect={(e) => {
-														e.preventDefault();
+													onClick={() => {
 														void NiceModal.show(ConfirmationModal, {
 															title: "Cancel subscription?",
 															message: `Are you sure you want to cancel the subscription for ${name} at the end of the current period?`,
-															confirmText: "Cancel at period end",
-															variant: "destructive",
+															confirmLabel: "Cancel at period end",
+															destructive: true,
 															onConfirm: () =>
 																cancelSubscriptionMutation.mutate({
 																	subscriptionId,

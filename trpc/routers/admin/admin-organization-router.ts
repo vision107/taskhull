@@ -15,7 +15,16 @@ import {
 	sql,
 } from "drizzle-orm";
 
+import { billingConfig } from "@/config/billing.config";
+import {
+	AdminSubscriptionAccessError,
+	extendOrganizationTrial,
+	grantOrganizationTrial,
+	reactivateOrganizationSubscription,
+} from "@/lib/billing/admin-subscription-access";
 import { adjustCredits as adjustCreditsLib } from "@/lib/billing/credits";
+import { getActivePlanForOrganization } from "@/lib/billing/queries";
+import { isStripeConfigured } from "@/lib/billing/stripe";
 import {
 	cancelSubscriptionAtPeriodEnd,
 	cancelSubscriptionImmediately,
@@ -37,12 +46,45 @@ import {
 	adjustCreditsAdminSchema,
 	cancelSubscriptionAdminSchema,
 	deleteOrganizationAdminSchema,
+	extendSubscriptionAccessAdminSchema,
 	exportOrganizationsAdminSchema,
+	grantSubscriptionAccessAdminSchema,
 	listOrganizationsAdminSchema,
+	reactivateSubscriptionAccessAdminSchema,
 } from "@/schemas/admin-organization-schemas";
 import { createTRPCRouter, protectedAdminProcedure } from "@/trpc/init";
 
 const logger = LoggerFactory.getLogger("admin-organization");
+
+function requireStripeBilling(): void {
+	if (!billingConfig.enabled || !isStripeConfigured()) {
+		throw new TRPCError({
+			code: "BAD_REQUEST",
+			message: "Stripe billing is not configured.",
+		});
+	}
+}
+
+function handleAdminSubscriptionAccessError(error: unknown): never {
+	if (error instanceof AdminSubscriptionAccessError) {
+		throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+	}
+	throw error;
+}
+
+async function syncOrganizationSubscriptionAfterAdminAction(
+	organizationId: string,
+): Promise<boolean> {
+	const result = await syncOrganizationSubscriptions([organizationId]);
+	const syncPending = result.successful !== 1;
+	if (syncPending) {
+		logger.warn(
+			{ organizationId, result },
+			"Stripe access changed but the local subscription sync is pending",
+		);
+	}
+	return syncPending;
+}
 
 export const adminOrganizationRouter = createTRPCRouter({
 	list: protectedAdminProcedure
@@ -539,6 +581,190 @@ export const adminOrganizationRouter = createTRPCRouter({
 				newBalance: transaction.balanceAfter,
 				transactionId: transaction.id,
 			};
+		}),
+
+	grantSubscriptionAccess: protectedAdminProcedure
+		.input(grantSubscriptionAccessAdminSchema)
+		.mutation(async ({ input, ctx }) => {
+			requireStripeBilling();
+			const [organization, memberCountResult, activePlan] = await Promise.all([
+				db.query.organizationTable.findFirst({
+					where: eq(organizationTable.id, input.organizationId),
+				}),
+				db
+					.select({ count: count() })
+					.from(memberTable)
+					.where(eq(memberTable.organizationId, input.organizationId)),
+				getActivePlanForOrganization(input.organizationId),
+			]);
+
+			if (!organization) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Organization not found",
+				});
+			}
+			if (activePlan) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "This organization already has active billing access.",
+				});
+			}
+
+			try {
+				const subscription = await grantOrganizationTrial({
+					organizationId: organization.id,
+					organizationName: organization.name,
+					memberCount: memberCountResult[0]?.count ?? 0,
+					stripePriceId: input.stripePriceId,
+					trialDays: input.trialDays,
+					requestId: input.requestId,
+				});
+				const syncPending = await syncOrganizationSubscriptionAfterAdminAction(
+					organization.id,
+				);
+
+				logger.info(
+					{
+						adminId: ctx.user.id,
+						organizationId: organization.id,
+						subscriptionId: subscription.id,
+						trialDays: input.trialDays,
+					},
+					"Admin granted temporary subscription access",
+				);
+
+				return {
+					success: true,
+					subscriptionId: subscription.id,
+					trialEnd: subscription.trial_end
+						? new Date(subscription.trial_end * 1000)
+						: null,
+					syncPending,
+				};
+			} catch (error) {
+				handleAdminSubscriptionAccessError(error);
+			}
+		}),
+
+	extendSubscriptionAccess: protectedAdminProcedure
+		.input(extendSubscriptionAccessAdminSchema)
+		.mutation(async ({ input, ctx }) => {
+			requireStripeBilling();
+			const [organization, subscription] = await Promise.all([
+				db.query.organizationTable.findFirst({
+					where: eq(organizationTable.id, input.organizationId),
+				}),
+				db.query.subscriptionTable.findFirst({
+					where: and(
+						eq(subscriptionTable.id, input.subscriptionId),
+						eq(subscriptionTable.organizationId, input.organizationId),
+					),
+				}),
+			]);
+
+			if (!organization) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Organization not found",
+				});
+			}
+			if (!subscription || !organization.stripeCustomerId) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Subscription not found for this organization.",
+				});
+			}
+
+			try {
+				const updated = await extendOrganizationTrial({
+					subscriptionId: subscription.id,
+					stripeCustomerId: organization.stripeCustomerId,
+					additionalDays: input.additionalDays,
+					requestId: input.requestId,
+				});
+				const syncPending = await syncOrganizationSubscriptionAfterAdminAction(
+					organization.id,
+				);
+
+				logger.info(
+					{
+						adminId: ctx.user.id,
+						organizationId: organization.id,
+						subscriptionId: subscription.id,
+						additionalDays: input.additionalDays,
+					},
+					"Admin extended trial access",
+				);
+
+				return {
+					success: true,
+					trialEnd: updated.trial_end
+						? new Date(updated.trial_end * 1000)
+						: null,
+					syncPending,
+				};
+			} catch (error) {
+				handleAdminSubscriptionAccessError(error);
+			}
+		}),
+
+	reactivateSubscriptionAccess: protectedAdminProcedure
+		.input(reactivateSubscriptionAccessAdminSchema)
+		.mutation(async ({ input, ctx }) => {
+			requireStripeBilling();
+			const [organization, subscription] = await Promise.all([
+				db.query.organizationTable.findFirst({
+					where: eq(organizationTable.id, input.organizationId),
+				}),
+				db.query.subscriptionTable.findFirst({
+					where: and(
+						eq(subscriptionTable.id, input.subscriptionId),
+						eq(subscriptionTable.organizationId, input.organizationId),
+					),
+				}),
+			]);
+
+			if (!organization) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Organization not found",
+				});
+			}
+			if (!subscription || !organization.stripeCustomerId) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Subscription not found for this organization.",
+				});
+			}
+
+			try {
+				const updated = await reactivateOrganizationSubscription({
+					subscriptionId: subscription.id,
+					stripeCustomerId: organization.stripeCustomerId,
+					requestId: input.requestId,
+				});
+				const syncPending = await syncOrganizationSubscriptionAfterAdminAction(
+					organization.id,
+				);
+
+				logger.info(
+					{
+						adminId: ctx.user.id,
+						organizationId: organization.id,
+						subscriptionId: subscription.id,
+					},
+					"Admin reactivated subscription access",
+				);
+
+				return {
+					success: true,
+					cancelAtPeriodEnd: updated.cancel_at_period_end,
+					syncPending,
+				};
+			} catch (error) {
+				handleAdminSubscriptionAccessError(error);
+			}
 		}),
 
 	/**
