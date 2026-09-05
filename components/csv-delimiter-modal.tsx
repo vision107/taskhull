@@ -37,7 +37,7 @@ export const CsvDelimiterModal = NiceModal.create<CsvDelimiterModalProps>(
 
 		const handleConfirm = () => {
 			onConfirm(delimiter);
-			void modal.hide();
+			modal.handleClose();
 		};
 
 		return (
@@ -77,11 +77,7 @@ export const CsvDelimiterModal = NiceModal.create<CsvDelimiterModalProps>(
 						</RadioGroup>
 					</div>
 					<DialogFooter>
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => modal.hide()}
-						>
+						<Button type="button" variant="outline" onClick={modal.handleClose}>
 							Cancel
 						</Button>
 						<Button onClick={handleConfirm}>{actionText}</Button>

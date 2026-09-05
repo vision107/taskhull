@@ -39,10 +39,14 @@ export type RegenerateBackupCodesModalProps = NiceModalHocProps;
 
 export const RegenerateBackupCodesModal =
 	NiceModal.create<RegenerateBackupCodesModalProps>(() => {
-		const modal = useEnhancedModal();
 		const requestPendingRef = React.useRef(false);
 		const [backupCodes, setBackupCodes] = React.useState<string[]>([]);
 		const [savedBackupCodes, setSavedBackupCodes] = React.useState(false);
+		const modal = useEnhancedModal({
+			blockHistoryDismiss: () =>
+				requestPendingRef.current ||
+				(backupCodes.length > 0 && !savedBackupCodes),
+		});
 
 		const form = useZodForm({
 			schema: passwordSchema,

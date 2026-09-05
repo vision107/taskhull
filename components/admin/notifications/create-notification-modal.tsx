@@ -73,7 +73,6 @@ export type CreateNotificationModalProps = NiceModalHocProps;
 
 export const CreateNotificationModal =
 	NiceModal.create<CreateNotificationModalProps>(() => {
-		const modal = useEnhancedModal();
 		const [recipientOpen, setRecipientOpen] = React.useState(false);
 		const [recipientSearch, setRecipientSearch] = React.useState("");
 		const [debouncedRecipientSearch, setDebouncedRecipientSearch] =
@@ -81,6 +80,11 @@ export const CreateNotificationModal =
 		const [selectedRecipientLabel, setSelectedRecipientLabel] =
 			React.useState("");
 		const [confirmingBroadcast, setConfirmingBroadcast] = React.useState(false);
+		const operationPendingRef = React.useRef(false);
+		const modal = useEnhancedModal({
+			blockHistoryDismiss: () =>
+				operationPendingRef.current || confirmingBroadcast,
+		});
 		const recipientListId = React.useId();
 		const utils = trpc.useUtils();
 		React.useEffect(() => {
@@ -138,6 +142,9 @@ export const CreateNotificationModal =
 				]);
 			},
 			onError: (error) => toast.error(error.message),
+			onSettled: () => {
+				operationPendingRef.current = false;
+			},
 		});
 		const handleSheetOpenChange = (open: boolean) => {
 			if (!open && (create.isPending || confirmingBroadcast)) return;
@@ -146,6 +153,7 @@ export const CreateNotificationModal =
 
 		const onSubmit = form.handleSubmit((values) => {
 			if (values.target !== "all") {
+				operationPendingRef.current = true;
 				create.mutate(values);
 				return;
 			}
@@ -162,6 +170,7 @@ export const CreateNotificationModal =
 				confirmLabel: "Send broadcast",
 				onConfirm: async () => {
 					try {
+						operationPendingRef.current = true;
 						await create.mutateAsync(values);
 						return true;
 					} catch {

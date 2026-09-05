@@ -29,7 +29,6 @@ import { authClient } from "@/lib/auth/client";
 export type TwoFactorModalProps = NiceModalHocProps;
 
 export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
-	const modal = useEnhancedModal();
 	const { user, reloadSession } = useSession();
 	const actionPendingRef = React.useRef(false);
 
@@ -41,6 +40,11 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 	const [savedBackupCodes, setSavedBackupCodes] = React.useState(false);
 	const [password, setPassword] = React.useState("");
 	const [totpCode, setTotpCode] = React.useState("");
+	const modal = useEnhancedModal({
+		blockHistoryDismiss: () =>
+			actionPendingRef.current ||
+			(view === "backup-codes" && !savedBackupCodes),
+	});
 
 	const totpURISecret = React.useMemo(() => {
 		if (!totpURI) {

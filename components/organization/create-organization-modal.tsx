@@ -75,9 +75,8 @@ export const CreateOrganizationModal =
 				// This is consistent with organization-switcher.tsx and organizations-grid.tsx
 				clearOrganizationScopedQueries(queryClient);
 
+				modal.dismissForNavigation();
 				router.replace("/dashboard/organization");
-
-				modal.handleClose();
 			} catch (e) {
 				logger.error(e);
 				toast.error("Could not save the organization. Please try again later.");

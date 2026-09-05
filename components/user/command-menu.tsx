@@ -121,8 +121,8 @@ export const CommandMenu = NiceModal.create<CommandMenuProps>(() => {
 							<CommandItem
 								key={item.href}
 								onSelect={() => {
+									modal.dismissForNavigation();
 									router.push(item.href);
-									modal.handleClose();
 								}}
 							>
 								<item.icon className="mr-2 size-4 shrink-0 text-muted-foreground" />

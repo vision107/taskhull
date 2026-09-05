@@ -130,7 +130,7 @@ export const NotificationDetailsModal =
 								</code>
 								<Link
 									href={actionUrl}
-									onClick={modal.handleClose}
+									onNavigate={modal.dismissForNavigation}
 									className={cn(
 										buttonVariants({ variant: "outline", size: "sm" }),
 										"mt-3",

@@ -1,7 +1,7 @@
 "use client";
 
 import NiceModal, { type NiceModalHocProps } from "@ebay/nice-modal-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -42,10 +42,13 @@ export const ConfirmationModal = NiceModal.create<ConfirmationModalProps>(
 		requiredText,
 		onConfirm,
 	}) => {
-		const modal = useEnhancedModal();
 		const [textInput, setTextInput] = useState("");
 		const [showError, setShowError] = useState(false);
 		const [isPending, setIsPending] = useState(false);
+		const pendingRef = useRef(false);
+		const modal = useEnhancedModal({
+			blockHistoryDismiss: () => pendingRef.current,
+		});
 
 		const isTextValid = !requiredText || textInput === requiredText;
 
@@ -55,6 +58,7 @@ export const ConfirmationModal = NiceModal.create<ConfirmationModalProps>(
 				setShowError(true);
 				return;
 			}
+			pendingRef.current = true;
 			setIsPending(true);
 			try {
 				const result = await onConfirm();
@@ -65,6 +69,7 @@ export const ConfirmationModal = NiceModal.create<ConfirmationModalProps>(
 				console.error("Confirmation modal action failed", error);
 				toast.error("Something went wrong. Please try again.");
 			} finally {
+				pendingRef.current = false;
 				setIsPending(false);
 			}
 		};
