@@ -1,11 +1,45 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	buildCheckoutBrandingSettings,
+	buildCheckoutIdempotencyKey,
 	buildCheckoutRedirectParams,
 	buildCheckoutResult,
 } from "@/lib/billing/checkout";
 
 describe("Stripe Checkout mode", () => {
+	it("matches embedded Checkout branding to light and dark themes", () => {
+		expect(buildCheckoutBrandingSettings("light")).toMatchObject({
+			background_color: "#ffffff",
+			button_color: "#18181b",
+		});
+		expect(buildCheckoutBrandingSettings("dark")).toMatchObject({
+			background_color: "#18181b",
+			button_color: "#fafafa",
+		});
+	});
+
+	it("isolates idempotent sessions by mode, theme and quantity", () => {
+		const base = {
+			organizationId: "org_123",
+			stripePriceId: "price_123",
+			quantity: 1,
+			checkoutMode: "hosted" as const,
+			timestamp: 60_000,
+		};
+		const hostedLight = buildCheckoutIdempotencyKey(base);
+
+		expect(
+			buildCheckoutIdempotencyKey({ ...base, checkoutMode: "embedded" }),
+		).not.toBe(hostedLight);
+		expect(
+			buildCheckoutIdempotencyKey({ ...base, colorScheme: "dark" }),
+		).not.toBe(hostedLight);
+		expect(buildCheckoutIdempotencyKey({ ...base, quantity: 2 })).not.toBe(
+			hostedLight,
+		);
+	});
+
 	it("uses a return URL without hosted redirect URLs for embedded checkout", () => {
 		expect(
 			buildCheckoutRedirectParams(

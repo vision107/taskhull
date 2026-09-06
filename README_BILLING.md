@@ -19,15 +19,21 @@ STRIPE_SECRET_KEY="sk_test_xxxxx"
 STRIPE_WEBHOOK_SECRET="whsec_xxxxx"
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_xxxxx"
 
-# Keep customers in the app with Stripe's embedded Checkout (recommended),
-# or use "hosted" to redirect to Stripe's hosted Checkout page.
-STRIPE_CHECKOUT_MODE="embedded"
+# Stripe-hosted Checkout is the recommended default.
+# Use "embedded" only when an in-app modal is preferable for your product.
+STRIPE_CHECKOUT_MODE="hosted"
 ```
 
 Embedded and hosted Checkout use the same server-side price validation,
 organization authorization, idempotency and webhook fulfillment. Changing the
 mode does not change which system is authoritative: always grant access from
 verified Stripe webhook events, never from the browser return page alone.
+
+Hosted Checkout generally provides the clearest experience across desktop,
+mobile, light and dark application themes. Embedded Checkout is available for
+products that prioritize keeping customers in the app, but its tall payment
+form can require scrolling inside the modal. Embedded sessions follow the
+active application theme through Stripe's supported session branding settings.
 
 ### 2. Create Products & Prices
 
@@ -142,6 +148,25 @@ This forwards Stripe events to `http://localhost:3000/api/webhooks/stripe`.
    - `charge.dispute.funds_withdrawn`
    - `charge.dispute.funds_reinstated`
 4. Copy the webhook signing secret to `STRIPE_WEBHOOK_SECRET`
+
+---
+
+## Plan Selection Experience
+
+The public pricing table and authenticated plan picker share the same
+`billingConfig` source while serving different jobs:
+
+- `PricingTable` presents plans for marketing pages, including monthly
+  equivalents, actual annual charges, per-member pricing and structured limits.
+- `PlanPicker` requires an explicit plan selection before Checkout. It shows
+  trial terms, billing cadence, limits and enabled entitlements in one review
+  step.
+- Existing subscribers receive a Stripe proration preview before confirming a
+  plan or interval change. Users cannot submit the current price again, and
+  subscriptions scheduled for cancellation must be reactivated first.
+
+Keep limits and entitlements structured in `config/billing.config.ts`. Avoid
+encoding authorization decisions in feature-description strings.
 
 ---
 

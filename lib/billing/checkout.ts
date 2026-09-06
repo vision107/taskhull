@@ -3,7 +3,7 @@ import type Stripe from "stripe";
 
 import { creditPackages } from "@/config/billing.config";
 import { getPriceByStripePriceId } from "@/lib/billing/plans";
-import type { CheckoutResult } from "@/lib/billing/types";
+import type { CheckoutColorScheme, CheckoutResult } from "@/lib/billing/types";
 import { env } from "@/lib/env";
 
 import { buildCheckoutMetadata } from "./checkout-metadata";
@@ -12,6 +12,45 @@ import { getStripe } from "./stripe";
 import type { CreateCheckoutParams } from "./types";
 
 export type StripeCheckoutMode = "embedded" | "hosted";
+
+export function buildCheckoutBrandingSettings(
+	colorScheme: CheckoutColorScheme = "light",
+): Stripe.Checkout.SessionCreateParams.BrandingSettings {
+	return colorScheme === "dark"
+		? {
+				background_color: "#18181b",
+				button_color: "#fafafa",
+				border_style: "rounded",
+				font_family: "inter",
+			}
+		: {
+				background_color: "#ffffff",
+				button_color: "#18181b",
+				border_style: "rounded",
+				font_family: "inter",
+			};
+}
+
+export function buildCheckoutIdempotencyKey({
+	organizationId,
+	stripePriceId,
+	quantity,
+	checkoutMode,
+	colorScheme = "light",
+	timestamp = Date.now(),
+}: {
+	organizationId: string;
+	stripePriceId: string;
+	quantity: number;
+	checkoutMode: StripeCheckoutMode;
+	colorScheme?: CheckoutColorScheme;
+	timestamp?: number;
+}): string {
+	const IDEMPOTENCY_WINDOW_MS = 60 * 1000;
+	const window = Math.floor(timestamp / IDEMPOTENCY_WINDOW_MS);
+
+	return `checkout-${organizationId}-${stripePriceId}-${quantity}-${checkoutMode}-${colorScheme}-${window}`;
+}
 
 export function buildCheckoutRedirectParams(
 	checkoutMode: StripeCheckoutMode,
@@ -82,6 +121,7 @@ export async function createCheckoutSession(
 		email,
 		quantity = 1,
 		trialDays,
+		colorScheme,
 		metadata = {},
 	} = params;
 
@@ -152,6 +192,7 @@ export async function createCheckoutSession(
 		mode,
 		line_items: lineItems,
 		...redirectParams,
+		branding_settings: buildCheckoutBrandingSettings(colorScheme),
 		metadata: buildCheckoutMetadata({
 			organizationId,
 			planId: plan.id,
@@ -207,9 +248,13 @@ export async function createCheckoutSession(
 
 	// Generate idempotency key to prevent duplicate checkout sessions on retry
 	// Uses organizationId + priceId + timestamp (rounded to minute) for uniqueness
-	const IDEMPOTENCY_WINDOW_MS = 60 * 1000; // 1 minute
-	const idempotencyTimestamp = Math.floor(Date.now() / IDEMPOTENCY_WINDOW_MS);
-	const idempotencyKey = `checkout-${organizationId}-${stripePriceId}-${idempotencyTimestamp}`;
+	const idempotencyKey = buildCheckoutIdempotencyKey({
+		organizationId,
+		stripePriceId,
+		quantity,
+		checkoutMode,
+		colorScheme,
+	});
 
 	const session = await stripe.checkout.sessions.create(sessionParams, {
 		idempotencyKey,

@@ -2,6 +2,7 @@
 
 import NiceModal, { type NiceModalHocProps } from "@ebay/nice-modal-react";
 import { AlertCircleIcon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -26,6 +27,7 @@ export type PurchaseCreditsModalProps = NiceModalHocProps;
 export const PurchaseCreditsModal = NiceModal.create<PurchaseCreditsModalProps>(
 	() => {
 		const modal = useEnhancedModal();
+		const { resolvedTheme } = useTheme();
 		const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
 
 		const {
@@ -49,7 +51,10 @@ export const PurchaseCreditsModal = NiceModal.create<PurchaseCreditsModalProps>(
 
 		const handlePurchase = (packageId: string) => {
 			setSelectedPackage(packageId);
-			purchaseMutation.mutate({ packageId });
+			purchaseMutation.mutate({
+				packageId,
+				colorScheme: resolvedTheme === "dark" ? "dark" : "light",
+			});
 		};
 
 		return (

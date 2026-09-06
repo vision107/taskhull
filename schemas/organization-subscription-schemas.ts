@@ -33,6 +33,7 @@ export const listInvoicesSchema = z.object({
 export const createCheckoutSchema = z.object({
 	priceId: z.string().min(1, "Price ID is required"),
 	quantity: z.number().min(1).default(1),
+	colorScheme: z.enum(["light", "dark"]).default("light"),
 	successUrl: paymentRedirectUrlSchema.optional(),
 	cancelUrl: paymentRedirectUrlSchema.optional(),
 });

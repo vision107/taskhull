@@ -440,6 +440,7 @@ export const organizationSubscriptionRouter = createTRPCRouter({
 				stripePriceId: input.priceId,
 				stripeCustomerId: customer.id,
 				quantity: checkoutQuantity,
+				colorScheme: input.colorScheme,
 				successUrl,
 				cancelUrl,
 				trialDays,
@@ -660,6 +661,7 @@ export const organizationSubscriptionRouter = createTRPCRouter({
 							intervalCount:
 								"intervalCount" in price ? price.intervalCount : null,
 							trialDays: "trialDays" in price ? price.trialDays : null,
+							seatBased: "seatBased" in price ? price.seatBased : false,
 						}))
 					: [],
 		}));

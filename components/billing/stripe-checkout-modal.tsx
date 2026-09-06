@@ -34,8 +34,8 @@ export const StripeCheckoutModal = NiceModal.create<StripeCheckoutModalProps>(
 				onOpenChange={modal.handleOpenChange}
 				onOpenChangeComplete={modal.handleOpenChangeComplete}
 			>
-				<DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white p-0 text-neutral-950 sm:max-w-3xl">
-					<DialogHeader className="border-b px-5 py-4 pr-12">
+				<DialogContent className="max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-[34rem] gap-0 overflow-hidden p-0 sm:max-w-[34rem]">
+					<DialogHeader className="border-b px-5 py-4 pr-12 text-left">
 						<DialogTitle>Secure checkout</DialogTitle>
 						<DialogDescription>
 							Complete your purchase securely with Stripe.
@@ -43,7 +43,7 @@ export const StripeCheckoutModal = NiceModal.create<StripeCheckoutModalProps>(
 					</DialogHeader>
 
 					{stripePromise ? (
-						<div className="min-h-96 px-2 py-4 sm:px-4">
+						<div className="min-h-0 overflow-y-auto overscroll-contain bg-background px-1 py-3 sm:px-2">
 							<EmbeddedCheckoutProvider
 								stripe={stripePromise}
 								options={{ clientSecret }}

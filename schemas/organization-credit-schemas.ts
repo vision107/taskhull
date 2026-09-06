@@ -9,6 +9,7 @@ export const getOrganizationCreditTransactionsSchema = z.object({
 // Purchase credit package
 export const purchaseOrganizationCreditSchema = z.object({
 	packageId: z.string().min(1, "Package ID is required"),
+	colorScheme: z.enum(["light", "dark"]).default("light"),
 });
 
 // Type exports

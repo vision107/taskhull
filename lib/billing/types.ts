@@ -94,9 +94,13 @@ export interface CreateCheckoutParams {
 	quantity?: number;
 	// Optional: trial period in days
 	trialDays?: number;
+	// Match Stripe Checkout branding to the active application theme.
+	colorScheme?: CheckoutColorScheme;
 	// Optional: metadata
 	metadata?: Record<string, string>;
 }
+
+export type CheckoutColorScheme = "light" | "dark";
 
 export type CheckoutResult =
 	| {
@@ -178,6 +182,7 @@ export interface PriceDisplay {
 	interval?: "month" | "year" | "week" | "day" | null;
 	intervalCount?: number | null;
 	trialDays?: number | null;
+	seatBased?: boolean;
 }
 
 /**
@@ -189,6 +194,7 @@ export interface PlanDisplay {
 	description: string;
 	features: string[];
 	entitlements: Record<string, boolean>;
+	limits?: Record<string, number> | null;
 	prices: PriceDisplay[]; // Required - use empty array for free/enterprise plans
 	isFree?: boolean;
 	isEnterprise?: boolean;

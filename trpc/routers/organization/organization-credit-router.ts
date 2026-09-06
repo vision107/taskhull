@@ -124,6 +124,7 @@ export const organizationCreditRouter = createTRPCRouter({
 				stripePriceId: pkg.stripePriceId,
 				stripeCustomerId: customer.id,
 				quantity: 1,
+				colorScheme: input.colorScheme,
 				successUrl: `${baseUrl}/dashboard/billing/return?session_id={CHECKOUT_SESSION_ID}&destination=credits`,
 				cancelUrl: `${baseUrl}/dashboard/organization/settings?tab=credits&canceled=true`,
 				metadata: {
