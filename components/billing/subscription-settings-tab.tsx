@@ -9,15 +9,18 @@ import {
 	FileText,
 	RefreshCw,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
+import { ChangePlanModal } from "@/components/billing/change-plan-modal";
+import { PlanPicker } from "@/components/billing/plan-picker";
 import { presentCheckout } from "@/components/billing/present-checkout";
-import { PricingTable } from "@/components/billing/pricing-table";
 import { SubscriptionStatusBadge } from "@/components/billing/subscription-status-badge";
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
 	Card,
@@ -28,6 +31,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getMonthlyEquivalent } from "@/lib/billing/plan-presentation";
 import { formatCurrency } from "@/lib/billing/utils";
 import { trpc } from "@/trpc/client";
 
@@ -36,9 +40,12 @@ interface SubscriptionSettingsTabProps {
 	isAdmin: boolean;
 }
 
+const RECURRING_PAYMENT_TYPES = ["recurring"] as const;
+
 export function SubscriptionSettingsTab({
 	isAdmin,
 }: SubscriptionSettingsTabProps) {
+	const { resolvedTheme } = useTheme();
 	const searchParams = useSearchParams();
 	const hasShownFeedback = useRef(false);
 
@@ -134,8 +141,6 @@ export function SubscriptionSettingsTab({
 			},
 		});
 
-	const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
-
 	const {
 		data: plansData,
 		isLoading: plansLoading,
@@ -145,20 +150,25 @@ export function SubscriptionSettingsTab({
 	const createCheckout =
 		trpc.organization.subscription.createCheckout.useMutation({
 			onSuccess: (data) => {
-				setLoadingPriceId(null);
 				void presentCheckout(data);
 			},
 			onError: (error) => {
 				toast.error(error.message);
-				setLoadingPriceId(null);
 			},
 		});
 
 	const handleSelectPlan = (priceId: string) => {
 		if (!isAdmin) return;
 
-		setLoadingPriceId(priceId);
-		createCheckout.mutate({ priceId });
+		if (billingStatus?.activePlan?.planId === "free") {
+			createCheckout.mutate({
+				priceId,
+				colorScheme: resolvedTheme === "dark" ? "dark" : "light",
+			});
+			return;
+		}
+
+		void NiceModal.show(ChangePlanModal, { newPriceId: priceId });
 	};
 
 	if (statusLoading || plansLoading) {
@@ -200,15 +210,25 @@ export function SubscriptionSettingsTab({
 	const plans = plansData?.plans ?? [];
 
 	const isFreePlan = activePlan?.planId === "free";
+	const activePriceId =
+		activePlan && "stripePriceId" in activePlan
+			? activePlan.stripePriceId
+			: null;
+	const activePrice = plans
+		.flatMap((plan) => plan.prices)
+		.find((price) => price.stripePriceId === activePriceId);
+	const activeMonthlyEquivalent = activePrice
+		? getMonthlyEquivalent(activePrice)
+		: null;
 	const isCanceling = subscription?.cancelAtPeriodEnd;
 
 	return (
 		<div className="space-y-6">
 			{/* Current Plan Card */}
-			<Card>
-				<CardHeader>
-					<div className="flex items-center justify-between">
-						<div>
+			<Card className="overflow-hidden">
+				<CardHeader className="border-b">
+					<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+						<div className="space-y-1">
 							<CardTitle>Current Plan</CardTitle>
 							<CardDescription>
 								{isAdmin
@@ -216,23 +236,36 @@ export function SubscriptionSettingsTab({
 									: "Only organization owners and admins can manage billing"}
 							</CardDescription>
 						</div>
-						{subscription && (
-							<SubscriptionStatusBadge status={subscription.status} />
-						)}
+						<div className="flex flex-wrap items-center gap-2">
+							{subscription ? (
+								<SubscriptionStatusBadge status={subscription.status} />
+							) : (
+								<Badge variant="secondary">Active</Badge>
+							)}
+							{!isFreePlan && !activePlan?.isLifetime && (
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => createPortalSession.mutate({})}
+									loading={createPortalSession.isPending}
+									disabled={!isAdmin}
+								>
+									Manage Billing
+								</Button>
+							)}
+						</div>
 					</div>
 				</CardHeader>
-				<CardContent className="space-y-4">
+				<CardContent className="space-y-6 pt-6">
 					{/* Plan Info */}
-					<div className="flex items-center justify-between rounded-lg border p-4">
-						<div>
+					<div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+						<div className="space-y-2">
 							<div className="flex items-center gap-2">
-								<h3 className="text-lg font-semibold">
+								<h3 className="text-2xl font-semibold tracking-tight">
 									{activePlan?.planName}
 								</h3>
 								{activePlan?.isLifetime && (
-									<span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
-										Lifetime
-									</span>
+									<Badge variant="outline">Lifetime</Badge>
 								)}
 							</div>
 							{isFreePlan && (
@@ -254,16 +287,34 @@ export function SubscriptionSettingsTab({
 									</p>
 								)}
 						</div>
-						{!isFreePlan && !activePlan?.isLifetime && (
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => createPortalSession.mutate({})}
-								loading={createPortalSession.isPending}
-								disabled={!isAdmin}
-							>
-								Manage Billing
-							</Button>
+
+						{(isFreePlan || activePrice) && (
+							<div className="shrink-0 sm:text-right">
+								<p className="text-2xl font-semibold tracking-tight">
+									{formatCurrency(
+										activePrice
+											? (activeMonthlyEquivalent ?? activePrice.amount)
+											: 0,
+										activePrice?.currency ?? "usd",
+									)}
+									<span className="ml-1 text-sm font-normal text-muted-foreground">
+										{activePrice?.type === "one_time"
+											? "once"
+											: activePrice?.seatBased
+												? "/member/month"
+												: "/month"}
+									</span>
+								</p>
+								<p className="mt-1 text-xs text-muted-foreground">
+									{isFreePlan
+										? "No payment method required"
+										: activePrice?.type === "one_time"
+											? "Paid once"
+											: activePrice?.interval === "year"
+												? `${formatCurrency(activePrice.amount, activePrice.currency)} billed yearly`
+												: "Billed monthly"}
+								</p>
+							</div>
 						)}
 					</div>
 
@@ -294,12 +345,15 @@ export function SubscriptionSettingsTab({
 
 					{/* Features */}
 					{activePlan?.features && activePlan.features.length > 0 && (
-						<div>
-							<h4 className="mb-2 text-sm font-medium">Included features</h4>
-							<ul className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
+						<div className="border-t border-dashed pt-5">
+							<h4 className="mb-3 text-sm font-medium">Included features</h4>
+							<ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
 								{activePlan.features.map((feature) => (
-									<li key={feature} className="flex items-center gap-2 text-sm">
-										<Check className="h-4 w-4 shrink-0" />
+									<li
+										key={feature}
+										className="flex items-center gap-2 text-sm text-muted-foreground"
+									>
+										<Check className="h-4 w-4 shrink-0 text-foreground" />
 										{feature}
 									</li>
 								))}
@@ -333,13 +387,16 @@ export function SubscriptionSettingsTab({
 				)}
 			</Card>
 
-			{/* Upgrade Plan Section - Only for Free Plans */}
-			{isFreePlan && (
+			{/* Plan selection and changes */}
+			{!activePlan?.isLifetime && (
 				<div className="space-y-4">
 					<div>
-						<h3 className="text-lg font-semibold">Upgrade Your Plan</h3>
+						<h3 className="text-lg font-semibold">
+							{isFreePlan ? "Upgrade your plan" : "Change plan"}
+						</h3>
 						<p className="text-sm text-muted-foreground">
-							Choose a plan that fits your needs
+							Compare billing intervals and review the exact price before
+							continuing.
 						</p>
 					</div>
 
@@ -352,15 +409,19 @@ export function SubscriptionSettingsTab({
 						</Alert>
 					)}
 
-					<PricingTable
+					<PlanPicker
 						plans={plans}
-						currentPlanId={activePlan?.planId}
-						onSelectPlan={isAdmin ? handleSelectPlan : undefined}
-						selectionDisabled={!isAdmin}
-						loadingPriceId={loadingPriceId}
-						showFreePlans={false}
-						showEnterprisePlans={true}
-						className="w-full"
+						currentPriceId={activePriceId}
+						canStartTrial={isFreePlan}
+						allowedPaymentTypes={
+							isFreePlan ? undefined : RECURRING_PAYMENT_TYPES
+						}
+						disabled={!isAdmin || Boolean(isCanceling)}
+						pending={createCheckout.isPending}
+						onSubmit={handleSelectPlan}
+						submitLabel={
+							isFreePlan ? "Continue to checkout" : "Review plan change"
+						}
 					/>
 				</div>
 			)}
