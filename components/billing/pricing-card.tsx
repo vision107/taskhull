@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { appConfig } from "@/config/app.config";
 import { billingConfig } from "@/config/billing.config";
+import { getMonthlyEquivalent } from "@/lib/billing/plan-presentation";
 import type { PlanDisplay } from "@/lib/billing/types";
 import { formatCurrency, formatInterval } from "@/lib/billing/utils";
 import { cn } from "@/lib/utils";
@@ -54,18 +55,28 @@ export function PricingCard({
 			return <p className="mt-1 text-base leading-7 text-foreground">Custom</p>;
 		}
 		if (selectedPrice) {
+			const monthlyEquivalent = getMonthlyEquivalent(selectedPrice);
 			return (
 				<div className="mt-1 flex flex-col">
 					<p className="inline-flex items-baseline gap-1 text-base leading-7">
 						<span className="text-foreground">
-							{formatCurrency(selectedPrice.amount, selectedPrice.currency)}
+							{formatCurrency(
+								monthlyEquivalent ?? selectedPrice.amount,
+								selectedPrice.currency,
+							)}
 						</span>
 						<span className="text-muted-foreground">
-							{selectedPrice.type === "recurring"
-								? formatInterval(selectedPrice.interval)
-								: "one-time"}
+							{selectedPrice.seatBased ? "/member" : ""}
+							{selectedPrice.type === "recurring" ? "/mo" : " one-time"}
 						</span>
 					</p>
+					{selectedPrice.type === "recurring" &&
+						selectedPrice.interval === "year" && (
+							<p className="text-xs text-muted-foreground">
+								{formatCurrency(selectedPrice.amount, selectedPrice.currency)}{" "}
+								billed yearly
+							</p>
+						)}
 				</div>
 			);
 		}

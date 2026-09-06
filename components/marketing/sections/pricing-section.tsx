@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { appConfig } from "@/config/app.config";
 import { billingConfig } from "@/config/billing.config";
+import { getMonthlyEquivalent } from "@/lib/billing/plan-presentation";
 import type { PlanDisplay } from "@/lib/billing/types";
 import {
 	calculateYearlySavingsPercent,
@@ -60,18 +61,28 @@ function PricingCard({
 			);
 		}
 		if (selectedPrice) {
+			const monthlyEquivalent = getMonthlyEquivalent(selectedPrice);
 			return (
 				<div className="mt-1 flex flex-col">
 					<p className="inline-flex items-baseline gap-1 text-base leading-7">
 						<span className="text-marketing-fg">
-							{formatCurrency(selectedPrice.amount, selectedPrice.currency)}
+							{formatCurrency(
+								monthlyEquivalent ?? selectedPrice.amount,
+								selectedPrice.currency,
+							)}
 						</span>
 						<span className="text-marketing-fg-subtle">
-							{selectedPrice.type === "recurring"
-								? formatInterval(selectedPrice.interval)
-								: "one-time"}
+							{selectedPrice.seatBased ? "/member" : ""}
+							{selectedPrice.type === "recurring" ? "/mo" : " one-time"}
 						</span>
 					</p>
+					{selectedPrice.type === "recurring" &&
+						selectedPrice.interval === "year" && (
+							<p className="text-xs text-marketing-fg-subtle">
+								{formatCurrency(selectedPrice.amount, selectedPrice.currency)}{" "}
+								billed yearly
+							</p>
+						)}
 				</div>
 			);
 		}

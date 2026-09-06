@@ -23,6 +23,7 @@ export function getPlansForPricingTable() {
 						intervalCount:
 							"intervalCount" in price ? price.intervalCount : null,
 						trialDays: "trialDays" in price ? price.trialDays : null,
+						seatBased: "seatBased" in price ? price.seatBased : false,
 					}))
 				: [];
 
@@ -32,6 +33,7 @@ export function getPlansForPricingTable() {
 			description: plan.description,
 			features: plan.features,
 			entitlements: plan.entitlements,
+			limits: plan.limits ?? null,
 			prices,
 			isFree: "isFree" in plan ? Boolean(plan.isFree) : false,
 			isEnterprise: "isEnterprise" in plan ? Boolean(plan.isEnterprise) : false,

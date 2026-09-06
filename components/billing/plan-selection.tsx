@@ -1,16 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useTheme } from "next-themes";
+import { useMemo } from "react";
 import { toast } from "sonner";
 
+import { PlanPicker } from "@/components/billing/plan-picker";
 import { presentCheckout } from "@/components/billing/present-checkout";
-import { PricingTable } from "@/components/billing/pricing-table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { appConfig } from "@/config/app.config";
-import {
-	calculateYearlySavingsPercent,
-	getPlansForPricingTable,
-} from "@/lib/billing/utils";
+import { getPlansForPricingTable } from "@/lib/billing/utils";
 import { trpc } from "@/trpc/client";
 
 interface PlanSelectionProps {
@@ -26,24 +24,16 @@ export function PlanSelection({
 	className,
 	canManageBilling,
 }: PlanSelectionProps) {
-	const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
-
+	const { resolvedTheme } = useTheme();
 	// Memoize static config-based computations
 	const plans = useMemo(() => getPlansForPricingTable(), []);
-	const yearlySavingsPercent = useMemo(
-		() => calculateYearlySavingsPercent(),
-		[],
-	);
-
 	const createCheckout =
 		trpc.organization.subscription.createCheckout.useMutation({
 			onSuccess: (data) => {
-				setLoadingPriceId(null);
 				void presentCheckout(data);
 			},
 			onError: (error) => {
 				toast.error(error.message || "Failed to create checkout session");
-				setLoadingPriceId(null);
 			},
 		});
 
@@ -53,13 +43,13 @@ export function PlanSelection({
 		}
 
 		// Prevent double-clicks
-		if (createCheckout.isPending || loadingPriceId) {
+		if (createCheckout.isPending) {
 			return;
 		}
 
-		setLoadingPriceId(stripePriceId);
 		createCheckout.mutate({
 			priceId: stripePriceId,
+			colorScheme: resolvedTheme === "dark" ? "dark" : "light",
 			successUrl: `${appConfig.baseUrl}/dashboard/billing/return?session_id={CHECKOUT_SESSION_ID}`,
 			cancelUrl: `${appConfig.baseUrl}/dashboard/choose-plan?checkout=cancelled`,
 		});
@@ -76,15 +66,11 @@ export function PlanSelection({
 					</AlertDescription>
 				</Alert>
 			)}
-			<PricingTable
+			<PlanPicker
 				plans={plans}
-				onSelectPlan={canManageBilling ? handleSelectPlan : undefined}
-				selectionDisabled={!canManageBilling}
-				loadingPriceId={loadingPriceId}
-				showFreePlans={false}
-				showEnterprisePlans={true}
-				yearlySavingsPercent={yearlySavingsPercent}
-				enterpriseContactEmail={appConfig.contact.email}
+				disabled={!canManageBilling}
+				pending={createCheckout.isPending}
+				onSubmit={handleSelectPlan}
 			/>
 		</div>
 	);
