@@ -17,9 +17,13 @@ import { trpc } from "@/trpc/client";
 
 export function ConnectedAccountsCard(): React.JSX.Element {
 	const { data, isPending } = trpc.user.getAccounts.useQuery();
+	const utils = trpc.useUtils();
+
+	const getProviderAccount = (provider: OAuthProvider) =>
+		data?.find((account) => account.providerId === provider);
 
 	const isProviderLinked = (provider: OAuthProvider) =>
-		data?.some((account) => account.providerId === provider);
+		Boolean(getProviderAccount(provider));
 
 	const connect = (provider: OAuthProvider) => {
 		const callbackURL = window.location.href;
@@ -31,11 +35,16 @@ export function ConnectedAccountsCard(): React.JSX.Element {
 		}
 	};
 
-	const disconnect = (provider: OAuthProvider) => {
-		if (isProviderLinked(provider)) {
-			void authClient.unlinkAccount({
-				providerId: provider,
+	const disconnect = async (provider: OAuthProvider) => {
+		const account = getProviderAccount(provider);
+		if (account) {
+			const { error } = await authClient.unlinkAccount({
+				accountId: account.id,
 			});
+
+			if (!error) {
+				await utils.user.getAccounts.invalidate();
+			}
 		}
 	};
 
@@ -72,7 +81,7 @@ export function ConnectedAccountsCard(): React.JSX.Element {
 										disabled={isLinked && isLastAccount}
 										onClick={() =>
 											isLinked
-												? disconnect(provider as OAuthProvider)
+												? void disconnect(provider as OAuthProvider)
 												: connect(provider as OAuthProvider)
 										}
 									>

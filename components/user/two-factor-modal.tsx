@@ -60,10 +60,14 @@ export const TwoFactorModal = NiceModal.create<TwoFactorModalProps>(() => {
 		mutationFn: async () => {
 			const { data, error } = await authClient.twoFactor.enable({
 				password,
+				method: "totp",
 			});
 
 			if (error) {
 				throw error;
+			}
+			if (data.method !== "totp") {
+				throw new Error("Unexpected two-factor authentication method");
 			}
 
 			setTotpURI(data.totpURI);
