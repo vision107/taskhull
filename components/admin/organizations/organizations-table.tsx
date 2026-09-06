@@ -662,6 +662,7 @@ export function OrganizationsTable(): React.JSX.Element {
 							<DropdownMenuTrigger asChild>
 								<Button
 									className="flex size-8 text-muted-foreground data-popup-open:bg-muted"
+									id={`organization-actions-${id}`}
 									size="icon"
 									variant="ghost"
 								>

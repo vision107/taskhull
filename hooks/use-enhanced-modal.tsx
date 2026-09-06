@@ -290,20 +290,53 @@ export function useEnhancedModal(
 				document.activeElement instanceof HTMLElement
 					? document.activeElement
 					: null;
-			let fallback: number | undefined;
+			const focusTargetId = focusTarget?.id;
+			const focusTargetTagName = focusTarget?.tagName.toLowerCase();
+			const focusTargetIdentity =
+				focusTarget?.getAttribute("aria-label") ?? focusTarget?.textContent;
+			const getMatchingFocusTargets = (): HTMLElement[] =>
+				focusTargetTagName
+					? Array.from(
+							document.querySelectorAll<HTMLElement>(focusTargetTagName),
+						).filter(
+							(element) =>
+								(element.getAttribute("aria-label") ?? element.textContent) ===
+								focusTargetIdentity,
+						)
+					: [];
+			const focusTargetIndex = focusTarget
+				? getMatchingFocusTargets().indexOf(focusTarget)
+				: -1;
 			const restoreFocus = (): void => {
-				window.removeEventListener("popstate", restoreFocus);
-				if (fallback !== undefined) {
-					window.clearTimeout(fallback);
-				}
-				if (focusTarget?.isConnected) {
-					focusTarget.focus({ preventScroll: true });
+				const activeElement = document.activeElement;
+				const focusWasLost =
+					activeElement === null ||
+					activeElement === document.body ||
+					activeElement === document.documentElement;
+				// A same-URL history traversal can replace the trigger's DOM node.
+				const connectedFocusTarget = focusTarget?.isConnected
+					? focusTarget
+					: focusTargetId
+						? document.getElementById(focusTargetId)
+						: focusTargetTagName && focusTargetIndex >= 0
+							? getMatchingFocusTargets()[focusTargetIndex]
+							: null;
+				if (focusWasLost && connectedFocusTarget instanceof HTMLElement) {
+					connectedFocusTarget.focus({ preventScroll: true });
 				}
 			};
+			const restoreFocusAfterPopState = (): void => {
+				window.requestAnimationFrame(restoreFocus);
+			};
 
-			window.addEventListener("popstate", restoreFocus);
+			window.addEventListener("popstate", restoreFocusAfterPopState, {
+				once: true,
+			});
 			window.history.back();
-			fallback = window.setTimeout(restoreFocus, 250);
+			window.setTimeout(() => {
+				window.removeEventListener("popstate", restoreFocusAfterPopState);
+				restoreFocus();
+			}, 250);
 		}, 100);
 	}, []);
 

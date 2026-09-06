@@ -16,6 +16,12 @@ async function signIn(page: Page, email: string) {
 	await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
 }
 
+async function waitForModalHistoryRelease(page: Page) {
+	await page.waitForFunction(
+		() => !window.history.state?.niceModalHistoryToken,
+	);
+}
+
 function totp(secret: string) {
 	const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 	let bits = "";
@@ -58,6 +64,7 @@ test("owner can navigate account and organization surfaces", async ({
 	).toBeVisible();
 	await createOrganizationDialog.getByRole("button", { name: "Close" }).click();
 	await expect(createOrganizationDialog).toBeHidden();
+	await waitForModalHistoryRelease(page);
 	await page.getByRole("button", { name: /E2E Owner/ }).click();
 	await page.getByRole("menuitem", { name: /Command Menu/ }).click();
 	const commandDialog = page.getByRole("dialog", { name: "Command Palette" });
@@ -86,6 +93,7 @@ test("owner can navigate account and organization surfaces", async ({
 	await expect(commandDialog).toBeVisible();
 	await page.keyboard.press("Escape");
 	await expect(commandDialog).toBeHidden();
+	await waitForModalHistoryRelease(page);
 	await page.goto("/dashboard");
 	await page.getByRole("button", { name: /Personal/ }).click();
 	const organizationSearch = page.getByPlaceholder("Search...");
@@ -123,6 +131,7 @@ test("owner can navigate account and organization surfaces", async ({
 	await expect(sourceSelect).toContainText("Referral");
 	await leadSheet.getByRole("button", { name: "Close" }).click();
 	await expect(leadSheet).toBeHidden();
+	await waitForModalHistoryRelease(page);
 	for (const path of ["leads", "settings", "chatbot"]) {
 		await page.goto(`/dashboard/organization/${path}`);
 		await expect(page).not.toHaveURL(/auth\/sign-in/);
@@ -226,6 +235,8 @@ test("AI chat enforces organization credits", async ({ page }) => {
 });
 
 test("administrator can access every admin surface", async ({ page }) => {
+	test.setTimeout(60_000);
+
 	// The preceding scenarios use all three credential sign-in attempts allowed
 	// in Better Auth's short protection window.
 	await page.waitForTimeout(10_500);
@@ -256,6 +267,7 @@ test("administrator can access every admin surface", async ({ page }) => {
 	await expect(page.locator('[data-slot="calendar"]')).toBeHidden();
 	await banDialog.getByRole("button", { name: "Cancel" }).click();
 	await expect(banDialog).toBeHidden();
+	await waitForModalHistoryRelease(page);
 
 	await ownerRow.getByRole("checkbox", { name: "Select row" }).click();
 	await expect(page.getByText("1 selected", { exact: true })).toBeVisible();
@@ -270,6 +282,7 @@ test("administrator can access every admin surface", async ({ page }) => {
 	await expect(semicolonOption).toBeChecked();
 	await exportDialog.getByRole("button", { name: "Cancel" }).click();
 	await expect(exportDialog).toBeHidden();
+	await waitForModalHistoryRelease(page);
 
 	await page.goto("/dashboard/admin/organizations");
 	const organizationRow = page
@@ -286,6 +299,7 @@ test("administrator can access every admin surface", async ({ page }) => {
 	await expect(deleteOrganizationDialog).toBeVisible();
 	await page.keyboard.press("Escape");
 	await expect(deleteOrganizationDialog).toBeHidden();
+	await waitForModalHistoryRelease(page);
 	await expect(organizationMenuTrigger).toBeFocused();
 });
 
