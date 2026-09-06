@@ -6,6 +6,18 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-09-06
+
+### Changed
+
+- Upgraded Better Auth and the passkey plugin to 1.7.3 and Base UI to 1.8.0.
+- Updated connected-account unlinking and TOTP enrollment for the Better Auth 1.7 APIs.
+- Refreshed connected-account state immediately after an account is unlinked.
+
+### Fixed
+
+- Preserved focus through same-page modal history cleanup after a dialog closes.
+
 ## [2.6.0] - 2026-09-06
 
 ### Added
@@ -152,7 +164,9 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial release of the Achromatic Pro Next.js Drizzle starter kit.
 
-[Unreleased]: https://github.com/achromaticlabs/pro-nextjs-drizzle/compare/v2.5.0...HEAD
+[Unreleased]: https://github.com/achromaticlabs/pro-nextjs-drizzle/compare/v2.7.0...HEAD
+[2.7.0]: https://github.com/achromaticlabs/pro-nextjs-drizzle/compare/v2.6.0...v2.7.0
+[2.6.0]: https://github.com/achromaticlabs/pro-nextjs-drizzle/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/achromaticlabs/pro-nextjs-drizzle/compare/v2.4.1...v2.5.0
 [2.4.1]: https://github.com/achromaticlabs/pro-nextjs-drizzle/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/achromaticlabs/pro-nextjs-drizzle/compare/v2.3.0...v2.4.0
