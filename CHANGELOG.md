@@ -6,9 +6,25 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-09-06
+
+### Added
+
+- Added structured plan entitlements and limits for consistent access checks and pricing presentation.
+- Added administrator controls for granting, extending and reactivating subscription access.
+- Added optional embedded Stripe Checkout while retaining hosted Checkout as the recommended default.
+
+### Changed
+
+- Redesigned authenticated plan selection, the current-plan summary and public pricing presentation.
+- Improved Checkout configuration, theme-aware appearance, pricing details and plan-change review.
+- Documented plan entitlements and administrator subscription workflows.
+
 ### Fixed
 
 - Blocked account deletion when it would leave an organization without an owner.
+- Refreshed Drizzle credit data after administrator balance adjustments.
+- Filtered expected tRPC errors from Sentry while preserving actionable failures.
 
 ## [2.5.0] - 2026-09-05
 
