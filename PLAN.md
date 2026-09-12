@@ -93,13 +93,15 @@ their list, each labeled with the build's serial number.
 
 - **Phase 0 — Bootstrap** ✅ Rename to Taskhull, `.env`, local Postgres db
   `taskhull4`, `upstream` remote, this plan.
-- **Phase 1 — Schema + API + tests** Tables/relations/enums above, Zod schemas in
+- **Phase 1 — Schema + API + tests** ✅ Tables/relations/enums above, Zod schemas in
   `schemas/manufacturing-schemas.ts`, tRPC routers under
   `trpc/routers/organization/`: `template`, `product`, `build`, `work`
   (worker‑facing). Vitest tests incl. tenant isolation.
-- **Phase 2 — Web planner: templates** List → detail with version history →
+- **Phase 2 — Web planner: templates** ✅ List → detail with version history →
   draft editor (sortable tasks, checklist, dependencies, document uploads) →
-  publish with change note.
+  publish with change note. Pages under
+  `app/(saas)/dashboard/(sidebar)/organization/templates/`, components in
+  `components/manufacturing/`.
 - **Phase 3 — Web planner: products & builds** Products → builds. New build
   picks version (default latest published), serial, start date. Build detail:
   task list + gantt, reassign, reschedule. Cross‑build assignment grid

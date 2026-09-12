@@ -5,6 +5,7 @@ import {
 	ChevronRight,
 	CoinsIcon,
 	CreditCardIcon,
+	FileStackIcon,
 	LayoutDashboardIcon,
 	SettingsIcon,
 	UserSearchIcon,
@@ -65,6 +66,11 @@ export function OrganizationMenuItems(): React.JSX.Element {
 					href: basePath,
 					icon: LayoutDashboardIcon,
 					exactMatch: true,
+				},
+				{
+					label: "Templates",
+					href: `${basePath}/templates`,
+					icon: FileStackIcon,
 				},
 				{
 					label: "Leads",
