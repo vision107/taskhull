@@ -4,7 +4,9 @@ import {
 	BotIcon,
 	ChevronRight,
 	CoinsIcon,
+	BoxIcon,
 	CreditCardIcon,
+	FactoryIcon,
 	FileStackIcon,
 	LayoutDashboardIcon,
 	SettingsIcon,
@@ -71,6 +73,16 @@ export function OrganizationMenuItems(): React.JSX.Element {
 					label: "Templates",
 					href: `${basePath}/templates`,
 					icon: FileStackIcon,
+				},
+				{
+					label: "Products",
+					href: `${basePath}/products`,
+					icon: BoxIcon,
+				},
+				{
+					label: "Builds",
+					href: `${basePath}/builds`,
+					icon: FactoryIcon,
 				},
 				{
 					label: "Leads",

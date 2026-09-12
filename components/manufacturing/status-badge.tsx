@@ -81,6 +81,15 @@ export const taskStatusStyles: Record<BuildTaskStatus, string> = {
 	done: "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200",
 };
 
+/** Solid colours for compact status dots and gantt bars. */
+export const taskStatusDot: Record<BuildTaskStatus, string> = {
+	todo: "bg-neutral-400 dark:bg-neutral-500",
+	in_progress: "bg-indigo-500",
+	blocked: "bg-red-500",
+	review: "bg-amber-500",
+	done: "bg-emerald-500",
+};
+
 export const taskStatusLabels: Record<BuildTaskStatus, string> = {
 	todo: "To do",
 	in_progress: "In progress",

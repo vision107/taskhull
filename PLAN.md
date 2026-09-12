@@ -102,10 +102,15 @@ their list, each labeled with the build's serial number.
   publish with change note. Pages under
   `app/(saas)/dashboard/(sidebar)/organization/templates/`, components in
   `components/manufacturing/`.
-- **Phase 3 — Web planner: products & builds** Products → builds. New build
-  picks version (default latest published), serial, start date. Build detail:
-  task list + gantt, reassign, reschedule. Cross‑build assignment grid
-  (template task × build).
+- **Phase 3 — Web planner: products & builds** ✅ Products list/detail
+  (`/organization/products`), builds list/detail (`/organization/builds`).
+  New build picks version (default latest published), serial, start date.
+  Build detail: task list grouped by phase with inline assign/unassign and
+  status change, day‑scale gantt (`build-gantt.tsx`), build status/delete menu.
+  Cross‑build assignment grid on the product page (`assignment-grid.tsx`):
+  select a whole row (= same task on every open unit) or single cells, then
+  "Assign selected to…" a member. Not yet: rescheduling dates from the UI and
+  planner‑side add/edit of ad‑hoc build tasks (router exists).
 - **Phase 4 — Worker PWA** `app/(saas)/work/*` without sidebar. My tasks
   (today / upcoming / blocked), task detail (instructions, checklist, downloads,
   photo upload, comments, start/done). `app/manifest.ts`, icons, service worker.
