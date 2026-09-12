@@ -29,6 +29,13 @@
       "when": 1786833174248,
       "tag": "20260815223254_add_passkeys",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789229059297,
+      "tag": "20260912160419_manufacturing_core",
+      "breakpoints": true
     }
   ]
 }

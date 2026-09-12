@@ -136,3 +136,81 @@ export function enumToPgEnum<T extends Record<string, string>>(myEnum: T) {
 		...T[keyof T][],
 	];
 }
+
+// -------------------------- Manufacturing --------------------------
+
+// Template version lifecycle. Only `draft` versions are editable.
+export const TemplateVersionStatus = {
+	draft: "draft",
+	published: "published",
+	archived: "archived",
+} as const;
+export type TemplateVersionStatus =
+	(typeof TemplateVersionStatus)[keyof typeof TemplateVersionStatus];
+export const TemplateVersionStatuses = Object.values(TemplateVersionStatus);
+
+// Build (one manufactured unit) lifecycle
+export const BuildStatus = {
+	planned: "planned",
+	active: "active",
+	blocked: "blocked",
+	completed: "completed",
+	archived: "archived",
+} as const;
+export type BuildStatus = (typeof BuildStatus)[keyof typeof BuildStatus];
+export const BuildStatuses = Object.values(BuildStatus);
+
+// Build task lifecycle
+export const BuildTaskStatus = {
+	todo: "todo",
+	inProgress: "in_progress",
+	blocked: "blocked",
+	review: "review",
+	done: "done",
+} as const;
+export type BuildTaskStatus =
+	(typeof BuildTaskStatus)[keyof typeof BuildTaskStatus];
+export const BuildTaskStatuses = Object.values(BuildTaskStatus);
+
+// Role of a user on a build task
+export const BuildTaskAssignmentRole = {
+	owner: "owner",
+	helper: "helper",
+	reviewer: "reviewer",
+} as const;
+export type BuildTaskAssignmentRole =
+	(typeof BuildTaskAssignmentRole)[keyof typeof BuildTaskAssignmentRole];
+export const BuildTaskAssignmentRoles = Object.values(BuildTaskAssignmentRole);
+
+// Checklist item state
+export const ChecklistItemStatus = {
+	open: "open",
+	done: "done",
+	skipped: "skipped",
+} as const;
+export type ChecklistItemStatus =
+	(typeof ChecklistItemStatus)[keyof typeof ChecklistItemStatus];
+export const ChecklistItemStatuses = Object.values(ChecklistItemStatus);
+
+// Entities tracked by the generic revision (audit) log
+export const RevisionEntity = {
+	template: "template",
+	templateVersion: "template_version",
+	templateTask: "template_task",
+	product: "product",
+	build: "build",
+	buildTask: "build_task",
+} as const;
+export type RevisionEntity =
+	(typeof RevisionEntity)[keyof typeof RevisionEntity];
+export const RevisionEntities = Object.values(RevisionEntity);
+
+export const RevisionAction = {
+	create: "create",
+	update: "update",
+	delete: "delete",
+	publish: "publish",
+} as const;
+export type RevisionAction =
+	(typeof RevisionAction)[keyof typeof RevisionAction];
+export const RevisionActions = Object.values(RevisionAction);

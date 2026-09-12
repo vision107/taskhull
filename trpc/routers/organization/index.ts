@@ -22,9 +22,13 @@ import {
 	protectedProcedure,
 } from "@/trpc/init";
 import { organizationAiRouter } from "@/trpc/routers/organization/organization-ai-router";
+import { organizationBuildRouter } from "@/trpc/routers/organization/organization-build-router";
 import { organizationCreditRouter } from "@/trpc/routers/organization/organization-credit-router";
 import { organizationLeadRouter } from "@/trpc/routers/organization/organization-lead-router";
+import { organizationProductRouter } from "@/trpc/routers/organization/organization-product-router";
 import { organizationSubscriptionRouter } from "@/trpc/routers/organization/organization-subscription-router";
+import { organizationTemplateRouter } from "@/trpc/routers/organization/organization-template-router";
+import { organizationWorkRouter } from "@/trpc/routers/organization/organization-work-router";
 
 async function generateOrganizationSlug(name: string): Promise<string> {
 	const baseSlug = slugify(name, {
@@ -182,4 +186,10 @@ export const organizationRouter = createTRPCRouter({
 	credit: organizationCreditRouter,
 	lead: organizationLeadRouter,
 	subscription: organizationSubscriptionRouter,
+
+	// Manufacturing
+	template: organizationTemplateRouter,
+	product: organizationProductRouter,
+	build: organizationBuildRouter,
+	work: organizationWorkRouter,
 });

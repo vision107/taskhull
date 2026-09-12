@@ -77,6 +77,7 @@ function getS3Client(): S3Client {
 export async function getSignedUploadUrl(
 	path: string,
 	bucket: string,
+	contentType: string = "image/jpeg",
 ): Promise<string> {
 	const safePath = validatePath(path);
 	const s3 = getS3Client();
@@ -86,7 +87,7 @@ export async function getSignedUploadUrl(
 			new PutObjectCommand({
 				Bucket: bucket,
 				Key: safePath,
-				ContentType: "image/jpeg",
+				ContentType: contentType,
 			}),
 			{ expiresIn: 60 },
 		);
