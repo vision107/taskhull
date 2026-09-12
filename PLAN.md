@@ -111,9 +111,17 @@ their list, each labeled with the build's serial number.
   select a whole row (= same task on every open unit) or single cells, then
   "Assign selected to…" a member. Not yet: rescheduling dates from the UI and
   planner‑side add/edit of ad‑hoc build tasks (router exists).
-- **Phase 4 — Worker PWA** `app/(saas)/work/*` without sidebar. My tasks
-  (today / upcoming / blocked), task detail (instructions, checklist, downloads,
-  photo upload, comments, start/done). `app/manifest.ts`, icons, service worker.
+- **Phase 4 — Worker PWA** ✅ `app/(saas)/dashboard/work/*` (protected by the
+  existing proxy, no sidebar, phone‑width column, safe‑area padding). "My
+  tasks" (`components/work/my-tasks-list.tsx`) groups ready / waiting on other
+  tasks / finished, each card labelled with product · serial · phase. Task
+  detail (`work-task-detail.tsx`): blockers, instructions, tap‑to‑tick
+  checklist, template documents (download), photos (camera capture upload),
+  comments, sticky Start / Mark done / Blocked / Reopen bar with the
+  photo/comment requirements surfaced. Auto‑selects the organization for
+  workers with a single membership (`work-org-picker.tsx`). `app/manifest.ts`
+  - icons; "My tasks" link in the planner sidebar. Not yet: service worker /
+    offline, push.
 - **Phase 5 — Polish** Notifications on assign/comment, activity timeline,
   upgrade‑build‑to‑version, offline write queue, web push.
 

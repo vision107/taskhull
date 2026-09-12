@@ -5,6 +5,7 @@ import {
 	ChevronRight,
 	CoinsIcon,
 	BoxIcon,
+	ClipboardCheckIcon,
 	CreditCardIcon,
 	FactoryIcon,
 	FileStackIcon,
@@ -83,6 +84,11 @@ export function OrganizationMenuItems(): React.JSX.Element {
 					label: "Builds",
 					href: `${basePath}/builds`,
 					icon: FactoryIcon,
+				},
+				{
+					label: "My tasks",
+					href: "/dashboard/work",
+					icon: ClipboardCheckIcon,
 				},
 				{
 					label: "Leads",
