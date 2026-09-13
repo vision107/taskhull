@@ -451,6 +451,91 @@ describe("manufacturing routers", () => {
 			expect(frame.checklistTotalCount).toBe(2);
 		});
 
+		it("lets a planner add, edit and delete ad-hoc tasks with dependencies", async () => {
+			const caller = callerAs(planner);
+			const { template } = await createPublishedTemplate(caller);
+			const product = await caller.organization.product.create({
+				name: "Machine AD",
+				templateId: template.id,
+			});
+			const build = await caller.organization.build.create({
+				productId: product.id,
+				serialNumber: "AD-0001",
+				plannedStartDate: "2026-10-01",
+			});
+			const detail = await caller.organization.build.get({ id: build.id });
+			const wiring = detail.tasks.find(
+				(t) => t.title === "Wire control cabinet",
+			)!;
+
+			// No explicit start -> scheduled after the dependency (wiring ends 10-05).
+			const extra = await caller.organization.build.createTask({
+				buildId: build.id,
+				title: "Label cable ducts",
+				phase: "Electrics",
+				plannedDurationDays: 2,
+				dependsOnIds: [wiring.id],
+			});
+			expect(extra.sourceTemplateTaskId).toBeNull();
+			expect(extra.startDate).toBe("2026-10-05");
+			expect(extra.endDate).toBe("2026-10-07");
+
+			// Duration change recomputes the end date; dependencies are replaced.
+			const frame = detail.tasks.find((t) => t.title === "Mount frame")!;
+			const edited = await caller.organization.build.updateTask({
+				id: extra.id,
+				plannedDurationDays: 4,
+				dependsOnIds: [frame.id],
+			});
+			expect(edited?.endDate).toBe("2026-10-09");
+			const after = await caller.organization.build.get({ id: build.id });
+			const extraAfter = after.tasks.find((t) => t.id === extra.id)!;
+			expect(
+				extraAfter.dependencies.map((d) => d.dependsOnBuildTaskId),
+			).toEqual([frame.id]);
+
+			// A loop (wiring -> extra while extra -> frame -> ... ) is rejected.
+			await expect(
+				caller.organization.build.updateTask({
+					id: frame.id,
+					dependsOnIds: [extra.id],
+				}),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+			await expect(
+				caller.organization.build.updateTask({
+					id: extra.id,
+					dependsOnIds: [extra.id],
+				}),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+			// Dependencies must come from the same build.
+			const other = await caller.organization.build.create({
+				productId: product.id,
+				serialNumber: "AD-0002",
+				plannedStartDate: "2026-10-01",
+			});
+			const otherDetail = await caller.organization.build.get({ id: other.id });
+			await expect(
+				caller.organization.build.createTask({
+					buildId: build.id,
+					title: "Cross-build",
+					dependsOnIds: [otherDetail.tasks[0]!.id],
+				}),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+			await caller.organization.build.deleteTask({ id: extra.id });
+			const finalDetail = await caller.organization.build.get({ id: build.id });
+			expect(finalDetail.tasks.some((t) => t.id === extra.id)).toBe(false);
+
+			// Workers cannot add tasks.
+			await expect(
+				callerAs(worker).organization.build.createTask({
+					buildId: build.id,
+					title: "Nope",
+				}),
+			).rejects.toMatchObject({ code: "FORBIDDEN" });
+		});
+
 		it("refuses a build when the template has no published version", async () => {
 			const caller = callerAs(planner);
 			const template = await caller.organization.template.create({

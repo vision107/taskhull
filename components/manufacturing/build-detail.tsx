@@ -7,6 +7,7 @@ import {
 	MessageSquareIcon,
 	MoreHorizontalIcon,
 	PaperclipIcon,
+	PlusIcon,
 	Trash2Icon,
 	XIcon,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import { ConfirmationModal } from "@/components/confirmation-modal";
 import { ActivityTimeline } from "@/components/manufacturing/activity-timeline";
 import { AssigneePicker } from "@/components/manufacturing/assignee-picker";
 import { BuildGantt } from "@/components/manufacturing/build-gantt";
+import { BuildTaskModal } from "@/components/manufacturing/build-task-modal";
 import { BuildUpgradeBanner } from "@/components/manufacturing/build-upgrade-banner";
 import {
 	formatDate,
@@ -89,6 +91,23 @@ export function BuildDetail({
 		void utils.organization.build.get.invalidate({ id: buildId });
 		void utils.organization.build.list.invalidate();
 		void utils.organization.build.assignmentGrid.invalidate();
+	};
+
+	const siblings = React.useMemo(
+		() =>
+			(build?.tasks ?? []).map((task) => ({
+				id: task.id,
+				title: task.title,
+				phase: task.phase,
+			})),
+		[build?.tasks],
+	);
+	const openAddTask = (phase?: string | null) => {
+		void NiceModal.show(BuildTaskModal, {
+			buildId,
+			siblings,
+			defaultPhase: phase ?? null,
+		});
 	};
 
 	const assignMutation = trpc.organization.build.assign.useMutation({
@@ -255,15 +274,37 @@ export function BuildDetail({
 
 				<UnderlinedTabsContent value="tasks">
 					{tasks.length === 0 ? (
-						<p className="rounded-lg border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
-							This build has no tasks.
-						</p>
+						<div className="rounded-lg border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+							<p>This build has no tasks.</p>
+							{canPlan && (
+								<Button
+									variant="outline"
+									size="sm"
+									className="mt-3"
+									onClick={() => openAddTask()}
+								>
+									<PlusIcon />
+									Add task
+								</Button>
+							)}
+						</div>
 					) : (
 						<div className="overflow-hidden rounded-lg border">
 							{groups.map((group, groupIndex) => (
 								<React.Fragment key={`${group.phase ?? "none"}-${groupIndex}`}>
-									<div className="border-b bg-muted/40 px-4 py-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+									<div className="flex items-center justify-between border-b bg-muted/40 px-4 py-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
 										{group.phase ?? "No phase"}
+										{canPlan && (
+											<Button
+												variant="ghost"
+												size="xs"
+												className="-mr-2 tracking-normal normal-case"
+												onClick={() => openAddTask(group.phase)}
+											>
+												<PlusIcon />
+												Add task
+											</Button>
+										)}
 									</div>
 									{group.items.map((task) => {
 										const owners = task.assignments.filter(
@@ -288,6 +329,19 @@ export function BuildDetail({
 														<span className="font-medium hover:underline">
 															{task.title}
 														</span>
+														{task.sourceTemplateTaskId === null && (
+															<Tooltip>
+																<TooltipTrigger asChild>
+																	<span className="rounded border px-1 text-[10px] leading-4 text-muted-foreground">
+																		ad-hoc
+																	</span>
+																</TooltipTrigger>
+																<TooltipContent>
+																	Added to this unit only; template upgrades
+																	leave it untouched.
+																</TooltipContent>
+															</Tooltip>
+														)}
 														{task.requiresPhoto && (
 															<CameraIcon className="size-3.5 text-muted-foreground" />
 														)}

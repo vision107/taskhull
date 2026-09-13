@@ -198,6 +198,8 @@ export const updateBuildTaskSchema = z.object({
 	plannedDurationDays: z.number().int().min(0).max(365).optional(),
 	requiresPhoto: z.boolean().optional(),
 	requiresComment: z.boolean().optional(),
+	/** Replaces the task's dependencies when provided. */
+	dependsOnIds: z.array(z.uuid()).max(30).optional(),
 });
 
 export const createBuildTaskSchema = z.object({
@@ -209,6 +211,7 @@ export const createBuildTaskSchema = z.object({
 	startDate: isoDate.optional(),
 	requiresPhoto: z.boolean().default(false),
 	requiresComment: z.boolean().default(false),
+	dependsOnIds: z.array(z.uuid()).max(30).default([]),
 });
 
 export const deleteBuildTaskSchema = idSchema;

@@ -13,6 +13,7 @@ import {
 	buildTable,
 	buildTaskAssignmentTable,
 	buildTaskCommentTable,
+	buildTaskDependencyTable,
 	buildTaskTable,
 	templateTaskTable,
 } from "@/lib/db/schema/manufacturing-tables";
@@ -55,6 +56,83 @@ const OPEN_BUILD_STATUSES = [
 	BuildStatus.active,
 	BuildStatus.blocked,
 ];
+
+function addDays(isoDate: string, days: number): string {
+	const date = new Date(`${isoDate}T00:00:00.000Z`);
+	date.setUTCDate(date.getUTCDate() + days);
+	return toDateString(date);
+}
+
+/**
+ * Validates the dependency ids a planner picked for a build task: all must
+ * belong to the same build, none may be the task itself, and none may
+ * (transitively) depend on the task, which would create a cycle.
+ */
+async function resolveDependencies(
+	buildId: string,
+	taskId: string | null,
+	dependsOnIds: string[],
+): Promise<{ id: string; endDate: string | null }[]> {
+	const unique = Array.from(new Set(dependsOnIds));
+	if (unique.length === 0) return [];
+	if (taskId && unique.includes(taskId)) {
+		throw new TRPCError({
+			code: "BAD_REQUEST",
+			message: "A task cannot depend on itself.",
+		});
+	}
+
+	const rows = await db
+		.select({ id: buildTaskTable.id, endDate: buildTaskTable.endDate })
+		.from(buildTaskTable)
+		.where(
+			and(
+				eq(buildTaskTable.buildId, buildId),
+				inArray(buildTaskTable.id, unique),
+			),
+		);
+	if (rows.length !== unique.length) {
+		throw new TRPCError({
+			code: "BAD_REQUEST",
+			message: "Dependencies must be tasks of the same build.",
+		});
+	}
+
+	if (taskId) {
+		// Walk upstream from each chosen dependency; hitting taskId = cycle.
+		const edges = await db
+			.select({
+				from: buildTaskDependencyTable.buildTaskId,
+				to: buildTaskDependencyTable.dependsOnBuildTaskId,
+			})
+			.from(buildTaskDependencyTable)
+			.innerJoin(
+				buildTaskTable,
+				eq(buildTaskTable.id, buildTaskDependencyTable.buildTaskId),
+			)
+			.where(eq(buildTaskTable.buildId, buildId));
+		const upstream = new Map<string, string[]>();
+		for (const edge of edges) {
+			upstream.set(edge.from, [...(upstream.get(edge.from) ?? []), edge.to]);
+		}
+		const seen = new Set<string>();
+		const stack = [...unique];
+		while (stack.length > 0) {
+			const current = stack.pop()!;
+			if (current === taskId) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "That order would create a loop between tasks.",
+				});
+			}
+			if (seen.has(current)) continue;
+			seen.add(current);
+			stack.push(...(upstream.get(current) ?? []));
+		}
+	}
+
+	return rows;
+}
 
 export const organizationBuildRouter = createTRPCRouter({
 	list: protectedOrganizationProcedure
@@ -320,10 +398,23 @@ export const organizationBuildRouter = createTRPCRouter({
 				.where(eq(buildTaskTable.buildId, build.id));
 			const maxSort = sortRow?.maxSort ?? -1;
 
+			const dependsOn = await resolveDependencies(
+				build.id,
+				null,
+				input.dependsOnIds,
+			);
+
+			// Default start: after the latest dependency, else the build start.
+			const latestDependencyEnd = dependsOn
+				.map((dep) => dep.endDate)
+				.filter((d): d is string => Boolean(d))
+				.sort()
+				.at(-1);
 			const startDate =
-				input.startDate ?? build.plannedStartDate ?? toDateString(new Date());
-			const end = new Date(`${startDate}T00:00:00.000Z`);
-			end.setUTCDate(end.getUTCDate() + input.plannedDurationDays);
+				input.startDate ??
+				latestDependencyEnd ??
+				build.plannedStartDate ??
+				toDateString(new Date());
 
 			const [task] = await db
 				.insert(buildTaskTable)
@@ -336,7 +427,7 @@ export const organizationBuildRouter = createTRPCRouter({
 					sortOrder: maxSort + 1,
 					plannedDurationDays: input.plannedDurationDays,
 					startDate,
-					endDate: toDateString(end),
+					endDate: addDays(startDate, input.plannedDurationDays),
 					requiresPhoto: input.requiresPhoto,
 					requiresComment: input.requiresComment,
 				})
@@ -347,6 +438,15 @@ export const organizationBuildRouter = createTRPCRouter({
 					code: "INTERNAL_SERVER_ERROR",
 					message: "Failed to create task.",
 				});
+			}
+
+			if (dependsOn.length > 0) {
+				await db.insert(buildTaskDependencyTable).values(
+					dependsOn.map((dep) => ({
+						buildTaskId: task.id,
+						dependsOnBuildTaskId: dep.id,
+					})),
+				);
 			}
 
 			await logActivity({
@@ -367,16 +467,57 @@ export const organizationBuildRouter = createTRPCRouter({
 			assertCanPlan(ctx.membership.role);
 			const before = await getOwnedBuildTask(input.id, ctx.organization.id);
 
-			const { id, ...changes } = input;
-			const [after] = await db
-				.update(buildTaskTable)
-				.set(
-					Object.fromEntries(
-						Object.entries(changes).filter(([, value]) => value !== undefined),
-					),
-				)
-				.where(eq(buildTaskTable.id, id))
-				.returning();
+			const { id, dependsOnIds, ...changes } = input;
+			const patch: Record<string, unknown> = Object.fromEntries(
+				Object.entries(changes).filter(([, value]) => value !== undefined),
+			);
+
+			// Keep the end date consistent when start or duration move and the
+			// caller did not set an explicit end.
+			const nextStart =
+				(patch.startDate as string | null | undefined) ?? before.startDate;
+			const nextDuration =
+				(patch.plannedDurationDays as number | undefined) ??
+				before.plannedDurationDays;
+			if (
+				patch.endDate === undefined &&
+				nextStart &&
+				(patch.startDate !== undefined ||
+					patch.plannedDurationDays !== undefined)
+			) {
+				patch.endDate = addDays(nextStart, nextDuration);
+			}
+
+			const dependsOn =
+				dependsOnIds !== undefined
+					? await resolveDependencies(before.buildId, before.id, dependsOnIds)
+					: null;
+
+			const after = await db.transaction(async (tx) => {
+				const [row] =
+					Object.keys(patch).length > 0
+						? await tx
+								.update(buildTaskTable)
+								.set(patch)
+								.where(eq(buildTaskTable.id, id))
+								.returning()
+						: [before];
+
+				if (dependsOn) {
+					await tx
+						.delete(buildTaskDependencyTable)
+						.where(eq(buildTaskDependencyTable.buildTaskId, id));
+					if (dependsOn.length > 0) {
+						await tx.insert(buildTaskDependencyTable).values(
+							dependsOn.map((dep) => ({
+								buildTaskId: id,
+								dependsOnBuildTaskId: dep.id,
+							})),
+						);
+					}
+				}
+				return row;
+			});
 
 			await recordRevision({
 				organizationId: ctx.organization.id,
@@ -386,6 +527,20 @@ export const organizationBuildRouter = createTRPCRouter({
 				changedById: ctx.user.id,
 				before,
 				after,
+			});
+			await logActivity({
+				organizationId: ctx.organization.id,
+				buildId: before.buildId,
+				buildTaskId: id,
+				actorId: ctx.user.id,
+				action: ActivityAction.taskUpdated,
+				metadata: {
+					title: after?.title ?? before.title,
+					fields: [
+						...Object.keys(patch),
+						...(dependsOn ? ["dependencies"] : []),
+					],
+				},
 			});
 
 			return after;

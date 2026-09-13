@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import {
 	AlertTriangleIcon,
 	CameraIcon,
+	PencilIcon,
 	CheckIcon,
 	ChevronDownIcon,
 	DownloadIcon,
@@ -18,8 +19,10 @@ import Link from "next/link";
 import * as React from "react";
 import { toast } from "sonner";
 
+import { ConfirmationModal } from "@/components/confirmation-modal";
 import { ActivityTimeline } from "@/components/manufacturing/activity-timeline";
 import { AssigneePicker } from "@/components/manufacturing/assignee-picker";
+import { BuildTaskModal } from "@/components/manufacturing/build-task-modal";
 import {
 	formatDate,
 	formatEndDate,
@@ -108,6 +111,60 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 				onSuccess: invalidate,
 				onError: (error) => toast.error(error.message),
 			});
+		const deleteTaskMutation = trpc.organization.build.deleteTask.useMutation({
+			onSuccess: () => {
+				toast.success("Task deleted");
+				invalidate();
+				modal.handleClose();
+			},
+			onError: (error) => toast.error(error.message),
+		});
+
+		const openEdit = async () => {
+			if (!task) return;
+			try {
+				const build = await utils.organization.build.get.fetch({
+					id: task.buildId,
+				});
+				void NiceModal.show(BuildTaskModal, {
+					buildId: task.buildId,
+					siblings: build.tasks.map((t) => ({
+						id: t.id,
+						title: t.title,
+						phase: t.phase,
+					})),
+					task: {
+						id: task.id,
+						title: task.title,
+						phase: task.phase,
+						instructions: task.instructions,
+						startDate: task.startDate,
+						plannedDurationDays: task.plannedDurationDays,
+						requiresPhoto: task.requiresPhoto,
+						requiresComment: task.requiresComment,
+						dependencies: task.dependencies.map((d) => ({
+							dependsOnBuildTaskId: d.dependsOnBuildTaskId,
+						})),
+					},
+				});
+			} catch (error) {
+				toast.error(error instanceof Error ? error.message : "Could not load");
+			}
+		};
+
+		const confirmDelete = () => {
+			if (!task) return;
+			void NiceModal.show(ConfirmationModal, {
+				title: "Delete task?",
+				message: `"${task.title}" will be removed from this unit. Only tasks that have not been started can be deleted.`,
+				confirmLabel: "Delete",
+				destructive: true,
+				onConfirm: async () => {
+					await deleteTaskMutation.mutateAsync({ id: task.id });
+				},
+			});
+		};
+
 		const assignMutation = trpc.organization.build.assign.useMutation({
 			onSuccess: invalidate,
 			onError: (error) => toast.error(error.message),
@@ -230,6 +287,33 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 									{task.requiresComment && (
 										<span className="text-xs text-muted-foreground">
 											comment required
+										</span>
+									)}
+									{task.sourceTemplateTaskId === null && (
+										<span className="rounded border px-1 text-[10px] leading-4 text-muted-foreground">
+											ad-hoc
+										</span>
+									)}
+									{canPlan && (
+										<span className="ml-auto flex items-center gap-1">
+											<Button
+												variant="ghost"
+												size="xs"
+												onClick={() => void openEdit()}
+											>
+												<PencilIcon />
+												Edit
+											</Button>
+											<Button
+												variant="ghost"
+												size="xs"
+												className="text-muted-foreground hover:text-destructive"
+												disabled={task.status !== BuildTaskStatus.todo}
+												onClick={confirmDelete}
+											>
+												<Trash2Icon />
+												Delete
+											</Button>
 										</span>
 									)}
 								</div>
