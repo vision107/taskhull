@@ -1353,6 +1353,7 @@ describe("manufacturing routers", () => {
 				title: "Weld frame",
 				phase: "Mechanics",
 				plannedDurationDays: 2,
+				plannedHours: 6.5,
 			});
 			const paint = await c.organization.build.createTask({
 				buildId: project.id,
@@ -1362,6 +1363,21 @@ describe("manufacturing routers", () => {
 				requiresPhoto: true,
 				dependsOnIds: [frame.id],
 			});
+			// Quick add: only a title and the phase it was typed into. It lands
+			// right after the last "Mechanics" task, not at the end of the list.
+			const grind = await c.organization.build.createTask({
+				buildId: project.id,
+				title: "Grind welds",
+				phase: "Mechanics",
+			});
+			expect(grind.plannedDurationDays).toBe(1);
+			expect(grind.plannedHours).toBeNull();
+			const ordered = await c.organization.build.get({ id: project.id });
+			expect(ordered.tasks.map((t) => t.title)).toEqual([
+				"Weld frame",
+				"Grind welds",
+				"Paint frame",
+			]);
 
 			const { template, version } = await c.organization.build.saveAsTemplate({
 				buildId: project.id,
@@ -1377,11 +1393,16 @@ describe("manufacturing routers", () => {
 			});
 			expect(v1.tasks.map((t) => t.title)).toEqual([
 				"Weld frame",
+				"Grind welds",
 				"Paint frame",
 			]);
 			const tplPaint = v1.tasks.find((t) => t.title === "Paint frame")!;
 			expect(tplPaint.requiresPhoto).toBe(true);
 			expect(tplPaint.dependencies).toHaveLength(1);
+			// Effort in hours travels into the template …
+			expect(v1.tasks.find((t) => t.title === "Weld frame")?.plannedHours).toBe(
+				6.5,
+			);
 
 			// Project is now linked and its tasks point at the template tasks.
 			const detail = await c.organization.build.get({ id: project.id });
@@ -1402,8 +1423,13 @@ describe("manufacturing routers", () => {
 			const nextDetail = await c.organization.build.get({ id: next.id });
 			expect(nextDetail.tasks.map((t) => t.title)).toEqual([
 				"Weld frame",
+				"Grind welds",
 				"Paint frame",
 			]);
+			// … and back out into the next unit.
+			expect(
+				nextDetail.tasks.find((t) => t.title === "Weld frame")?.plannedHours,
+			).toBe(6.5);
 
 			// Saving again is refused; the project belongs to a template now.
 			await expect(
@@ -1418,7 +1444,7 @@ describe("manufacturing routers", () => {
 				templateId: template.id,
 			});
 			expect(grid.builds).toHaveLength(2);
-			expect(grid.rows).toHaveLength(2);
+			expect(grid.rows).toHaveLength(3);
 		});
 
 		it("previews and pushes project changes into the template as a new version", async () => {

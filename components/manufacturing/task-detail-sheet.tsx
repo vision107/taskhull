@@ -57,7 +57,7 @@ import {
 	BuildTaskStatuses,
 	type ChecklistItemStatus,
 } from "@/lib/db/schema/enums";
-import { formatBytes } from "@/lib/manufacturing/format";
+import { formatBytes, formatEffort } from "@/lib/manufacturing/format";
 import {
 	DOCUMENT_ACCEPT,
 	normalizeContentType,
@@ -148,6 +148,7 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 						instructions: task.instructions,
 						startDate: task.startDate,
 						plannedDurationDays: task.plannedDurationDays,
+						plannedHours: task.plannedHours,
 						requiresPhoto: task.requiresPhoto,
 						requiresComment: task.requiresComment,
 						dependencies: task.dependencies.map((d) => ({
@@ -362,7 +363,11 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 									{task.startDate && task.endDate && (
 										<span className="text-xs text-muted-foreground">
 											{formatDate(task.startDate)} →{" "}
-											{formatEndDate(task.endDate)}
+											{formatEndDate(task.endDate)} ·{" "}
+											{formatEffort(
+												task.plannedDurationDays,
+												task.plannedHours,
+											)}
 										</span>
 									)}
 									{task.requiresPhoto && (

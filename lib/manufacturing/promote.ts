@@ -38,6 +38,7 @@ export interface BuildTaskSnapshot {
 	phase: string | null;
 	sortOrder: number;
 	durationDays: number;
+	plannedHours: number | null;
 	requiresPhoto: boolean;
 	requiresComment: boolean;
 	checklist: string[];
@@ -64,6 +65,7 @@ export interface TemplateTaskSnapshot {
 	phase: string | null;
 	sortOrder: number;
 	durationDays: number;
+	plannedHours: number | null;
 	requiresPhoto: boolean;
 	requiresComment: boolean;
 	checklist: string[];
@@ -144,6 +146,8 @@ export function diffBuildAgainstVersion(
 			fields.push("instructions");
 		if (norm(task.phase) !== norm(counterpart.phase)) fields.push("phase");
 		if (task.durationDays !== counterpart.durationDays) fields.push("duration");
+		if ((task.plannedHours ?? null) !== (counterpart.plannedHours ?? null))
+			fields.push("hours");
 		if (task.requiresPhoto !== counterpart.requiresPhoto)
 			fields.push("photo required");
 		if (task.requiresComment !== counterpart.requiresComment)
@@ -213,6 +217,7 @@ export async function loadBuildSnapshot(
 		// Normalise to a dense order so the template reads top to bottom.
 		sortOrder: index,
 		durationDays: task.plannedDurationDays,
+		plannedHours: task.plannedHours,
 		requiresPhoto: task.requiresPhoto,
 		requiresComment: task.requiresComment,
 		checklist: task.checklistItems.map((item) => item.title),
@@ -251,6 +256,7 @@ export async function loadVersionSnapshot(
 		phase: task.phase,
 		sortOrder: task.sortOrder,
 		durationDays: task.durationDays,
+		plannedHours: task.plannedHours,
 		requiresPhoto: task.requiresPhoto,
 		requiresComment: task.requiresComment,
 		checklist: task.checklistItems.map((item) => item.title),
@@ -318,6 +324,7 @@ async function writeTasksToVersion(
 				phase: task.phase,
 				sortOrder: task.sortOrder,
 				durationDays: task.durationDays,
+				plannedHours: task.plannedHours,
 				requiresPhoto: task.requiresPhoto,
 				requiresComment: task.requiresComment,
 			})

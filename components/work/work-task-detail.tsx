@@ -374,6 +374,8 @@ export function WorkTaskDetail({
 						{task.startDate
 							? `${format(parseISO(task.startDate), "EEE, d. MMM", { locale: dateLocale })} · ${t.detail.days(task.plannedDurationDays)}`
 							: t.detail.unscheduled}
+						{task.plannedHours != null &&
+							` · ${t.detail.hours(task.plannedHours)}`}
 					</span>
 					<span className="flex items-center gap-1">
 						{task.assignments.map((assignment) => (

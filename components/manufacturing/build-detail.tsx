@@ -29,6 +29,7 @@ import {
 	formatEndDate,
 } from "@/components/manufacturing/builds-table";
 import { PromoteTemplateModal } from "@/components/manufacturing/promote-template-modal";
+import { QuickAddTask } from "@/components/manufacturing/quick-add-task";
 import {
 	BuildStatusBadge,
 	TaskStatusBadge,
@@ -65,6 +66,7 @@ import {
 	BuildTaskStatus,
 	BuildTaskStatuses,
 } from "@/lib/db/schema/enums";
+import { formatEffort } from "@/lib/manufacturing/format";
 import { trpc } from "@/trpc/client";
 
 const buildStatusLabels: Record<BuildStatus, string> = {
@@ -112,6 +114,17 @@ export function BuildDetail({
 			defaultPhase: phase ?? null,
 		});
 	};
+
+	const quickAddMutation = trpc.organization.build.createTask.useMutation({
+		onSuccess: invalidate,
+		onError: (error) => toast.error(error.message),
+	});
+	const quickAdd = (phase: string | null) => (title: string) =>
+		quickAddMutation.mutateAsync({
+			buildId,
+			title,
+			phase: phase ?? undefined,
+		});
 
 	const assignMutation = trpc.organization.build.assign.useMutation({
 		onSuccess: invalidate,
@@ -293,15 +306,22 @@ export function BuildDetail({
 						<div className="rounded-lg border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
 							<p>This project has no tasks yet.</p>
 							{canPlan && (
-								<Button
-									variant="outline"
-									size="sm"
-									className="mt-3"
-									onClick={() => openAddTask()}
-								>
-									<PlusIcon />
-									Add task
-								</Button>
+								<>
+									<QuickAddTask
+										className="mx-auto mt-3 max-w-md rounded-md border bg-background text-left"
+										placeholder="Type a task title and press Enter"
+										onAdd={quickAdd(null)}
+									/>
+									<Button
+										variant="ghost"
+										size="sm"
+										className="mt-2"
+										onClick={() => openAddTask()}
+									>
+										<PlusIcon />
+										Add with details
+									</Button>
+								</>
 							)}
 						</div>
 					) : (
@@ -384,7 +404,10 @@ export function BuildDetail({
 													<p className="mt-0.5 text-xs text-muted-foreground">
 														{formatDate(task.startDate)} →{" "}
 														{formatEndDate(task.endDate)} ·{" "}
-														{task.plannedDurationDays}d
+														{formatEffort(
+															task.plannedDurationDays,
+															task.plannedHours,
+														)}
 														{task.dependencies.length > 0 && (
 															<>
 																{" · after "}
@@ -504,6 +527,13 @@ export function BuildDetail({
 											</div>
 										);
 									})}
+									{canPlan && (
+										<QuickAddTask
+											className="border-b last:border-b-0"
+											onAdd={quickAdd(group.phase)}
+											hint={group.phase ? `→ ${group.phase}` : null}
+										/>
+									)}
 								</React.Fragment>
 							))}
 						</div>

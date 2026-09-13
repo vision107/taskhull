@@ -6,6 +6,7 @@ import {
 	integer,
 	jsonb,
 	pgTable,
+	real,
 	text,
 	timestamp,
 	uniqueIndex,
@@ -119,6 +120,8 @@ export const templateTaskTable = pgTable(
 		phase: text("phase"),
 		sortOrder: integer("sort_order").notNull().default(0),
 		durationDays: integer("duration_days").notNull().default(1),
+		/** Planned effort in hours (independent of the calendar duration). */
+		plannedHours: real("planned_hours"),
 		requiresPhoto: boolean("requires_photo").notNull().default(false),
 		requiresComment: boolean("requires_comment").notNull().default(false),
 		...timestamps,
@@ -294,6 +297,8 @@ export const buildTaskTable = pgTable(
 		phase: text("phase"),
 		sortOrder: integer("sort_order").notNull().default(0),
 		plannedDurationDays: integer("planned_duration_days").notNull().default(1),
+		/** Planned effort in hours (independent of the calendar duration). */
+		plannedHours: real("planned_hours"),
 		startDate: date("start_date"),
 		endDate: date("end_date"),
 		status: text("status", { enum: enumToPgEnum(BuildTaskStatus) })

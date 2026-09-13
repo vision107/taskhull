@@ -262,6 +262,71 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
      ad‑hoc projects). Activity timeline knows `build.saved_as_template` and
      `build.pushed_to_template`.
 
+- **Phase 8a — Faster planning** ✅ Small things that got in the way while
+  typing up a plan.
+  1. _Quick add._ Every phase group on the project page and in the template
+     draft editor ends with a "type a title, press Enter" row
+     (`QuickAddTask`). Only the title (and the phase it was typed into) is
+     sent; duration defaults to 1 day, everything else is added later via
+     Edit. Focus stays in the row so a whole plan can be typed in one go.
+     New tasks are inserted **after the last task of the same phase**
+     (`nextSortOrderForPhase`) instead of the end of the list, so the grouped
+     list never shows a phase twice. Empty projects/drafts show the same row
+     plus an "Add with details" button.
+  2. _Effort in hours._ `planned_hours` (nullable real) on `template_task` and
+     `build_task`, next to the calendar duration in days. Travels through
+     create‑from‑template, upgrades, save‑as / update‑template (and shows up
+     in the diff as `hours`). Lists render `2d · 4h`, the template header
+     sums effort, the worker task view shows it next to the date.
+  3. _Edit dialog layout._ Phase | Start and Duration (days) | Effort (hours)
+     in a 2×2 grid; the date picker truncates its label (`dateFormat="PP"`)
+     instead of spilling into the next field.
+
+- **Phase 8b — My tasks in the web view** (proposal, not started)
+  Today `/dashboard/work` is the phone layout stretched to a 32rem column;
+  on a desktop it wastes the screen and every task is a round trip. Goals:
+  a planner or a worker at a workstation PC should be able to work a day's
+  list without leaving the page, and the phone PWA must not change.
+  1. _Two‑pane layout ≥ `lg`._ Same route. Left: the task list (as now, but
+     denser rows). Right: the task detail (`WorkTaskDetail`) for the selected
+     task, driven by `?task=<id>` so links from notifications/e‑mails still
+     open the right task and the phone keeps navigating to
+     `/work/tasks/[id]`. Below `lg` nothing changes. The work layout widens
+     `max-w-lg` → `max-w-6xl` only when the two‑pane mode is active.
+  2. _Grouping and filters._ Segmented control **Ready · Waiting · Done** plus
+     chips for project (serial), phase and "due": _Overdue_, _Today_, _This
+     week_, _Later_. State in the URL (`?status=&project=&phase=&due=`) so a
+     filtered view can be bookmarked. Server: `work.myTasks` gains optional
+     `projectId`, `phase`, `dueBefore/After` and returns `plannedHours` and
+     `endDate` so the list can show "due Thu · 4h left".
+  3. _Sort and density._ Sort by start date (default), project, phase or
+     effort. A compact table mode on desktop (one line per task: status dot,
+     title, project, phase, dates, effort, blockers) with the same row
+     component underneath so phone and desktop stay in sync.
+  4. _Act from the list._ Status change directly on the row (To do → In
+     progress → Done; Blocked opens the reason sheet), checklist ticks in the
+     right pane, comment box in the right pane. Everything reuses the
+     existing `work.*` mutations and the offline queue, so nothing is
+     duplicated.
+  5. _Keyboard._ `j`/`k` move selection, `Enter` opens, `s` cycles status,
+     `c` focuses the comment box, `/` focuses the filter. Cheap to add once
+     selection lives in the URL.
+  6. _Today at a glance._ Header line: "5 ready · 2 waiting · 14h planned
+     today" computed client‑side from the list. Overdue tasks get the amber
+     date colour already used on the phone.
+  7. _For planners only._ A "Team" toggle on the same page that switches
+     `work.myTasks` → a new `work.teamTasks` (planner‑only, same shape, plus
+     assignee) so a planner can see everyone's list grouped by worker and
+     re‑assign from the row (`build.assign/unassign`). This is the first step
+     towards a workload view; the assignment grid stays per template.
+  8. _Not in this phase:_ drag‑and‑drop re‑scheduling, time tracking against
+     `plannedHours`, a calendar view.
+
+  Order of work: 1 → 2 → 4 (this is the useful core), then 3, 6, 5, 7.
+  Tests: extend `organization-manufacturing.test.ts` for the new `myTasks`
+  filters and `teamTasks` permissions; a Playwright smoke for the two‑pane
+  route with `?task=`.
+
 ## Local setup
 
 ```bash

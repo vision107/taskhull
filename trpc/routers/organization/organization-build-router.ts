@@ -43,6 +43,7 @@ import {
 	updateTemplateFromBuild,
 } from "@/lib/manufacturing/promote";
 import { toDateString } from "@/lib/manufacturing/scheduling";
+import { nextSortOrderForPhase } from "@/lib/manufacturing/sort-order";
 import { getOwnedTemplate } from "@/lib/manufacturing/template-versions";
 import { normalizeContentType } from "@/lib/manufacturing/uploads";
 import { getSignedUploadUrl } from "@/lib/storage";
@@ -589,11 +590,13 @@ export const organizationBuildRouter = createTRPCRouter({
 			assertCanPlan(ctx.membership.role);
 			const build = await getOwnedBuild(input.buildId, ctx.organization.id);
 
-			const [sortRow] = await db
-				.select({ maxSort: sql<number>`coalesce(max(sort_order), -1)::int` })
-				.from(buildTaskTable)
-				.where(eq(buildTaskTable.buildId, build.id));
-			const maxSort = sortRow?.maxSort ?? -1;
+			// Land inside the task's phase group (after its last task) so the
+			// grouped list doesn't show the same phase twice; else append.
+			const sortOrder = await nextSortOrderForPhase(
+				buildTaskTable,
+				eq(buildTaskTable.buildId, build.id),
+				input.phase ?? null,
+			);
 
 			const dependsOn = await resolveDependencies(
 				build.id,
@@ -621,8 +624,9 @@ export const organizationBuildRouter = createTRPCRouter({
 					title: input.title,
 					instructions: input.instructions ?? null,
 					phase: input.phase ?? null,
-					sortOrder: maxSort + 1,
+					sortOrder,
 					plannedDurationDays: input.plannedDurationDays,
+					plannedHours: input.plannedHours ?? null,
 					startDate,
 					endDate: addDays(startDate, input.plannedDurationDays),
 					requiresPhoto: input.requiresPhoto,

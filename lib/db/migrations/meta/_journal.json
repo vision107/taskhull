@@ -64,6 +64,13 @@
       "when": 1789318903625,
       "tag": "20260913170143_projects_first",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789321113942,
+      "tag": "20260913173833_planned_hours",
+      "breakpoints": true
     }
   ]
 }

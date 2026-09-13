@@ -178,6 +178,7 @@ export async function copyVersionContents(
 				phase: task.phase,
 				sortOrder: task.sortOrder,
 				durationDays: task.durationDays,
+				plannedHours: task.plannedHours,
 				requiresPhoto: task.requiresPhoto,
 				requiresComment: task.requiresComment,
 			})

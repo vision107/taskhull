@@ -17,6 +17,7 @@ import { toast } from "sonner";
 
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { PublishVersionModal } from "@/components/manufacturing/publish-version-modal";
+import { QuickAddTask } from "@/components/manufacturing/quick-add-task";
 import { VersionStatusBadge } from "@/components/manufacturing/status-badge";
 import { TemplateTaskModal } from "@/components/manufacturing/template-task-modal";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formatEffort, formatHours } from "@/lib/manufacturing/format";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 
@@ -58,6 +60,17 @@ export function TemplateVersionEditor({
 		void utils.organization.template.getVersion.invalidate({ versionId });
 		void utils.organization.template.get.invalidate({ id: templateId });
 	};
+
+	const quickAddMutation = trpc.organization.template.createTask.useMutation({
+		onSuccess: invalidate,
+		onError: (error) => toast.error(error.message),
+	});
+	const quickAdd = (phase: string | null) => (title: string) =>
+		quickAddMutation.mutateAsync({
+			versionId,
+			title,
+			phase: phase ?? undefined,
+		});
 
 	const reorderMutation = trpc.organization.template.reorderTasks.useMutation({
 		onSuccess: invalidate,
@@ -147,6 +160,10 @@ export function TemplateVersionEditor({
 	}
 
 	const totalDays = tasks.reduce((sum, task) => sum + task.durationDays, 0);
+	const totalHours = tasks.reduce(
+		(sum, task) => sum + (task.plannedHours ?? 0),
+		0,
+	);
 
 	return (
 		<div className="space-y-4">
@@ -159,6 +176,7 @@ export function TemplateVersionEditor({
 					<span>
 						· {tasks.length} {tasks.length === 1 ? "task" : "tasks"} ·{" "}
 						{totalDays} work {totalDays === 1 ? "day" : "days"} total
+						{totalHours > 0 && ` · ${formatHours(totalHours)} effort`}
 					</span>
 				</div>
 				{editable && (
@@ -211,10 +229,15 @@ export function TemplateVersionEditor({
 						</EmptyDescription>
 					</EmptyHeader>
 					{editable && (
-						<EmptyContent>
-							<Button onClick={() => openTask()}>
+						<EmptyContent className="w-full max-w-md">
+							<QuickAddTask
+								className="w-full rounded-md border bg-background"
+								placeholder="Type a task title and press Enter"
+								onAdd={quickAdd(null)}
+							/>
+							<Button variant="ghost" onClick={() => openTask()}>
 								<PlusIcon />
-								Add first task
+								Add with details
 							</Button>
 						</EmptyContent>
 					)}
@@ -247,7 +270,7 @@ export function TemplateVersionEditor({
 											<div className="flex flex-wrap items-center gap-2">
 												<span className="font-medium">{task.title}</span>
 												<span className="text-xs text-muted-foreground">
-													{task.durationDays}d
+													{formatEffort(task.durationDays, task.plannedHours)}
 												</span>
 												{task.requiresPhoto && (
 													<Tooltip>
@@ -333,6 +356,13 @@ export function TemplateVersionEditor({
 									</div>
 								);
 							})}
+							{editable && (
+								<QuickAddTask
+									className="border-b pl-[3.25rem] last:border-b-0"
+									onAdd={quickAdd(group.phase)}
+									hint={group.phase ? `→ ${group.phase}` : null}
+								/>
+							)}
 						</React.Fragment>
 					))}
 				</div>

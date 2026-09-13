@@ -40,6 +40,8 @@ const formSchema = z.object({
 	instructions: z.string().trim().max(10_000),
 	startDate: z.string(),
 	plannedDurationDays: z.coerce.number().int().min(0).max(365),
+	/** Empty string = not set. */
+	plannedHours: z.union([z.literal(""), z.coerce.number().min(0).max(10_000)]),
 	requiresPhoto: z.boolean(),
 	requiresComment: z.boolean(),
 	dependsOnIds: z.array(z.string()),
@@ -52,6 +54,7 @@ export type BuildTaskModalTask = {
 	instructions: string | null;
 	startDate: string | null;
 	plannedDurationDays: number;
+	plannedHours: number | null;
 	requiresPhoto: boolean;
 	requiresComment: boolean;
 	dependencies: { dependsOnBuildTaskId: string }[];
@@ -86,6 +89,7 @@ export const BuildTaskModal = NiceModal.create<BuildTaskModalProps>(
 				instructions: task?.instructions ?? "",
 				startDate: task?.startDate ?? "",
 				plannedDurationDays: task?.plannedDurationDays ?? 1,
+				plannedHours: task?.plannedHours ?? "",
 				requiresPhoto: task?.requiresPhoto ?? false,
 				requiresComment: task?.requiresComment ?? false,
 				dependsOnIds:
@@ -128,6 +132,7 @@ export const BuildTaskModal = NiceModal.create<BuildTaskModalProps>(
 				phase: data.phase || null,
 				instructions: data.instructions || null,
 				plannedDurationDays: data.plannedDurationDays,
+				plannedHours: data.plannedHours === "" ? null : data.plannedHours,
 				requiresPhoto: data.requiresPhoto,
 				requiresComment: data.requiresComment,
 				dependsOnIds: data.dependsOnIds,
@@ -188,7 +193,7 @@ export const BuildTaskModal = NiceModal.create<BuildTaskModalProps>(
 								)}
 							/>
 
-							<div className="grid gap-4 sm:grid-cols-3">
+							<div className="grid gap-4 sm:grid-cols-2">
 								<FormField
 									control={form.control}
 									name="phase"
@@ -218,6 +223,7 @@ export const BuildTaskModal = NiceModal.create<BuildTaskModalProps>(
 												<FormControl>
 													<DatePicker
 														className="w-full"
+														dateFormat="PP"
 														placeholder={
 															isEditing ? "Pick a date" : "Automatic"
 														}
@@ -242,13 +248,41 @@ export const BuildTaskModal = NiceModal.create<BuildTaskModalProps>(
 									render={({ field }) => (
 										<FormItem asChild>
 											<Field>
-												<FormLabel>Days</FormLabel>
+												<FormLabel>Duration (days)</FormLabel>
 												<FormControl>
 													<Input
 														type="number"
 														min={0}
 														max={365}
 														inputMode="numeric"
+														{...field}
+														value={
+															typeof field.value === "number" ||
+															typeof field.value === "string"
+																? field.value
+																: ""
+														}
+													/>
+												</FormControl>
+												<FormMessage />
+											</Field>
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="plannedHours"
+									render={({ field }) => (
+										<FormItem asChild>
+											<Field>
+												<FormLabel>Effort (hours)</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														min={0}
+														step={0.5}
+														inputMode="decimal"
+														placeholder="optional"
 														{...field}
 														value={
 															typeof field.value === "number" ||

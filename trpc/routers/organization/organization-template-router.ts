@@ -19,6 +19,7 @@ import {
 	templateVersionTable,
 } from "@/lib/db/schema/manufacturing-tables";
 import { assertCanPlan } from "@/lib/manufacturing/permissions";
+import { nextSortOrderForPhase } from "@/lib/manufacturing/sort-order";
 import {
 	ensureDraftVersion,
 	getOwnedDraftTask,
@@ -409,11 +410,11 @@ export const organizationTemplateRouter = createTRPCRouter({
 				ctx.organization.id,
 			);
 
-			const [sortRow] = await db
-				.select({ maxSort: sql<number>`coalesce(max(sort_order), -1)::int` })
-				.from(templateTaskTable)
-				.where(eq(templateTaskTable.versionId, draft.id));
-			const maxSort = sortRow?.maxSort ?? -1;
+			const sortOrder = await nextSortOrderForPhase(
+				templateTaskTable,
+				eq(templateTaskTable.versionId, draft.id),
+				input.phase ?? null,
+			);
 
 			const task = await db.transaction(async (tx) => {
 				const [created] = await tx
@@ -423,8 +424,9 @@ export const organizationTemplateRouter = createTRPCRouter({
 						title: input.title,
 						instructions: input.instructions ?? null,
 						phase: input.phase ?? null,
-						sortOrder: maxSort + 1,
+						sortOrder,
 						durationDays: input.durationDays,
+						plannedHours: input.plannedHours ?? null,
 						requiresPhoto: input.requiresPhoto,
 						requiresComment: input.requiresComment,
 					})

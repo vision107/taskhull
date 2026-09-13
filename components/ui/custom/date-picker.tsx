@@ -26,12 +26,15 @@ export type DatePickerProps = ButtonProps & {
 	onDateChange?: (date?: Date) => void;
 	placeholder?: string;
 	presets?: { value: number; label: string }[];
+	/** date-fns format for the trigger label. Defaults to "PPP". */
+	dateFormat?: string;
 };
 function DatePicker({
 	date,
 	onDateChange,
 	placeholder = "Pick a date",
 	presets = defaultPresets,
+	dateFormat = "PPP",
 	className,
 	variant,
 	...other
@@ -42,14 +45,16 @@ function DatePicker({
 				<Button
 					variant={variant || "outline"}
 					className={cn(
-						"justify-start text-left font-normal whitespace-nowrap",
+						"min-w-0 justify-start overflow-hidden text-left font-normal whitespace-nowrap",
 						!date && "text-muted-foreground",
 						className,
 					)}
 					{...other}
 				>
 					<CalendarIcon className="mr-2 size-4 shrink-0" />
-					{date ? format(date, "PPP") : <span>{placeholder}</span>}
+					<span className="truncate">
+						{date ? format(date, dateFormat) : placeholder}
+					</span>
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent

@@ -54,6 +54,7 @@ const formSchema = z.object({
 	title: z.string().trim().min(1, "Title is required").max(200),
 	phase: z.string().trim().max(80),
 	durationDays: z.coerce.number().int().min(0).max(365),
+	plannedHours: z.union([z.literal(""), z.coerce.number().min(0).max(10_000)]),
 	instructions: z.string().trim().max(10_000),
 	requiresPhoto: z.boolean(),
 	requiresComment: z.boolean(),
@@ -106,6 +107,7 @@ export const TemplateTaskModal = NiceModal.create<TemplateTaskModalProps>(
 				title: "",
 				phase: "",
 				durationDays: 1,
+				plannedHours: "",
 				instructions: "",
 				requiresPhoto: false,
 				requiresComment: false,
@@ -131,6 +133,7 @@ export const TemplateTaskModal = NiceModal.create<TemplateTaskModalProps>(
 				title: task.title,
 				phase: task.phase ?? "",
 				durationDays: task.durationDays,
+				plannedHours: task.plannedHours ?? "",
 				instructions: task.instructions ?? "",
 				requiresPhoto: task.requiresPhoto,
 				requiresComment: task.requiresComment,
@@ -190,6 +193,7 @@ export const TemplateTaskModal = NiceModal.create<TemplateTaskModalProps>(
 					title: parsed.title,
 					phase: parsed.phase || null,
 					durationDays: parsed.durationDays,
+					plannedHours: parsed.plannedHours === "" ? null : parsed.plannedHours,
 					instructions: parsed.instructions || null,
 					requiresPhoto: parsed.requiresPhoto,
 					requiresComment: parsed.requiresComment,
@@ -205,6 +209,7 @@ export const TemplateTaskModal = NiceModal.create<TemplateTaskModalProps>(
 					title: parsed.title,
 					phase: parsed.phase || null,
 					durationDays: parsed.durationDays,
+					plannedHours: parsed.plannedHours === "" ? null : parsed.plannedHours,
 					instructions: parsed.instructions || null,
 					requiresPhoto: parsed.requiresPhoto,
 					requiresComment: parsed.requiresComment,
@@ -371,7 +376,7 @@ export const TemplateTaskModal = NiceModal.create<TemplateTaskModalProps>(
 											)}
 										/>
 
-										<div className="grid grid-cols-2 gap-4">
+										<div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
 											<FormField
 												control={form.control}
 												name="phase"
@@ -405,13 +410,41 @@ export const TemplateTaskModal = NiceModal.create<TemplateTaskModalProps>(
 												render={({ field }) => (
 													<FormItem asChild>
 														<Field>
-															<FormLabel>Duration (work days)</FormLabel>
+															<FormLabel>Duration (days)</FormLabel>
 															<FormControl>
 																<Input
 																	type="number"
 																	min={0}
 																	max={365}
 																	inputMode="numeric"
+																	{...field}
+																	value={
+																		typeof field.value === "number" ||
+																		typeof field.value === "string"
+																			? field.value
+																			: ""
+																	}
+																/>
+															</FormControl>
+															<FormMessage />
+														</Field>
+													</FormItem>
+												)}
+											/>
+											<FormField
+												control={form.control}
+												name="plannedHours"
+												render={({ field }) => (
+													<FormItem asChild>
+														<Field>
+															<FormLabel>Effort (hours)</FormLabel>
+															<FormControl>
+																<Input
+																	type="number"
+																	min={0}
+																	step={0.5}
+																	inputMode="decimal"
+																	placeholder="optional"
 																	{...field}
 																	value={
 																		typeof field.value === "number" ||

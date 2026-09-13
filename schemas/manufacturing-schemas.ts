@@ -54,11 +54,15 @@ export const discardDraftSchema = z.object({ versionId: z.uuid() });
 
 // Template tasks (only on draft versions)
 
+/** Effort in hours, quarter-hour steps are fine; null clears it. */
+const plannedHoursSchema = z.number().min(0).max(10_000);
+
 const templateTaskFields = {
 	title: z.string().trim().min(1, "Title is required").max(200),
 	instructions: z.string().trim().max(10_000).nullable().optional(),
 	phase: z.string().trim().max(80).nullable().optional(),
 	durationDays: z.number().int().min(0).max(365).default(1),
+	plannedHours: plannedHoursSchema.nullable().optional(),
 	requiresPhoto: z.boolean().default(false),
 	requiresComment: z.boolean().default(false),
 };
@@ -75,6 +79,7 @@ export const updateTemplateTaskSchema = z.object({
 	instructions: templateTaskFields.instructions,
 	phase: templateTaskFields.phase,
 	durationDays: z.number().int().min(0).max(365).optional(),
+	plannedHours: plannedHoursSchema.nullable().optional(),
 	requiresPhoto: z.boolean().optional(),
 	requiresComment: z.boolean().optional(),
 });
@@ -248,6 +253,7 @@ export const updateBuildTaskSchema = z.object({
 	startDate: isoDate.nullable().optional(),
 	endDate: isoDate.nullable().optional(),
 	plannedDurationDays: z.number().int().min(0).max(365).optional(),
+	plannedHours: plannedHoursSchema.nullable().optional(),
 	requiresPhoto: z.boolean().optional(),
 	requiresComment: z.boolean().optional(),
 	/** Replaces the task's dependencies when provided. */
@@ -260,6 +266,7 @@ export const createBuildTaskSchema = z.object({
 	instructions: z.string().trim().max(10_000).optional(),
 	phase: z.string().trim().max(80).optional(),
 	plannedDurationDays: z.number().int().min(0).max(365).default(1),
+	plannedHours: plannedHoursSchema.nullable().optional(),
 	startDate: isoDate.optional(),
 	requiresPhoto: z.boolean().default(false),
 	requiresComment: z.boolean().default(false),
