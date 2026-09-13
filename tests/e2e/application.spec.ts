@@ -117,22 +117,7 @@ test("owner can navigate account and organization surfaces", async ({
 	await expect(
 		page.getByRole("tab", { name: "Pending Invitations" }),
 	).toHaveAttribute("data-active");
-	await page.goto("/dashboard/organization/leads");
-	await page.getByRole("button", { name: "Add Lead" }).click();
-	const leadSheet = page.getByRole("dialog", { name: "Create Lead" });
-	await expect(leadSheet).toBeVisible();
-	const statusSelect = leadSheet.getByRole("combobox", { name: "Status" });
-	await statusSelect.click();
-	await page.getByRole("option", { name: "Qualified" }).click();
-	await expect(statusSelect).toContainText("Qualified");
-	const sourceSelect = leadSheet.getByRole("combobox", { name: "Source" });
-	await sourceSelect.click();
-	await page.getByRole("option", { name: "Referral" }).click();
-	await expect(sourceSelect).toContainText("Referral");
-	await leadSheet.getByRole("button", { name: "Close" }).click();
-	await expect(leadSheet).toBeHidden();
-	await waitForModalHistoryRelease(page);
-	for (const path of ["leads", "settings", "chatbot"]) {
+	for (const path of ["templates", "products", "builds", "settings"]) {
 		await page.goto(`/dashboard/organization/${path}`);
 		await expect(page).not.toHaveURL(/auth\/sign-in/);
 	}
@@ -218,20 +203,6 @@ test("owner can enroll in and authenticate with TOTP", async ({ page }) => {
 	await expect(page).toHaveURL(/\/auth\/verify/);
 	await page.getByLabel("One-time password").fill(await stableTotp(secret!));
 	await expect(page).toHaveURL(/\/dashboard/);
-});
-
-test("AI chat enforces organization credits", async ({ page }) => {
-	await signIn(page, "owner@e2e.local");
-	await page.getByText("Open", { exact: true }).click();
-	await expect(page).toHaveURL(/\/dashboard\/organization/);
-	await page.goto("/dashboard/organization/chatbot");
-	await expect(page.locator("[data-chat-transcript]")).toHaveAttribute(
-		"translate",
-		"no",
-	);
-	await page.getByPlaceholder("Ask me anything...").fill("E2E message");
-	await page.getByRole("button", { name: "Submit" }).click();
-	await expect(page.getByText("Not enough credits").first()).toBeVisible();
 });
 
 test("administrator can access every admin surface", async ({ page }) => {

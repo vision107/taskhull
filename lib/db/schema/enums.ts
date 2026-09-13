@@ -88,33 +88,6 @@ export const OrderStatus = {
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 export const OrderStatuses = Object.values(OrderStatus);
 
-// Lead status enum
-export const LeadStatus = {
-	new: "new",
-	contacted: "contacted",
-	qualified: "qualified",
-	proposal: "proposal",
-	negotiation: "negotiation",
-	won: "won",
-	lost: "lost",
-} as const;
-export type LeadStatus = (typeof LeadStatus)[keyof typeof LeadStatus];
-export const LeadStatuses = Object.values(LeadStatus);
-
-// Lead source enum
-export const LeadSource = {
-	website: "website",
-	referral: "referral",
-	socialMedia: "social_media",
-	advertising: "advertising",
-	coldCall: "cold_call",
-	email: "email",
-	event: "event",
-	other: "other",
-} as const;
-export type LeadSource = (typeof LeadSource)[keyof typeof LeadSource];
-export const LeadSources = Object.values(LeadSource);
-
 // Credit transaction type enum
 export const CreditTransactionType = {
 	purchase: "purchase", // User bought credits

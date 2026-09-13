@@ -2,7 +2,6 @@
 
 import NiceModal, { type NiceModalHocProps } from "@ebay/nice-modal-react";
 import {
-	BotIcon,
 	CreditCardIcon,
 	HomeIcon,
 	LayoutDashboardIcon,
@@ -10,7 +9,6 @@ import {
 	SettingsIcon,
 	ShieldIcon,
 	UserIcon,
-	UserSearchIcon,
 	UsersIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -60,16 +58,6 @@ const organizationNavItems: NavItem[] = [
 		title: "Dashboard",
 		href: "/dashboard/organization",
 		icon: LayoutDashboardIcon,
-	},
-	{
-		title: "Leads",
-		href: "/dashboard/organization/leads",
-		icon: UserSearchIcon,
-	},
-	{
-		title: "AI Chatbot",
-		href: "/dashboard/organization/chatbot",
-		icon: BotIcon,
 	},
 	{
 		title: "General Settings",

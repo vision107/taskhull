@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working with this repository.
 
 ## Project Overview
 
-Multi-tenant SaaS template with authentication, billing, organizations, lead management, and AI chat.
+Multi-tenant SaaS template with authentication, billing, organizations, and a manufacturing task planner (templates → products → builds → worker tasks).
 
 ## Tech Stack
 
@@ -71,12 +71,12 @@ Always filter by organization:
 
 ```typescript
 // ✅ CORRECT
-const leads = await db.query.leadTable.findMany({
-	where: eq(leadTable.organizationId, ctx.organization.id),
+const builds = await db.query.buildTable.findMany({
+	where: eq(buildTable.organizationId, ctx.organization.id),
 });
 
 // ❌ WRONG - Data leak
-const leads = await db.query.leadTable.findMany();
+const builds = await db.query.buildTable.findMany();
 ```
 
 ### Role System

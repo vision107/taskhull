@@ -98,7 +98,6 @@ async function getProjectOverview(
 		"drizzle-orm",
 		"@trpc/server",
 		"stripe",
-		"ai",
 		"@sentry/nextjs",
 	]);
 	const nextVersion = keyPackages.next;
@@ -121,7 +120,7 @@ async function getProjectOverview(
 			"tRPC APIs with React Query",
 			"Resend and React Email",
 			"S3-compatible storage",
-			"Vercel AI SDK chat with persistence and credit consumption",
+			"Manufacturing planner: templates, products, builds and worker tasks",
 			"Sentry, Pino, Vercel Analytics and Speed Insights",
 		],
 		importantPaths: {

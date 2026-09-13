@@ -341,9 +341,9 @@ describe("Achromatic MCP server", () => {
 		expect(
 			await callText("list_implementation_files", {
 				area: "trpc",
-				query: "organization-lead",
+				query: "organization-build",
 			}),
-		).toContain("trpc/routers/organization/organization-lead-router.ts");
+		).toContain("trpc/routers/organization/organization-build-router.ts");
 		expect(
 			await callText("list_implementation_files", {
 				area: "hooks",
@@ -364,7 +364,7 @@ describe("Achromatic MCP server", () => {
 		).toContain("drizzle.config.ts");
 		expect(
 			await callText("read_implementation_file", {
-				path: "trpc/routers/organization/organization-lead-router.ts",
+				path: "trpc/routers/organization/organization-build-router.ts",
 			}),
 		).toContain("protectedOrganizationProcedure");
 		expect(
@@ -372,7 +372,7 @@ describe("Achromatic MCP server", () => {
 				area: "trpc",
 				query: "protectedOrganizationProcedure",
 			}),
-		).toContain("trpc/routers/organization/organization-lead-router.ts");
+		).toContain("trpc/routers/organization/organization-build-router.ts");
 		expect(
 			await callText("search_implementation", {
 				area: "config",

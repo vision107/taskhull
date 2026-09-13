@@ -2,13 +2,11 @@ import { relations } from "drizzle-orm";
 
 import {
 	accountTable,
-	aiChatTable,
 	billingEventTable,
 	creditBalanceTable,
 	creditDeductionFailureTable,
 	creditTransactionTable,
 	invitationTable,
-	leadTable,
 	memberTable,
 	notificationTable,
 	passkeyTable,
@@ -59,8 +57,6 @@ export const organizationRelations = relations(
 		subscriptions: many(subscriptionTable),
 		orders: many(orderTable),
 		billingEvents: many(billingEventTable),
-		aiChats: many(aiChatTable),
-		leads: many(leadTable),
 		creditBalance: one(creditBalanceTable),
 		creditTransactions: many(creditTransactionTable),
 	}),
@@ -94,8 +90,6 @@ export const userRelations = relations(userTable, ({ many }) => ({
 	invitations: many(invitationTable),
 	memberships: many(memberTable),
 	twoFactors: many(twoFactorTable),
-	aiChats: many(aiChatTable),
-	assignedLeads: many(leadTable),
 	creditTransactions: many(creditTransactionTable),
 	notifications: many(notificationTable, {
 		relationName: "notificationRecipient",
@@ -167,30 +161,6 @@ export const billingEventRelations = relations(
 		}),
 	}),
 );
-
-// AI Chat relations
-export const aiChatRelations = relations(aiChatTable, ({ one }) => ({
-	organization: one(organizationTable, {
-		fields: [aiChatTable.organizationId],
-		references: [organizationTable.id],
-	}),
-	user: one(userTable, {
-		fields: [aiChatTable.userId],
-		references: [userTable.id],
-	}),
-}));
-
-// Lead relations
-export const leadRelations = relations(leadTable, ({ one }) => ({
-	organization: one(organizationTable, {
-		fields: [leadTable.organizationId],
-		references: [organizationTable.id],
-	}),
-	assignedTo: one(userTable, {
-		fields: [leadTable.assignedToId],
-		references: [userTable.id],
-	}),
-}));
 
 // Credit relations
 export const creditBalanceRelations = relations(

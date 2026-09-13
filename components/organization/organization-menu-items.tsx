@@ -1,9 +1,7 @@
 "use client";
 
 import {
-	BotIcon,
 	ChevronRight,
-	CoinsIcon,
 	BoxIcon,
 	ClipboardCheckIcon,
 	CreditCardIcon,
@@ -11,7 +9,6 @@ import {
 	FileStackIcon,
 	LayoutDashboardIcon,
 	SettingsIcon,
-	UserSearchIcon,
 	UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -90,16 +87,6 @@ export function OrganizationMenuItems(): React.JSX.Element {
 					href: "/dashboard/work",
 					icon: ClipboardCheckIcon,
 				},
-				{
-					label: "Leads",
-					href: `${basePath}/leads`,
-					icon: UserSearchIcon,
-				},
-				{
-					label: "AI Chatbot",
-					href: `${basePath}/chatbot`,
-					icon: BotIcon,
-				},
 			],
 			collapsible: false,
 		},
@@ -120,11 +107,6 @@ export function OrganizationMenuItems(): React.JSX.Element {
 					label: "Subscription",
 					href: `${basePath}/settings?tab=subscription`,
 					icon: CreditCardIcon,
-				},
-				{
-					label: "Credits",
-					href: `${basePath}/settings?tab=credits`,
-					icon: CoinsIcon,
 				},
 			],
 			collapsible: false,

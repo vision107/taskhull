@@ -95,13 +95,13 @@ const user = await db.query.userTable.findFirst({
 });
 
 // Complex query
-const leads = await db
+const builds = await db
 	.select()
-	.from(leadTable)
+	.from(buildTable)
 	.where(
-		and(eq(leadTable.organizationId, orgId), eq(leadTable.status, "qualified")),
+		and(eq(buildTable.organizationId, orgId), eq(buildTable.status, "active")),
 	)
-	.orderBy(desc(leadTable.createdAt))
+	.orderBy(desc(buildTable.createdAt))
 	.limit(10);
 ```
 
@@ -277,12 +277,12 @@ if (ctx.membership.role !== "owner" && ctx.membership.role !== "admin") { ... }
 
 ```typescript
 // ✅ CORRECT
-const leads = await db.query.leadTable.findMany({
-	where: eq(leadTable.organizationId, ctx.organization.id),
+const builds = await db.query.buildTable.findMany({
+	where: eq(buildTable.organizationId, ctx.organization.id),
 });
 
 // ❌ WRONG - Data leak across tenants
-const leads = await db.query.leadTable.findMany();
+const builds = await db.query.buildTable.findMany();
 ```
 
 ## UI Components
@@ -331,7 +331,7 @@ if (memberCount >= limits.maxMembers) {
 Follow Conventional Commits:
 
 ```
-feat: add lead export feature
+feat: add build export feature
 fix: resolve billing calculation error
 chore: update dependencies
 docs: improve quickstart guide

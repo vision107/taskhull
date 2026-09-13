@@ -1,7 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
 	boolean,
-	check,
 	index,
 	integer,
 	pgTable,
@@ -16,8 +15,6 @@ import {
 	CreditTransactionType,
 	enumToPgEnum,
 	InvitationStatus,
-	LeadSource,
-	LeadStatus,
 	MemberRole,
 	OrderStatus,
 	PriceModel,
@@ -690,106 +687,5 @@ export const creditTransactionTable = pgTable(
 		uniqueIndex("credit_transaction_bonus_unique")
 			.on(table.referenceType, table.referenceId)
 			.where(sql`${table.referenceType} = 'checkout_session_bonus'`),
-	],
-);
-
-// ============================================================================
-// AI CHAT TABLE
-// ============================================================================
-
-/**
- * AI Chat table - stores chat conversations with AI
- * Supports both user-level and organization-level chats
- * Note: At least one of organizationId or userId must be non-null (enforced by check constraint)
- */
-export const aiChatTable = pgTable(
-	"ai_chat",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		organizationId: uuid("organization_id").references(
-			() => organizationTable.id,
-			{ onDelete: "cascade" },
-		),
-		userId: uuid("user_id").references(() => userTable.id, {
-			onDelete: "cascade",
-		}),
-		title: text("title"),
-		messages: text("messages"), // JSON stringified array of messages
-		pinned: boolean("pinned").notNull().default(false),
-		createdAt: timestamp("created_at", { withTimezone: true })
-			.notNull()
-			.defaultNow(),
-		updatedAt: timestamp("updated_at", { withTimezone: true })
-			.notNull()
-			.defaultNow()
-			.$onUpdate(() => new Date()),
-	},
-	(table) => [
-		index("ai_chat_organization_id_idx").on(table.organizationId),
-		index("ai_chat_user_id_idx").on(table.userId),
-		index("ai_chat_created_at_idx").on(table.createdAt),
-		// Ensure at least one owner is set - prevent orphaned chats
-		check(
-			"ai_chat_has_owner",
-			sql`${table.organizationId} IS NOT NULL OR ${table.userId} IS NOT NULL`,
-		),
-	],
-);
-
-// ============================================================================
-// LEADS TABLE
-// ============================================================================
-
-/**
- * Lead table - stores leads/prospects for an organization
- */
-export const leadTable = pgTable(
-	"lead",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		organizationId: uuid("organization_id")
-			.notNull()
-			.references(() => organizationTable.id, { onDelete: "cascade" }),
-		// Contact information
-		firstName: text("first_name").notNull(),
-		lastName: text("last_name").notNull(),
-		email: text("email").notNull(),
-		phone: text("phone"),
-		company: text("company"),
-		jobTitle: text("job_title"),
-		// Lead details
-		status: text("status", { enum: enumToPgEnum(LeadStatus) })
-			.$type<LeadStatus>()
-			.notNull()
-			.default(LeadStatus.new),
-		source: text("source", { enum: enumToPgEnum(LeadSource) })
-			.$type<LeadSource>()
-			.notNull()
-			.default(LeadSource.other),
-		// Value and notes
-		estimatedValue: integer("estimated_value"), // Amount in cents
-		notes: text("notes"),
-		// Assigned to
-		assignedToId: uuid("assigned_to_id").references(() => userTable.id, {
-			onDelete: "set null",
-		}),
-		// Timestamps
-		createdAt: timestamp("created_at", { withTimezone: true })
-			.notNull()
-			.defaultNow(),
-		updatedAt: timestamp("updated_at", { withTimezone: true })
-			.notNull()
-			.defaultNow()
-			.$onUpdate(() => new Date()),
-	},
-	(table) => [
-		index("lead_organization_id_idx").on(table.organizationId),
-		index("lead_status_idx").on(table.status),
-		index("lead_source_idx").on(table.source),
-		index("lead_assigned_to_id_idx").on(table.assignedToId),
-		index("lead_email_idx").on(table.email),
-		index("lead_created_at_idx").on(table.createdAt),
-		// Composite index for common query: leads by organization and status
-		index("lead_org_status_idx").on(table.organizationId, table.status),
 	],
 );

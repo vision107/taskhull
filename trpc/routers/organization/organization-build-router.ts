@@ -713,9 +713,24 @@ export const organizationBuildRouter = createTRPCRouter({
 			},
 		});
 
+		// Aggregates always return exactly one row; the fallbacks only satisfy the type.
 		return {
-			builds: buildStats,
-			tasks: taskStats,
+			builds: buildStats ?? {
+				total: 0,
+				planned: 0,
+				active: 0,
+				blocked: 0,
+				completed: 0,
+			},
+			tasks: taskStats ?? {
+				total: 0,
+				todo: 0,
+				inProgress: 0,
+				blocked: 0,
+				review: 0,
+				done: 0,
+				unassigned: 0,
+			},
 			recentComments,
 		};
 	}),

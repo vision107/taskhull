@@ -36,6 +36,13 @@
       "when": 1789229059297,
       "tag": "20260912160419_manufacturing_core",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789294758517,
+      "tag": "20260913101918_remove_leads_and_ai_chat",
+      "breakpoints": true
     }
   ]
 }
