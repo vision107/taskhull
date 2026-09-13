@@ -33,6 +33,12 @@ import type {
 	ChecklistItemStatus,
 } from "@/lib/db/schema/enums";
 import { formatBytes } from "@/lib/manufacturing/format";
+import { downscalePhoto } from "@/lib/manufacturing/image-client";
+import {
+	assertUploadAllowed,
+	normalizeContentType,
+	PHOTO_ACCEPT,
+} from "@/lib/manufacturing/uploads";
 import { isNetworkError } from "@/lib/offline/queue";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
@@ -197,16 +203,31 @@ export function WorkTaskDetail({
 		if (!files || files.length === 0) return;
 		setUploading(true);
 		try {
-			for (const file of Array.from(files)) {
+			for (const original of Array.from(files)) {
+				// Reject obviously wrong files before touching the network, then
+				// shrink phone photos so they stay well under the size cap.
+				assertUploadAllowed("photo", {
+					fileName: original.name,
+					contentType: original.type,
+					sizeBytes: original.size,
+				});
+				const file = await downscalePhoto(original);
+				assertUploadAllowed("photo", {
+					fileName: file.name,
+					contentType: file.type,
+					sizeBytes: file.size,
+				});
+				const contentType = normalizeContentType(file.type);
 				const { storageKey, signedUrl } = await uploadUrlMutation.mutateAsync({
 					buildTaskId: task.id,
 					fileName: file.name,
-					contentType: file.type || undefined,
+					contentType,
+					sizeBytes: file.size,
 				});
 				const response = await fetch(signedUrl, {
 					method: "PUT",
 					body: file,
-					headers: { "Content-Type": file.type || "application/octet-stream" },
+					headers: { "Content-Type": contentType },
 				});
 				if (!response.ok) {
 					throw new Error(`Upload of ${file.name} failed (${response.status})`);
@@ -215,7 +236,7 @@ export function WorkTaskDetail({
 					buildTaskId: task.id,
 					storageKey,
 					fileName: file.name,
-					contentType: file.type || undefined,
+					contentType,
 					sizeBytes: file.size,
 				});
 			}
@@ -447,7 +468,7 @@ export function WorkTaskDetail({
 						<input
 							ref={fileInputRef}
 							type="file"
-							accept="image/*,application/pdf"
+							accept={PHOTO_ACCEPT}
 							capture="environment"
 							multiple
 							className="hidden"

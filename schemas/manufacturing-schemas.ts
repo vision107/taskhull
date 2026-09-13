@@ -6,6 +6,7 @@ import {
 	BuildTaskStatus,
 	ChecklistItemStatus,
 } from "@/lib/db/schema/enums";
+import { type UploadKind, uploadRejection } from "@/lib/manufacturing/uploads";
 
 const isoDate = z
 	.string()
@@ -100,21 +101,47 @@ export const templateTaskDependencySchema = z.object({
 	dependsOnTemplateTaskId: z.uuid(),
 });
 
-export const addTemplateTaskDocumentSchema = z.object({
-	templateTaskId: z.uuid(),
-	storageKey: z.string().min(1).max(500),
+const uploadFileFields = {
 	fileName: z.string().trim().min(1).max(255),
 	contentType: z.string().trim().max(120).optional(),
-	sizeBytes: z.number().int().min(0).optional(),
-});
+	sizeBytes: z.number().int().min(1),
+};
+
+function refineUpload<T extends z.ZodObject<z.ZodRawShape>>(
+	schema: T,
+	kind: UploadKind,
+) {
+	return schema.superRefine((value, ctx) => {
+		const file = value as unknown as {
+			fileName: string;
+			contentType?: string;
+			sizeBytes: number;
+		};
+		const reason = uploadRejection(kind, file);
+		if (reason) {
+			ctx.addIssue({ code: "custom", message: reason, path: ["fileName"] });
+		}
+	});
+}
+
+export const addTemplateTaskDocumentSchema = refineUpload(
+	z.object({
+		templateTaskId: z.uuid(),
+		storageKey: z.string().min(1).max(500),
+		...uploadFileFields,
+	}),
+	"document",
+);
 
 export const removeTemplateTaskDocumentSchema = idSchema;
 
-export const templateTaskDocumentUploadUrlSchema = z.object({
-	templateTaskId: z.uuid(),
-	fileName: z.string().trim().min(1).max(255),
-	contentType: z.string().trim().max(120).optional(),
-});
+export const templateTaskDocumentUploadUrlSchema = refineUpload(
+	z.object({
+		templateTaskId: z.uuid(),
+		...uploadFileFields,
+	}),
+	"document",
+);
 
 // ---------------------------------------------------------------------------
 // Products
@@ -267,20 +294,23 @@ export const updateBuildTaskChecklistItemSchema = z.object({
 	status: z.enum(ChecklistItemStatus),
 });
 
-export const buildTaskAttachmentUploadUrlSchema = z.object({
-	buildTaskId: z.uuid(),
-	fileName: z.string().trim().min(1).max(255),
-	contentType: z.string().trim().max(120).optional(),
-});
+export const buildTaskAttachmentUploadUrlSchema = refineUpload(
+	z.object({
+		buildTaskId: z.uuid(),
+		...uploadFileFields,
+	}),
+	"photo",
+);
 
-export const addBuildTaskAttachmentSchema = z.object({
-	buildTaskId: z.uuid(),
-	storageKey: z.string().min(1).max(500),
-	fileName: z.string().trim().min(1).max(255),
-	contentType: z.string().trim().max(120).optional(),
-	sizeBytes: z.number().int().min(0).optional(),
-	caption: z.string().trim().max(500).optional(),
-});
+export const addBuildTaskAttachmentSchema = refineUpload(
+	z.object({
+		buildTaskId: z.uuid(),
+		storageKey: z.string().min(1).max(500),
+		...uploadFileFields,
+		caption: z.string().trim().max(500).optional(),
+	}),
+	"photo",
+);
 
 export const deleteBuildTaskAttachmentSchema = idSchema;
 

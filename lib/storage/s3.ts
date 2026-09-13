@@ -78,6 +78,7 @@ export async function getSignedUploadUrl(
 	path: string,
 	bucket: string,
 	contentType: string = "image/jpeg",
+	contentLength?: number,
 ): Promise<string> {
 	const safePath = validatePath(path);
 	const s3 = getS3Client();
@@ -88,6 +89,11 @@ export async function getSignedUploadUrl(
 				Bucket: bucket,
 				Key: safePath,
 				ContentType: contentType,
+				// When given, the signature covers Content-Length so a client
+				// cannot upload more than it declared.
+				...(contentLength !== undefined
+					? { ContentLength: contentLength }
+					: {}),
 			}),
 			{ expiresIn: 60 },
 		);

@@ -31,6 +31,7 @@ import {
 	notifyTaskStatusChanged,
 } from "@/lib/manufacturing/notifications";
 import { canPlan } from "@/lib/manufacturing/permissions";
+import { normalizeContentType } from "@/lib/manufacturing/uploads";
 import { getSignedUploadUrl, getSignedUrl } from "@/lib/storage";
 import {
 	addBuildTaskAttachmentSchema,
@@ -490,7 +491,8 @@ export const organizationWorkRouter = createTRPCRouter({
 			const signedUrl = await getSignedUploadUrl(
 				storageKey,
 				storageConfig.bucketNames.images,
-				input.contentType ?? "application/octet-stream",
+				normalizeContentType(input.contentType),
+				input.sizeBytes,
 			);
 
 			return { storageKey, signedUrl };

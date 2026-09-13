@@ -43,6 +43,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEnhancedModal } from "@/hooks/use-enhanced-modal";
 import { useZodForm } from "@/hooks/use-zod-form";
 import { formatBytes } from "@/lib/manufacturing/format";
+import {
+	assertUploadAllowed,
+	normalizeContentType,
+	UPLOAD_LIMITS,
+} from "@/lib/manufacturing/uploads";
 import { trpc } from "@/trpc/client";
 
 const formSchema = z.object({
@@ -232,24 +237,36 @@ export const TemplateTaskModal = NiceModal.create<TemplateTaskModalProps>(
 		const { getRootProps, getInputProps, isDragActive } = useDropzone({
 			disabled: readOnly || !taskId || uploading,
 			multiple: true,
-			maxSize: 50 * 1024 * 1024,
+			maxSize: UPLOAD_LIMITS.document.maxBytes,
+			onDropRejected: (rejections) => {
+				for (const rejection of rejections) {
+					toast.error(
+						`${rejection.file.name}: too large (max ${UPLOAD_LIMITS.document.label}).`,
+					);
+				}
+			},
 			onDrop: async (files) => {
 				if (!taskId) return;
 				setUploading(true);
 				try {
 					for (const file of files) {
+						assertUploadAllowed("document", {
+							fileName: file.name,
+							contentType: file.type,
+							sizeBytes: file.size,
+						});
+						const contentType = normalizeContentType(file.type);
 						const { storageKey, signedUrl } =
 							await uploadUrlMutation.mutateAsync({
 								templateTaskId: taskId,
 								fileName: file.name,
-								contentType: file.type || "application/octet-stream",
+								contentType,
+								sizeBytes: file.size,
 							});
 						const response = await fetch(signedUrl, {
 							method: "PUT",
 							body: file,
-							headers: {
-								"Content-Type": file.type || "application/octet-stream",
-							},
+							headers: { "Content-Type": contentType },
 						});
 						if (!response.ok) {
 							throw new Error(`Upload of ${file.name} failed`);
@@ -258,7 +275,7 @@ export const TemplateTaskModal = NiceModal.create<TemplateTaskModalProps>(
 							templateTaskId: taskId,
 							storageKey,
 							fileName: file.name,
-							contentType: file.type || undefined,
+							contentType,
 							sizeBytes: file.size,
 						});
 					}
@@ -663,7 +680,7 @@ export const TemplateTaskModal = NiceModal.create<TemplateTaskModalProps>(
 															<UploadIcon className="size-4" />
 															{uploading
 																? "Uploading…"
-																: "Drop drawings, PDFs or images here, or click to choose"}
+																: `Drop drawings, PDFs or images here, or click to choose (max ${UPLOAD_LIMITS.document.label})`}
 														</div>
 													)}
 												</div>

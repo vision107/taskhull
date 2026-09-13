@@ -28,6 +28,7 @@ import {
 	publishDraftVersion,
 	wouldCreateCycle,
 } from "@/lib/manufacturing/template-versions";
+import { normalizeContentType } from "@/lib/manufacturing/uploads";
 import { getSignedUploadUrl, getSignedUrl } from "@/lib/storage";
 import {
 	addTemplateTaskDocumentSchema,
@@ -691,7 +692,8 @@ export const organizationTemplateRouter = createTRPCRouter({
 			const signedUrl = await getSignedUploadUrl(
 				storageKey,
 				storageConfig.bucketNames.images,
-				input.contentType ?? "application/octet-stream",
+				normalizeContentType(input.contentType),
+				input.sizeBytes,
 			);
 
 			return { storageKey, signedUrl };

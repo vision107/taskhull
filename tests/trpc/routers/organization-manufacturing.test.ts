@@ -763,10 +763,29 @@ describe("manufacturing routers", () => {
 				message: expect.stringContaining("photo"),
 			});
 
+			// Upload guardrails: type and size are checked before signing.
+			await expect(
+				workerCaller.organization.work.attachmentUploadUrl({
+					buildTaskId: byTitle["Wire control cabinet"]!.id,
+					fileName: "clip.mp4",
+					contentType: "video/mp4",
+					sizeBytes: 1024,
+				}),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+			await expect(
+				workerCaller.organization.work.attachmentUploadUrl({
+					buildTaskId: byTitle["Wire control cabinet"]!.id,
+					fileName: "huge.jpg",
+					contentType: "image/jpeg",
+					sizeBytes: 16 * 1024 * 1024,
+				}),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
 			const upload = await workerCaller.organization.work.attachmentUploadUrl({
 				buildTaskId: byTitle["Wire control cabinet"]!.id,
 				fileName: "cabinet done.jpg",
 				contentType: "image/jpeg",
+				sizeBytes: 250_000,
 			});
 			expect(upload.storageKey.startsWith(`orgs/${ORG_ID}/builds/`)).toBe(true);
 			await workerCaller.organization.work.addAttachment({
@@ -774,6 +793,7 @@ describe("manufacturing routers", () => {
 				storageKey: upload.storageKey,
 				fileName: "cabinet done.jpg",
 				contentType: "image/jpeg",
+				sizeBytes: 250_000,
 			});
 			await workerCaller.organization.work.addComment({
 				buildTaskId: byTitle["Wire control cabinet"]!.id,
