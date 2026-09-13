@@ -1157,13 +1157,28 @@ describe("manufacturing routers", () => {
 				id: frameIds[0]!,
 				status: "in_progress",
 			});
+			// Blocking without a reason is refused; the reason becomes a comment.
+			await expect(
+				w.organization.work.updateStatus({
+					id: frameIds[0]!,
+					status: "blocked",
+				}),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
 			await w.organization.work.updateStatus({
 				id: frameIds[0]!,
 				status: "blocked",
+				reason: "Missing bolts, ordered new ones",
 			});
+			const blockedTask = await w.organization.work.getTask({
+				id: frameIds[0]!,
+			});
+			expect(blockedTask.status).toBe("blocked");
+			expect(blockedTask.comments.map((c) => c.body)).toEqual([
+				"Missing bolts, ordered new ones",
+			]);
 			await w.organization.work.addComment({
 				buildTaskId: frameIds[0]!,
-				body: "Missing bolts, ordered new ones",
+				body: "Supplier says Thursday.",
 			});
 
 			const plannerInbox = await callerAs(planner).notification.list({
@@ -1174,6 +1189,7 @@ describe("manufacturing routers", () => {
 				["Task blocked: Mount frame", "Worker commented on Mount frame"].sort(),
 			);
 			const blocked = plannerInbox.find((n) => n.type === "warning")!;
+			expect(blocked.message).toContain("Missing bolts");
 			expect(blocked.actionUrl).toBe(
 				`/dashboard/organization/builds/${builds[0]!.id}`,
 			);

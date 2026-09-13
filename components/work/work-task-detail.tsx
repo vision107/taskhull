@@ -1,5 +1,6 @@
 "use client";
 
+import NiceModal from "@ebay/nice-modal-react";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import {
 	ArrowLeftIcon,
@@ -26,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/user/user-avatar";
+import { BlockReasonSheet } from "@/components/work/block-reason-sheet";
 import { useOffline } from "@/components/work/offline-provider";
 import { useSession } from "@/hooks/use-session";
 import type {
@@ -71,11 +73,11 @@ export function WorkTaskDetail({
 	// task is patched so the screen reflects it, and the provider replays it
 	// once the phone is back online.
 
-	const queueStatus = (next: BuildTaskStatus) => {
+	const queueStatus = (next: BuildTaskStatus, reason?: string) => {
 		offline.enqueue({
 			kind: "updateStatus",
 			taskId,
-			input: { id: taskId, status: next },
+			input: { id: taskId, status: next, reason },
 		});
 		utils.organization.work.getTask.setData({ id: taskId }, (old) =>
 			old ? { ...old, status: next } : old,
@@ -119,7 +121,8 @@ export function WorkTaskDetail({
 			invalidate();
 		},
 		onError: (error, variables) => {
-			if (isNetworkError(error)) queueStatus(variables.status);
+			if (isNetworkError(error))
+				queueStatus(variables.status, variables.reason);
 			else toast.error(error.message);
 		},
 	});
@@ -180,12 +183,19 @@ export function WorkTaskDetail({
 	const missingPhoto = task.requiresPhoto && task.uploads.length === 0;
 	const missingComment = task.requiresComment && task.comments.length === 0;
 
-	const setStatus = (next: BuildTaskStatus) => {
+	const setStatus = (next: BuildTaskStatus, reason?: string) => {
 		if (!offline.online) {
-			queueStatus(next);
+			queueStatus(next, reason);
 			return;
 		}
-		statusMutation.mutate({ id: task.id, status: next });
+		statusMutation.mutate({ id: task.id, status: next, reason });
+	};
+
+	const askBlockReason = () => {
+		void NiceModal.show(BlockReasonSheet, {
+			taskTitle: task.title,
+			onSubmit: (reason) => setStatus("blocked", reason),
+		});
 	};
 
 	const download = async (attachmentId: string) => {
@@ -629,7 +639,7 @@ export function WorkTaskDetail({
 								<Button
 									variant="outline"
 									size="lg"
-									onClick={() => setStatus("blocked")}
+									onClick={askBlockReason}
 									disabled={statusMutation.isPending}
 								>
 									Blocked
@@ -650,7 +660,7 @@ export function WorkTaskDetail({
 								<Button
 									variant="outline"
 									size="lg"
-									onClick={() => setStatus("blocked")}
+									onClick={askBlockReason}
 									disabled={statusMutation.isPending}
 								>
 									Blocked

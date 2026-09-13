@@ -48,6 +48,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/user/user-avatar";
+import { BlockReasonSheet } from "@/components/work/block-reason-sheet";
 import { useEnhancedModal } from "@/hooks/use-enhanced-modal";
 import { useSession } from "@/hooks/use-session";
 import {
@@ -261,9 +262,21 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 														disabled={
 															status === task.status || statusMutation.isPending
 														}
-														onClick={() =>
-															statusMutation.mutate({ id: task.id, status })
-														}
+														onClick={() => {
+															if (status === BuildTaskStatus.blocked) {
+																void NiceModal.show(BlockReasonSheet, {
+																	taskTitle: task.title,
+																	onSubmit: (reason) =>
+																		statusMutation.mutateAsync({
+																			id: task.id,
+																			status,
+																			reason,
+																		}),
+																});
+																return;
+															}
+															statusMutation.mutate({ id: task.id, status });
+														}}
 													>
 														{taskStatusLabels[status]}
 													</DropdownMenuItem>

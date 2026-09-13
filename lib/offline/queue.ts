@@ -15,7 +15,7 @@ export type QueuedWrite =
 			id: string;
 			kind: "updateStatus";
 			taskId: string;
-			input: { id: string; status: BuildTaskStatus };
+			input: { id: string; status: BuildTaskStatus; reason?: string };
 			createdAt: number;
 	  }
 	| {

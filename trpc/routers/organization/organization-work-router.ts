@@ -269,6 +269,15 @@ export const organizationWorkRouter = createTRPCRouter({
 				});
 			}
 
+			const reason =
+				input.status === BuildTaskStatus.blocked ? input.reason : undefined;
+			if (input.status === BuildTaskStatus.blocked && !reason) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Tell the planner what is blocking you.",
+				});
+			}
+
 			if (input.status === BuildTaskStatus.done) {
 				const blockers = await getOpenBlockers(before.id);
 				if (blockers.length > 0) {
@@ -332,6 +341,16 @@ export const organizationWorkRouter = createTRPCRouter({
 				});
 			}
 
+			// The block reason doubles as a comment so it shows up in the thread
+			// and the planner can reply to it.
+			if (reason) {
+				await db.insert(buildTaskCommentTable).values({
+					buildTaskId: before.id,
+					authorId: ctx.user.id,
+					body: reason,
+				});
+			}
+
 			await Promise.all([
 				logActivity({
 					organizationId: ctx.organization.id,
@@ -339,7 +358,11 @@ export const organizationWorkRouter = createTRPCRouter({
 					buildTaskId: before.id,
 					actorId: ctx.user.id,
 					action: ActivityAction.taskStatusChanged,
-					metadata: { from: before.status, to: input.status },
+					metadata: {
+						from: before.status,
+						to: input.status,
+						...(reason ? { reason } : {}),
+					},
 				}),
 				recordRevision({
 					organizationId: ctx.organization.id,
@@ -362,6 +385,7 @@ export const organizationWorkRouter = createTRPCRouter({
 				serialNumber: build.serialNumber,
 				from: before.status,
 				to: input.status,
+				reason,
 			});
 
 			return after;

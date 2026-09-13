@@ -191,6 +191,10 @@ export async function notifyTaskCommented(params: {
  * Status changes that planners care about (blocked, done) and the
  * "your task is ready now" nudge for dependents when a task is finished.
  */
+function truncate(text: string, max: number): string {
+	return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
 export async function notifyTaskStatusChanged(params: {
 	organizationId: string;
 	actorId: string;
@@ -199,18 +203,20 @@ export async function notifyTaskStatusChanged(params: {
 	serialNumber: string;
 	from: BuildTaskStatus;
 	to: BuildTaskStatus;
+	reason?: string;
 }): Promise<void> {
 	const { task, to } = params;
 	const jobs: Promise<unknown>[] = [];
 
 	if (to === BuildTaskStatus.blocked) {
+		const reason = params.reason ? ` – “${truncate(params.reason, 140)}”` : "";
 		jobs.push(
 			getPlannerUserIds(params.organizationId).then((planners) =>
 				notifyUsers({
 					userIds: planners,
 					actorId: params.actorId,
 					title: `Task blocked: ${task.title}`,
-					message: `${params.serialNumber} · ${params.actorName} marked it blocked`,
+					message: `${params.serialNumber} · ${params.actorName}${reason}`,
 					type: "warning",
 					actionUrl: plannerBuildUrl(task.buildId),
 				}),

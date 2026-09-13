@@ -277,9 +277,13 @@ export const listMyTasksSchema = z.object({
 	includeDone: z.boolean().default(false),
 });
 
+export const BLOCK_REASON_MAX = 2000;
+
 export const updateBuildTaskStatusSchema = z.object({
 	id: z.uuid(),
 	status: z.enum(BuildTaskStatus),
+	/** Required when moving to "blocked"; stored as a comment on the task. */
+	reason: z.string().trim().min(1).max(BLOCK_REASON_MAX).optional(),
 });
 
 export const addBuildTaskCommentSchema = z.object({
