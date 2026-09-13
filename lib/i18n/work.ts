@@ -92,6 +92,10 @@ const en = {
 		viewingAsPlanner: "You're viewing this task as a planner.",
 		instructions: "Instructions",
 		checklist: "Checklist",
+		subtasks: "Subtasks",
+		subtasksOpen: (n: number) =>
+			n === 1 ? "1 subtask still open" : `${n} subtasks still open`,
+		finishSubtasksFirst: "finish all subtasks",
 		documents: "Documents",
 		photos: "Photos",
 		required: "required",
@@ -223,6 +227,10 @@ const de: WorkDictionary = {
 		viewingAsPlanner: "Du siehst diese Aufgabe als Planer.",
 		instructions: "Anleitung",
 		checklist: "Checkliste",
+		subtasks: "Unteraufgaben",
+		subtasksOpen: (n) =>
+			n === 1 ? "1 Unteraufgabe noch offen" : `${n} Unteraufgaben noch offen`,
+		finishSubtasksFirst: "alle Unteraufgaben abschließen",
 		documents: "Dokumente",
 		photos: "Fotos",
 		required: "erforderlich",

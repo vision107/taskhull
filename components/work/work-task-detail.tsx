@@ -10,6 +10,7 @@ import {
 	DownloadIcon,
 	FileIcon,
 	ImageIcon,
+	ListTreeIcon,
 	LockIcon,
 	PlayIcon,
 	RotateCcwIcon,
@@ -225,6 +226,9 @@ export function WorkTaskDetail({
 		task.uploads.length === 0 &&
 		pendingPhotos.length === 0;
 	const missingComment = task.requiresComment && task.comments.length === 0;
+	const openSubtasks = task.subtasks.filter(
+		(subtask) => subtask.status !== "done",
+	).length;
 
 	const setStatus = (next: BuildTaskStatus, reason?: string) => {
 		if (!offline.online) {
@@ -360,6 +364,15 @@ export function WorkTaskDetail({
 						· {task.build.serialNumber}
 						{task.phase ? ` · ${task.phase}` : ""}
 					</p>
+					{task.parent && (
+						<Link
+							href={`/dashboard/work/tasks/${task.parent.id}`}
+							className="inline-flex max-w-full items-center gap-1 truncate text-xs text-muted-foreground hover:underline"
+						>
+							<ListTreeIcon className="size-3 shrink-0" />
+							<span className="truncate">{task.parent.title}</span>
+						</Link>
+					)}
 					<h1 className="truncate text-lg leading-tight font-semibold">
 						{task.title}
 					</h1>
@@ -408,6 +421,54 @@ export function WorkTaskDetail({
 					</p>
 				)}
 			</div>
+
+			{/* Subtasks: each is its own task; this one is confirmed by hand */}
+			{task.subtasks.length > 0 && (
+				<Card
+					title={t.detail.subtasks}
+					aside={`${task.subtasks.length - openSubtasks}/${task.subtasks.length}`}
+				>
+					<ul className="divide-y">
+						{task.subtasks.map((subtask) => (
+							<li key={subtask.id}>
+								<Link
+									href={`/dashboard/work/tasks/${subtask.id}`}
+									className="flex items-center gap-2 py-2 text-sm active:bg-muted/60"
+								>
+									<span
+										className={cn(
+											"min-w-0 flex-1 truncate",
+											subtask.status === "done" &&
+												"text-muted-foreground line-through",
+										)}
+									>
+										{subtask.title}
+									</span>
+									{subtask.assignments.length > 0 && (
+										<span className="flex shrink-0 -space-x-1.5">
+											{subtask.assignments.map((assignment) => (
+												<UserAvatar
+													key={assignment.id}
+													name={assignment.user.name}
+													src={assignment.user.image}
+													className="size-5 ring-1 ring-background"
+													fallbackClassName="text-[9px]"
+												/>
+											))}
+										</span>
+									)}
+									<TaskStatusBadge status={subtask.status} labels={t.status} />
+								</Link>
+							</li>
+						))}
+					</ul>
+					{openSubtasks > 0 && status !== "done" && (
+						<p className="mt-2 text-xs text-muted-foreground">
+							{t.detail.subtasksOpen(openSubtasks)}
+						</p>
+					)}
+				</Card>
+			)}
 
 			{/* Instructions */}
 			{task.instructions && (
@@ -776,7 +837,9 @@ export function WorkTaskDetail({
 									className="flex-1"
 									size="lg"
 									onClick={() => setStatus("done")}
-									disabled={statusMutation.isPending || blocked}
+									disabled={
+										statusMutation.isPending || blocked || openSubtasks > 0
+									}
 								>
 									<CheckIcon />
 									{t.detail.markDone}
@@ -836,16 +899,18 @@ export function WorkTaskDetail({
 							</Button>
 						)}
 					</div>
-					{status === "in_progress" && (missingPhoto || missingComment) && (
-						<p className="mx-auto max-w-lg px-4 pt-2 text-center text-xs text-muted-foreground">
-							{t.detail.beforeFinishing(
-								[
-									missingPhoto ? t.detail.addPhoto : null,
-									missingComment ? t.detail.leaveComment : null,
-								].filter((part): part is string => Boolean(part)),
-							)}
-						</p>
-					)}
+					{status === "in_progress" &&
+						(missingPhoto || missingComment || openSubtasks > 0) && (
+							<p className="mx-auto max-w-lg px-4 pt-2 text-center text-xs text-muted-foreground">
+								{t.detail.beforeFinishing(
+									[
+										openSubtasks > 0 ? t.detail.finishSubtasksFirst : null,
+										missingPhoto ? t.detail.addPhoto : null,
+										missingComment ? t.detail.leaveComment : null,
+									].filter((part): part is string => Boolean(part)),
+								)}
+							</p>
+						)}
 				</div>
 			)}
 		</div>

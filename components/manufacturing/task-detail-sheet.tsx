@@ -8,8 +8,10 @@ import {
 	PencilIcon,
 	CheckIcon,
 	ChevronDownIcon,
+	ChevronRightIcon,
 	DownloadIcon,
 	FileIcon,
+	ListTreeIcon,
 	LockIcon,
 	SendIcon,
 	Trash2Icon,
@@ -166,7 +168,10 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 			if (!task) return;
 			void NiceModal.show(ConfirmationModal, {
 				title: "Delete task?",
-				message: `"${task.title}" will be removed from this unit. Only tasks that have not been started can be deleted.`,
+				message:
+					task.subtasks.length > 0
+						? `"${task.title}" and its ${task.subtasks.length} ${task.subtasks.length === 1 ? "subtask" : "subtasks"} will be removed from this unit. Only tasks that have not been started can be deleted.`
+						: `"${task.title}" will be removed from this unit. Only tasks that have not been started can be deleted.`,
 				confirmLabel: "Delete",
 				destructive: true,
 				onConfirm: async () => {
@@ -207,6 +212,10 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 				onSuccess: invalidate,
 				onError: (error) => toast.error(error.message),
 			});
+		const addSubtaskMutation = trpc.organization.build.createTask.useMutation({
+			onSuccess: invalidate,
+			onError: (error) => toast.error(error.message),
+		});
 		const [uploadingDocs, setUploadingDocs] = React.useState(false);
 		const docInputRef = React.useRef<HTMLInputElement>(null);
 		const handleDocumentFiles = async (files: FileList | null) => {
@@ -275,6 +284,11 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 		const checklistDone = task
 			? task.checklistItems.filter((item) => item.status !== "open").length
 			: 0;
+		const subtasksDone = task
+			? task.subtasks.filter(
+					(subtask) => subtask.status === BuildTaskStatus.done,
+				).length
+			: 0;
 		const lastWorkerComment = task
 			? [...task.comments].reverse().find((item) => item.authorId !== user?.id)
 			: undefined;
@@ -319,6 +333,24 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 										<>
 											<span>·</span>
 											<span>{task.phase}</span>
+										</>
+									)}
+									{task.parent && (
+										<>
+											<ChevronRightIcon className="size-3" />
+											<button
+												type="button"
+												className="inline-flex min-w-0 items-center gap-1 truncate hover:underline"
+												onClick={() => {
+													void NiceModal.show(TaskDetailSheet, {
+														taskId: task.parent!.id,
+														canPlan,
+													});
+												}}
+											>
+												<ListTreeIcon className="size-3 shrink-0" />
+												<span className="truncate">{task.parent.title}</span>
+											</button>
 										</>
 									)}
 								</div>
@@ -543,6 +575,92 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 										<p className="text-sm whitespace-pre-wrap">
 											{task.instructions}
 										</p>
+									</Section>
+								)}
+
+								{/* Subtasks: independent tasks under this one */}
+								{(task.subtasks.length > 0 ||
+									(canPlan && !task.parentTaskId)) && (
+									<Section
+										title="Subtasks"
+										aside={
+											task.subtasks.length > 0
+												? `${subtasksDone}/${task.subtasks.length}`
+												: undefined
+										}
+									>
+										{task.subtasks.length > 0 && (
+											<ul className="space-y-1">
+												{task.subtasks.map((subtask) => {
+													const subOwners = subtask.assignments.filter(
+														(assignment) => assignment.role === "owner",
+													);
+													return (
+														<li key={subtask.id}>
+															<button
+																type="button"
+																className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-left text-sm hover:bg-muted/60"
+																onClick={() => {
+																	void NiceModal.show(TaskDetailSheet, {
+																		taskId: subtask.id,
+																		canPlan,
+																	});
+																}}
+															>
+																<span
+																	className={cn(
+																		"min-w-0 flex-1 truncate",
+																		subtask.status === BuildTaskStatus.done &&
+																			"text-muted-foreground line-through",
+																	)}
+																>
+																	{subtask.title}
+																</span>
+																{subtask.endDate && (
+																	<span className="shrink-0 text-xs text-muted-foreground">
+																		{formatEndDate(subtask.endDate)}
+																	</span>
+																)}
+																{subOwners.length > 0 && (
+																	<span className="flex shrink-0 -space-x-1.5">
+																		{subOwners.map((assignment) => (
+																			<UserAvatar
+																				key={assignment.id}
+																				name={assignment.user.name}
+																				src={assignment.user.image}
+																				className="size-5 ring-1 ring-background"
+																				fallbackClassName="text-[9px]"
+																			/>
+																		))}
+																	</span>
+																)}
+																<TaskStatusBadge status={subtask.status} />
+															</button>
+														</li>
+													);
+												})}
+											</ul>
+										)}
+										{canPlan && !task.parentTaskId && (
+											<QuickAddTask
+												className="-mx-1 mt-1 rounded-md px-1"
+												placeholder="Add subtask and press Enter"
+												onAdd={(title) =>
+													addSubtaskMutation.mutateAsync({
+														buildId: task.buildId,
+														title,
+														parentTaskId: task.id,
+													})
+												}
+											/>
+										)}
+										{task.subtasks.length > 0 &&
+											subtasksDone < task.subtasks.length &&
+											task.status !== BuildTaskStatus.done && (
+												<p className="mt-2 text-xs text-muted-foreground">
+													This task can be finished once all subtasks are done.
+												</p>
+											)}
 									</Section>
 								)}
 

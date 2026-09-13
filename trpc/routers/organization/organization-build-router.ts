@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 
 import { storageConfig } from "@/config/storage.config";
 import { db } from "@/lib/db";
@@ -44,7 +44,11 @@ import {
 	updateTemplateFromBuild,
 } from "@/lib/manufacturing/promote";
 import { toDateString } from "@/lib/manufacturing/scheduling";
-import { nextSortOrderForPhase } from "@/lib/manufacturing/sort-order";
+import {
+	nextSiblingSortOrder,
+	nextSortOrderForPhase,
+} from "@/lib/manufacturing/sort-order";
+import { getSubtaskParent } from "@/lib/manufacturing/subtasks";
 import { getOwnedTemplate } from "@/lib/manufacturing/template-versions";
 import { normalizeContentType } from "@/lib/manufacturing/uploads";
 import { getSignedUploadUrl } from "@/lib/storage";
@@ -274,11 +278,26 @@ export const organizationBuildRouter = createTRPCRouter({
 
 			const availableUpgrades = await getAvailableUpgrades(build);
 
+			// Subtask progress per parent, from the flat task list.
+			const subtaskCounts = new Map<string, { total: number; done: number }>();
+			for (const task of build.tasks) {
+				if (!task.parentTaskId) continue;
+				const counts = subtaskCounts.get(task.parentTaskId) ?? {
+					total: 0,
+					done: 0,
+				};
+				counts.total++;
+				if (task.status === BuildTaskStatus.done) counts.done++;
+				subtaskCounts.set(task.parentTaskId, counts);
+			}
+
 			return {
 				...build,
 				availableUpgrades,
 				tasks: build.tasks.map((task) => ({
 					...task,
+					subtaskTotalCount: subtaskCounts.get(task.id)?.total ?? 0,
+					subtaskDoneCount: subtaskCounts.get(task.id)?.done ?? 0,
 					commentCount: task.comments.length,
 					attachmentCount: task.attachments.length,
 					checklistDoneCount: task.checklistItems.filter(
@@ -663,13 +682,29 @@ export const organizationBuildRouter = createTRPCRouter({
 			assertCanPlan(ctx.membership.role);
 			const build = await getOwnedBuild(input.buildId, ctx.organization.id);
 
-			// Land inside the task's phase group (after its last task) so the
-			// grouped list doesn't show the same phase twice; else append.
-			const sortOrder = await nextSortOrderForPhase(
-				buildTaskTable,
-				eq(buildTaskTable.buildId, build.id),
-				input.phase ?? null,
-			);
+			// Subtasks sit under their parent (one level), share its phase and
+			// are appended after their siblings. Top-level tasks land inside
+			// their phase group (after its last task) so the grouped list
+			// doesn't show the same phase twice; else append.
+			const parent = input.parentTaskId
+				? await getSubtaskParent(buildTaskTable, input.parentTaskId, {
+						buildId: build.id,
+					})
+				: null;
+			const phase = parent ? parent.phase : (input.phase ?? null);
+			const sortOrder = parent
+				? await nextSiblingSortOrder(
+						buildTaskTable,
+						eq(buildTaskTable.parentTaskId, parent.id),
+					)
+				: await nextSortOrderForPhase(
+						buildTaskTable,
+						and(
+							eq(buildTaskTable.buildId, build.id),
+							isNull(buildTaskTable.parentTaskId),
+						)!,
+						phase,
+					);
 
 			const dependsOn = await resolveDependencies(
 				build.id,
@@ -686,6 +721,7 @@ export const organizationBuildRouter = createTRPCRouter({
 			const startDate =
 				input.startDate ??
 				latestDependencyEnd ??
+				parent?.startDate ??
 				build.plannedStartDate ??
 				toDateString(new Date());
 
@@ -694,9 +730,10 @@ export const organizationBuildRouter = createTRPCRouter({
 				.values({
 					organizationId: ctx.organization.id,
 					buildId: build.id,
+					parentTaskId: parent?.id ?? null,
 					title: input.title,
 					instructions: input.instructions ?? null,
-					phase: input.phase ?? null,
+					phase,
 					sortOrder,
 					plannedDurationDays: input.plannedDurationDays,
 					plannedHours: input.plannedHours ?? null,
@@ -777,6 +814,14 @@ export const organizationBuildRouter = createTRPCRouter({
 								.returning()
 						: [before];
 
+				// Subtasks follow their parent's phase.
+				if (patch.phase !== undefined) {
+					await tx
+						.update(buildTaskTable)
+						.set({ phase: (patch.phase as string | null) ?? null })
+						.where(eq(buildTaskTable.parentTaskId, id));
+				}
+
 				if (dependsOn) {
 					await tx
 						.delete(buildTaskDependencyTable)
@@ -830,6 +875,22 @@ export const organizationBuildRouter = createTRPCRouter({
 				throw new TRPCError({
 					code: "BAD_REQUEST",
 					message: "Only tasks that have not been started can be deleted.",
+				});
+			}
+
+			// Deleting a parent takes its subtasks with it; refuse when any of
+			// them has work on it.
+			const startedSubtasks = await db.$count(
+				buildTaskTable,
+				and(
+					eq(buildTaskTable.parentTaskId, before.id),
+					ne(buildTaskTable.status, BuildTaskStatus.todo),
+				),
+			);
+			if (startedSubtasks > 0) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "This task has subtasks that were already started.",
 				});
 			}
 
@@ -1045,8 +1106,17 @@ export const organizationBuildRouter = createTRPCRouter({
 					assignments: {
 						with: { user: { columns: { id: true, name: true, image: true } } },
 					},
+					parent: { columns: { title: true, sortOrder: true } },
 				},
 			});
+
+			// Subtasks read "Parent › Subtask" and sort right behind their parent.
+			const rowTitle = (task: (typeof tasks)[number]) =>
+				task.parent ? `${task.parent.title} › ${task.title}` : task.title;
+			const rowSort = (task: (typeof tasks)[number]) =>
+				task.parent
+					? task.parent.sortOrder + (task.sortOrder + 1) / 1000
+					: task.sortOrder;
 
 			// Group by template task when available so the same task lines up across
 			// builds even if the planner renamed it on one build. Ad-hoc tasks (no
@@ -1063,14 +1133,14 @@ export const organizationBuildRouter = createTRPCRouter({
 			for (const task of tasks) {
 				const key = task.sourceTemplateTaskId
 					? `tpl:${task.sourceTemplateTaskId}`
-					: `title:${task.title.toLowerCase()}`;
+					: `title:${rowTitle(task).toLowerCase()}`;
 				let row = rows.get(key);
 				if (!row) {
 					row = {
 						key,
-						title: task.title,
+						title: rowTitle(task),
 						phase: task.phase,
-						sortOrder: task.sortOrder,
+						sortOrder: rowSort(task),
 						cells: Object.fromEntries(builds.map((build) => [build.id, null])),
 					};
 					rows.set(key, row);

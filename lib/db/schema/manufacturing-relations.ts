@@ -64,6 +64,12 @@ export const templateTaskRelations = relations(
 			fields: [templateTaskTable.versionId],
 			references: [templateVersionTable.id],
 		}),
+		parent: one(templateTaskTable, {
+			fields: [templateTaskTable.parentTaskId],
+			references: [templateTaskTable.id],
+			relationName: "templateTaskParent",
+		}),
+		subtasks: many(templateTaskTable, { relationName: "templateTaskParent" }),
 		checklistItems: many(templateTaskChecklistItemTable),
 		documents: many(templateTaskDocumentTable),
 		dependencies: many(templateTaskDependencyTable, {
@@ -173,6 +179,12 @@ export const buildTaskRelations = relations(
 			fields: [buildTaskTable.completedById],
 			references: [userTable.id],
 		}),
+		parent: one(buildTaskTable, {
+			fields: [buildTaskTable.parentTaskId],
+			references: [buildTaskTable.id],
+			relationName: "buildTaskParent",
+		}),
+		subtasks: many(buildTaskTable, { relationName: "buildTaskParent" }),
 		assignments: many(buildTaskAssignmentTable),
 		checklistItems: many(buildTaskChecklistItemTable),
 		comments: many(buildTaskCommentTable),

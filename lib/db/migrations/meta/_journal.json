@@ -71,6 +71,13 @@
       "when": 1789321113942,
       "tag": "20260913173833_planned_hours",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789324354287,
+      "tag": "20260913183234_subtasks",
+      "breakpoints": true
     }
   ]
 }

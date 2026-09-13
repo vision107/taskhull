@@ -1666,6 +1666,215 @@ describe("manufacturing routers", () => {
 			);
 		});
 
+		it("subtasks are independent tasks; the parent is confirmed by hand and travels through templates", async () => {
+			const c = callerAs(planner);
+			const project = await c.organization.build.create({
+				serialNumber: "SUB-1",
+				plannedStartDate: "2026-10-01",
+			});
+			const cabinet = await c.organization.build.createTask({
+				buildId: project.id,
+				title: "Build cabinet",
+				phase: "Electrics",
+				plannedDurationDays: 3,
+			});
+			const test = await c.organization.build.createTask({
+				buildId: project.id,
+				title: "Function test",
+				phase: "QA",
+			});
+			// Quick-added subtasks inherit the parent's phase and queue up
+			// behind each other, without disturbing the top-level order.
+			const mountRail = await c.organization.build.createTask({
+				buildId: project.id,
+				title: "Mount rail",
+				parentTaskId: cabinet.id,
+			});
+			const wire = await c.organization.build.createTask({
+				buildId: project.id,
+				title: "Wire terminals",
+				parentTaskId: cabinet.id,
+				plannedHours: 2,
+			});
+			expect(mountRail.parentTaskId).toBe(cabinet.id);
+			expect(mountRail.phase).toBe("Electrics");
+			expect(mountRail.startDate).toBe(cabinet.startDate);
+			expect([mountRail.sortOrder, wire.sortOrder]).toEqual([0, 1]);
+
+			// One level only, and parents must live in the same project.
+			await expect(
+				c.organization.build.createTask({
+					buildId: project.id,
+					title: "Too deep",
+					parentTaskId: wire.id,
+				}),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+			const other = await c.organization.build.create({
+				serialNumber: "SUB-2",
+				plannedStartDate: "2026-10-01",
+			});
+			await expect(
+				c.organization.build.createTask({
+					buildId: other.id,
+					title: "Wrong project",
+					parentTaskId: cabinet.id,
+				}),
+			).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+			const detail = await c.organization.build.get({ id: project.id });
+			const parentRow = detail.tasks.find((t) => t.id === cabinet.id)!;
+			expect(parentRow.subtaskTotalCount).toBe(2);
+			expect(parentRow.subtaskDoneCount).toBe(0);
+			expect(
+				detail.tasks.filter((t) => !t.parentTaskId).map((t) => t.title),
+			).toEqual(["Build cabinet", "Function test"]);
+
+			// Changing the parent's phase moves the subtasks along.
+			await c.organization.build.updateTask({ id: cabinet.id, phase: "Panel" });
+			const moved = await c.organization.work.getTask({ id: wire.id });
+			expect(moved.phase).toBe("Panel");
+			expect(moved.parent?.title).toBe("Build cabinet");
+
+			// Each subtask is assigned and finished on its own.
+			await c.organization.build.assign({
+				buildTaskIds: [cabinet.id, mountRail.id, wire.id],
+				userId: WORKER_ID,
+			});
+			const w = callerAs(worker, ORG_ID, MemberRole.member);
+			const mine = await w.organization.work.myTasks({});
+			const mineWire = mine.find((t) => t.id === wire.id)!;
+			expect(mineWire.parent?.title).toBe("Build cabinet");
+			expect(mine.find((t) => t.id === cabinet.id)?.subtaskTotal).toBe(2);
+
+			await w.organization.work.updateStatus({
+				id: cabinet.id,
+				status: "in_progress",
+			});
+			// Parent cannot be finished while a subtask is open …
+			await expect(
+				w.organization.work.updateStatus({ id: cabinet.id, status: "done" }),
+			).rejects.toMatchObject({
+				code: "BAD_REQUEST",
+				message: "Finish all subtasks first.",
+			});
+			for (const id of [mountRail.id, wire.id]) {
+				await w.organization.work.updateStatus({ id, status: "in_progress" });
+				await w.organization.work.updateStatus({ id, status: "done" });
+			}
+			// … and finishing the subtasks does not finish the parent by itself.
+			const parentAfter = await w.organization.work.getTask({ id: cabinet.id });
+			expect(parentAfter.status).toBe("in_progress");
+			expect(parentAfter.subtasks.map((s) => s.status)).toEqual([
+				"done",
+				"done",
+			]);
+			await w.organization.work.updateStatus({
+				id: cabinet.id,
+				status: "done",
+			});
+			callerAs(planner); // callerAs swaps the shared auth state; switch back
+
+			// A started parent (or one with started subtasks) cannot be deleted.
+			await expect(
+				c.organization.build.deleteTask({ id: cabinet.id }),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+			// The structure is kept when the project becomes a template …
+			const { template, version } = await c.organization.build.saveAsTemplate({
+				buildId: project.id,
+				name: "Cabinet line",
+			});
+			const v1 = await c.organization.template.getVersion({
+				versionId: version.id,
+			});
+			const tplCabinet = v1.tasks.find((t) => t.title === "Build cabinet")!;
+			const tplSubs = v1.tasks.filter((t) => t.parentTaskId === tplCabinet.id);
+			expect(tplSubs.map((t) => t.title)).toEqual([
+				"Mount rail",
+				"Wire terminals",
+			]);
+			expect(tplSubs[1]?.plannedHours).toBe(2);
+			expect(
+				v1.tasks.find((t) => t.title === "Function test")?.parentTaskId,
+			).toBeNull();
+
+			// … when the next unit is created from it …
+			const next = await c.organization.build.create({
+				templateId: template.id,
+				serialNumber: "SUB-3",
+				plannedStartDate: "2026-11-01",
+			});
+			const nextDetail = await c.organization.build.get({ id: next.id });
+			const nextCabinet = nextDetail.tasks.find(
+				(t) => t.title === "Build cabinet",
+			)!;
+			expect(
+				nextDetail.tasks
+					.filter((t) => t.parentTaskId === nextCabinet.id)
+					.map((t) => t.title),
+			).toEqual(["Mount rail", "Wire terminals"]);
+			expect(nextCabinet.subtaskTotalCount).toBe(2);
+
+			// … and when a draft copies the version. Adding a subtask in the
+			// template draft is scoped and levelled the same way.
+			const draft = await c.organization.template.ensureDraft({
+				templateId: template.id,
+			});
+			const v2 = await c.organization.template.getVersion({
+				versionId: draft.id,
+			});
+			const draftCabinet = v2.tasks.find((t) => t.title === "Build cabinet")!;
+			expect(
+				v2.tasks.filter((t) => t.parentTaskId === draftCabinet.id),
+			).toHaveLength(2);
+			const draftSub = await c.organization.template.createTask({
+				versionId: draft.id,
+				title: "Label terminals",
+				parentTaskId: draftCabinet.id,
+			});
+			expect(draftSub.phase).toBe("Panel");
+			expect(draftSub.sortOrder).toBe(2);
+			await expect(
+				c.organization.template.createTask({
+					versionId: draft.id,
+					title: "Too deep",
+					parentTaskId: draftSub.id,
+				}),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+			// Upgrading the open unit brings the new subtask under its parent.
+			await c.organization.template.publish({
+				versionId: draft.id,
+				changeNote: "Label terminals",
+			});
+			await c.organization.build.upgradeToVersion({
+				buildId: next.id,
+				templateVersionId: draft.id,
+			});
+			const upgraded = await c.organization.build.get({ id: next.id });
+			const upgradedCabinet = upgraded.tasks.find(
+				(t) => t.title === "Build cabinet",
+			)!;
+			expect(
+				upgraded.tasks
+					.filter((t) => t.parentTaskId === upgradedCabinet.id)
+					.map((t) => t.title),
+			).toEqual(["Mount rail", "Wire terminals", "Label terminals"]);
+
+			// The grid reads subtasks as "Parent › Subtask" right behind the parent.
+			const grid = await c.organization.build.assignmentGrid({
+				templateId: template.id,
+			});
+			expect(grid.rows.map((row) => row.title)).toEqual([
+				"Build cabinet",
+				"Build cabinet › Mount rail",
+				"Build cabinet › Wire terminals",
+				"Build cabinet › Label terminals",
+				"Function test",
+			]);
+			expect(test.id).toBeDefined();
+		});
+
 		it("keeps serial numbers unique per organization", async () => {
 			const c = callerAs(planner);
 			await c.organization.build.create({

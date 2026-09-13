@@ -43,3 +43,17 @@ export async function nextSortOrderForPhase(
 		.where(and(scope, gt(table.sortOrder, lastInPhase)));
 	return lastInPhase + 1;
 }
+
+/** Append position among the tasks matched by `scope` (e.g. one parent's subtasks). */
+export async function nextSiblingSortOrder(
+	table: TaskTable,
+	scope: SQL,
+): Promise<number> {
+	const [row] = await db
+		.select({
+			maxSort: sql<number>`coalesce(max(${table.sortOrder}), -1)::int`,
+		})
+		.from(table)
+		.where(scope);
+	return (row?.maxSort ?? -1) + 1;
+}

@@ -287,6 +287,25 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
      "type + Enter" row (`build.addChecklistItem`) and a remove button per
      item (`build.removeChecklistItem`). Items typed on a project task travel
      into the template on save‑as / update‑template like everything else.
+  5. _Subtasks (Asana‑style)._ `parent_task_id` (self reference, cascade
+     delete, one level deep) on `template_task` and `build_task`. A subtask is
+     a full task: own status, assignees, dates, hours, checklist, comments,
+     photos and dependencies — a worker sees it in _My tasks_ as
+     "Parent › Subtask" and works it like any other. Rules: a subtask inherits
+     the parent's phase (and follows it when the parent's phase changes);
+     `sortOrder` is per sibling group; a parent **is not** finished
+     automatically — it is confirmed by hand, but `work.updateStatus` refuses
+     `done` while a subtask is open ("Finish all subtasks first."); deleting a
+     parent is refused when a subtask has been started. Planner UI: project
+     page and draft editor render subtasks indented under a collapsible
+     parent row with an `n/m` count, a hover "Add subtask" button and an
+     "Add a subtask and press Enter" row; the task sheet has a "Subtasks n/m"
+     section with quick add and a parent breadcrumb. Worker UI: parent link
+     above the title, a "Subtasks" card with progress, "Mark done" disabled
+     with a hint until every subtask is done. Structure travels through
+     create‑from‑template, draft copies, upgrades and save‑as /
+     update‑template (diff field `parent`); the assignment grid labels
+     subtask rows "Parent › Subtask" and sorts them behind the parent.
 
 - **Phase 8b — My tasks in the web view** (proposal, not started)
   Today `/dashboard/work` is the phone layout stretched to a 32rem column;

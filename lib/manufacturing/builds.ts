@@ -278,6 +278,8 @@ export async function createBuildFromVersion(
 			}
 		}
 
+		await linkSubtasks(tx, templateTasks, templateToBuildTaskId);
+
 		const dependencyRows = templateTasks.flatMap((templateTask) =>
 			templateTask.dependencies.flatMap((dep) => {
 				const buildTaskId = templateToBuildTaskId.get(templateTask.id);
@@ -715,6 +717,9 @@ export async function upgradeBuildToVersion(params: {
 			}
 		}
 
+		// Subtask structure follows the template for every template-derived task.
+		await linkSubtasks(tx, newTemplateTasks, templateToBuildTaskId);
+
 		// Dependencies: rebuild the template-derived ones, keep ad-hoc edges.
 		const templateBuildTaskIds = Array.from(templateToBuildTaskId.values());
 		if (templateBuildTaskIds.length > 0) {
@@ -800,4 +805,27 @@ export async function upgradeBuildToVersion(params: {
 	]);
 
 	return result;
+}
+
+/**
+ * Point build tasks at their parent build task, mirroring `parentTaskId` on
+ * the template tasks they were created from. Parents that are not part of the
+ * mapping (dropped from the template) leave the task at top level.
+ */
+async function linkSubtasks(
+	tx: Pick<typeof db, "update">,
+	templateTasks: { id: string; parentTaskId: string | null }[],
+	templateToBuildTaskId: Map<string, string>,
+): Promise<void> {
+	for (const templateTask of templateTasks) {
+		const buildTaskId = templateToBuildTaskId.get(templateTask.id);
+		if (!buildTaskId) continue;
+		const parentBuildTaskId = templateTask.parentTaskId
+			? (templateToBuildTaskId.get(templateTask.parentTaskId) ?? null)
+			: null;
+		await tx
+			.update(buildTaskTable)
+			.set({ parentTaskId: parentBuildTaskId })
+			.where(eq(buildTaskTable.id, buildTaskId));
+	}
 }

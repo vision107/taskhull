@@ -44,6 +44,8 @@ export interface BuildTaskSnapshot {
 	checklist: string[];
 	/** Ids of other project tasks this one depends on. */
 	dependsOn: string[];
+	/** Project task id of the parent when this is a subtask. */
+	parentId: string | null;
 	documents: DocumentSnapshot[];
 }
 
@@ -70,6 +72,8 @@ export interface TemplateTaskSnapshot {
 	requiresComment: boolean;
 	checklist: string[];
 	dependsOn: string[];
+	/** Template task id of the parent when this is a subtask. */
+	parentId: string | null;
 	documents: DocumentSnapshot[];
 }
 
@@ -168,6 +172,15 @@ export function diffBuildAgainstVersion(
 			return versionTaskId ? [versionTaskId] : [`new:${depId}`];
 		});
 		if (!sameSet(taskDeps, counterpart.dependsOn)) fields.push("order");
+		// Parent compares through lineage as well.
+		const parentLineage = task.parentId
+			? lineageOfBuildTask.get(task.parentId)
+			: undefined;
+		const taskParent = task.parentId
+			? ((parentLineage && versionIdByLineage.get(parentLineage)) ??
+				`new:${task.parentId}`)
+			: null;
+		if (taskParent !== counterpart.parentId) fields.push("parent");
 		if (
 			!sameSet(
 				task.documents.map((doc) => doc.storageKey),
@@ -208,20 +221,29 @@ export async function loadBuildSnapshot(
 		},
 	});
 
-	return tasks.map((task, index) => ({
+	// Normalise to a dense order per sibling group (top level, or one parent's
+	// subtasks) so the template reads top to bottom.
+	const nextIndex = new Map<string | null, number>();
+	const denseSortOrder = (parentId: string | null) => {
+		const index = nextIndex.get(parentId) ?? 0;
+		nextIndex.set(parentId, index + 1);
+		return index;
+	};
+
+	return tasks.map((task) => ({
 		id: task.id,
 		sourceTemplateTaskId: task.sourceTemplateTaskId,
 		title: task.title,
 		instructions: task.instructions,
 		phase: task.phase,
-		// Normalise to a dense order so the template reads top to bottom.
-		sortOrder: index,
+		sortOrder: denseSortOrder(task.parentTaskId),
 		durationDays: task.plannedDurationDays,
 		plannedHours: task.plannedHours,
 		requiresPhoto: task.requiresPhoto,
 		requiresComment: task.requiresComment,
 		checklist: task.checklistItems.map((item) => item.title),
 		dependsOn: task.dependencies.map((dep) => dep.dependsOnBuildTaskId),
+		parentId: task.parentTaskId,
 		documents: task.attachments.map((att) => ({
 			id: att.id,
 			storageKey: att.storageKey,
@@ -261,6 +283,7 @@ export async function loadVersionSnapshot(
 		requiresComment: task.requiresComment,
 		checklist: task.checklistItems.map((item) => item.title),
 		dependsOn: task.dependencies.map((dep) => dep.dependsOnTemplateTaskId),
+		parentId: task.parentTaskId,
 		documents: task.documents.map((doc) => ({
 			id: doc.id,
 			storageKey: doc.storageKey,
@@ -355,6 +378,19 @@ async function writeTasksToVersion(
 				})
 				.returning({ id: templateTaskDocumentTable.id });
 			if (document) documentIds.set(doc.id, document.id);
+		}
+	}
+
+	for (const task of tasks) {
+		const templateTaskId = taskIds.get(task.id);
+		const parentTemplateTaskId = task.parentId
+			? taskIds.get(task.parentId)
+			: undefined;
+		if (templateTaskId && parentTemplateTaskId) {
+			await tx
+				.update(templateTaskTable)
+				.set({ parentTaskId: parentTemplateTaskId })
+				.where(eq(templateTaskTable.id, templateTaskId));
 		}
 	}
 

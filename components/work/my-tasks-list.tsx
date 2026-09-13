@@ -7,6 +7,7 @@ import {
 	CheckCircle2Icon,
 	ChevronRightIcon,
 	ListChecksIcon,
+	ListTreeIcon,
 	LockIcon,
 	MessageSquareTextIcon,
 } from "lucide-react";
@@ -156,7 +157,14 @@ function TaskCard({ task }: { task: MyTask }): React.JSX.Element {
 		>
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
-					<p className="truncate font-medium">{task.title}</p>
+					<p className="truncate font-medium">
+						{task.parent && (
+							<span className="text-muted-foreground">
+								{task.parent.title} ›{" "}
+							</span>
+						)}
+						{task.title}
+					</p>
 					{blocked && (
 						<LockIcon className="size-3.5 shrink-0 text-muted-foreground" />
 					)}
@@ -180,6 +188,12 @@ function TaskCard({ task }: { task: MyTask }): React.JSX.Element {
 						<span className="inline-flex items-center gap-1">
 							<ListChecksIcon className="size-3.5" />
 							{task.checklistDone}/{task.checklistTotal}
+						</span>
+					)}
+					{task.subtaskTotal > 0 && (
+						<span className="inline-flex items-center gap-1">
+							<ListTreeIcon className="size-3.5" />
+							{task.subtaskDone}/{task.subtaskTotal}
 						</span>
 					)}
 					{task.requiresPhoto && (

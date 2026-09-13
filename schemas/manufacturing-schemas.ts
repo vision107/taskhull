@@ -65,6 +65,8 @@ const templateTaskFields = {
 	plannedHours: plannedHoursSchema.nullable().optional(),
 	requiresPhoto: z.boolean().default(false),
 	requiresComment: z.boolean().default(false),
+	/** Make this a subtask of another task in the same version. */
+	parentTaskId: z.uuid().optional(),
 };
 
 export const createTemplateTaskSchema = z.object({
@@ -271,6 +273,8 @@ export const createBuildTaskSchema = z.object({
 	requiresPhoto: z.boolean().default(false),
 	requiresComment: z.boolean().default(false),
 	dependsOnIds: z.array(z.uuid()).max(30).default([]),
+	/** Make this a subtask of another task in the same project. */
+	parentTaskId: z.uuid().optional(),
 });
 
 export const deleteBuildTaskSchema = idSchema;

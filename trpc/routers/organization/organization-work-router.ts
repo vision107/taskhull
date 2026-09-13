@@ -159,6 +159,8 @@ export const organizationWorkRouter = createTRPCRouter({
 					},
 					attachments: { columns: { id: true } },
 					comments: { columns: { id: true } },
+					parent: { columns: { id: true, title: true } },
+					subtasks: { columns: { id: true, status: true } },
 				},
 			});
 
@@ -167,6 +169,11 @@ export const organizationWorkRouter = createTRPCRouter({
 				.map((task) => ({
 					id: task.id,
 					title: task.title,
+					parent: task.parent,
+					subtaskTotal: task.subtasks.length,
+					subtaskDone: task.subtasks.filter(
+						(subtask) => subtask.status === BuildTaskStatus.done,
+					).length,
 					phase: task.phase,
 					status: task.status,
 					startDate: task.startDate,
@@ -239,6 +246,27 @@ export const organizationWorkRouter = createTRPCRouter({
 							buildTask: { columns: { id: true, title: true, status: true } },
 						},
 					},
+					parent: { columns: { id: true, title: true, status: true } },
+					subtasks: {
+						orderBy: [
+							asc(buildTaskTable.sortOrder),
+							asc(buildTaskTable.createdAt),
+						],
+						columns: {
+							id: true,
+							title: true,
+							status: true,
+							startDate: true,
+							endDate: true,
+						},
+						with: {
+							assignments: {
+								with: {
+									user: { columns: { id: true, name: true, image: true } },
+								},
+							},
+						},
+					},
 				},
 			});
 
@@ -297,6 +325,21 @@ export const organizationWorkRouter = createTRPCRouter({
 					throw new TRPCError({
 						code: "BAD_REQUEST",
 						message: `Finish "${blockers[0]!.title}" first.`,
+					});
+				}
+
+				// A parent is confirmed done by hand, but only once every subtask is.
+				const openSubtasks = await db.$count(
+					buildTaskTable,
+					and(
+						eq(buildTaskTable.parentTaskId, before.id),
+						ne(buildTaskTable.status, BuildTaskStatus.done),
+					),
+				);
+				if (openSubtasks > 0) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: "Finish all subtasks first.",
 					});
 				}
 

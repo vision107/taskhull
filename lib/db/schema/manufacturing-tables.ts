@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+	type AnyPgColumn,
 	boolean,
 	date,
 	index,
@@ -115,9 +116,15 @@ export const templateTaskTable = pgTable(
 		 * progress on tasks that still exist.
 		 */
 		lineageId: uuid("lineage_id").notNull().defaultRandom(),
+		/** Subtask of another task in the same version (one level deep). */
+		parentTaskId: uuid("parent_task_id").references(
+			(): AnyPgColumn => templateTaskTable.id,
+			{ onDelete: "cascade" },
+		),
 		title: text("title").notNull(),
 		instructions: text("instructions"),
 		phase: text("phase"),
+		/** Position among siblings (top-level tasks or subtasks of one parent). */
 		sortOrder: integer("sort_order").notNull().default(0),
 		durationDays: integer("duration_days").notNull().default(1),
 		/** Planned effort in hours (independent of the calendar duration). */
@@ -130,6 +137,7 @@ export const templateTaskTable = pgTable(
 		index("template_task_version_id_idx").on(table.versionId),
 		index("template_task_sort_order_idx").on(table.versionId, table.sortOrder),
 		index("template_task_lineage_id_idx").on(table.lineageId),
+		index("template_task_parent_task_id_idx").on(table.parentTaskId),
 	],
 );
 
@@ -292,9 +300,15 @@ export const buildTaskTable = pgTable(
 			() => templateTaskTable.id,
 			{ onDelete: "set null" },
 		),
+		/** Subtask of another task in the same project (one level deep). */
+		parentTaskId: uuid("parent_task_id").references(
+			(): AnyPgColumn => buildTaskTable.id,
+			{ onDelete: "cascade" },
+		),
 		title: text("title").notNull(),
 		instructions: text("instructions"),
 		phase: text("phase"),
+		/** Position among siblings (top-level tasks or subtasks of one parent). */
 		sortOrder: integer("sort_order").notNull().default(0),
 		plannedDurationDays: integer("planned_duration_days").notNull().default(1),
 		/** Planned effort in hours (independent of the calendar duration). */
@@ -322,6 +336,7 @@ export const buildTaskTable = pgTable(
 		),
 		index("build_task_status_idx").on(table.status),
 		index("build_task_dates_idx").on(table.startDate, table.endDate),
+		index("build_task_parent_task_id_idx").on(table.parentTaskId),
 	],
 );
 

@@ -211,6 +211,20 @@ export async function copyVersionContents(
 		}
 	}
 
+	// Subtask links, now that every task has its new id.
+	for (const task of tasks) {
+		const newId = idMap.get(task.id);
+		const newParentId = task.parentTaskId
+			? idMap.get(task.parentTaskId)
+			: undefined;
+		if (newId && newParentId) {
+			await executor
+				.update(templateTaskTable)
+				.set({ parentTaskId: newParentId })
+				.where(eq(templateTaskTable.id, newId));
+		}
+	}
+
 	const dependencies =
 		await executor.query.templateTaskDependencyTable.findMany({
 			where: inArray(

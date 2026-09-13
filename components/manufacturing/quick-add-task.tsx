@@ -12,6 +12,8 @@ export type QuickAddTaskProps = {
 	className?: string;
 	/** Extra hint to the right of the input, e.g. the phase it lands in. */
 	hint?: string | null;
+	/** Focus the input when it appears (e.g. after "Add subtask"). */
+	focusOnMount?: boolean;
 };
 
 /**
@@ -24,10 +26,15 @@ export function QuickAddTask({
 	placeholder = "Add a task and press Enter",
 	className,
 	hint,
+	focusOnMount = false,
 }: QuickAddTaskProps): React.JSX.Element {
 	const [value, setValue] = React.useState("");
 	const [pending, setPending] = React.useState(false);
 	const inputRef = React.useRef<HTMLInputElement>(null);
+
+	React.useEffect(() => {
+		if (focusOnMount) inputRef.current?.focus();
+	}, [focusOnMount]);
 
 	const submit = async () => {
 		const title = value.trim();

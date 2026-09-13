@@ -3,8 +3,12 @@
 import NiceModal from "@ebay/nice-modal-react";
 import {
 	CameraIcon,
+	ChevronDownIcon,
+	ChevronRightIcon,
+	CornerDownRightIcon,
 	FileStackIcon,
 	ListChecksIcon,
+	ListTreeIcon,
 	MessageSquareIcon,
 	MoreHorizontalIcon,
 	PaperclipIcon,
@@ -67,6 +71,7 @@ import {
 	BuildTaskStatuses,
 } from "@/lib/db/schema/enums";
 import { formatEffort } from "@/lib/manufacturing/format";
+import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 
 const buildStatusLabels: Record<BuildStatus, string> = {
@@ -88,6 +93,10 @@ export function BuildDetail({
 	const utils = trpc.useUtils();
 	const router = useRouter();
 	const [tab, setTab] = React.useState("tasks");
+	const [collapsed, setCollapsed] = React.useState<Set<string>>(new Set());
+	const [addingSubtaskFor, setAddingSubtaskFor] = React.useState<string | null>(
+		null,
+	);
 	const { data: build, isLoading } = trpc.organization.build.get.useQuery({
 		id: buildId,
 	});
@@ -124,6 +133,15 @@ export function BuildDetail({
 			buildId,
 			title,
 			phase: phase ?? undefined,
+		});
+	const quickAddSubtask = (parentTaskId: string) => (title: string) =>
+		quickAddMutation.mutateAsync({ buildId, title, parentTaskId });
+	const toggleCollapsed = (taskId: string) =>
+		setCollapsed((prev) => {
+			const next = new Set(prev);
+			if (next.has(taskId)) next.delete(taskId);
+			else next.add(taskId);
+			return next;
 		});
 
 	const assignMutation = trpc.organization.build.assign.useMutation({
@@ -167,9 +185,19 @@ export function BuildDetail({
 	const done = tasks.filter((task) => task.status === "done").length;
 	const titleById = new Map(tasks.map((task) => [task.id, task.title]));
 
+	// Subtasks render under their parent; only top-level tasks form groups.
+	const subtasksByParent = new Map<string, typeof tasks>();
+	for (const task of tasks) {
+		if (!task.parentTaskId) continue;
+		const list = subtasksByParent.get(task.parentTaskId) ?? [];
+		list.push(task);
+		subtasksByParent.set(task.parentTaskId, list);
+	}
+	const topLevel = tasks.filter((task) => !task.parentTaskId);
+
 	// Group by phase preserving sort order.
 	const groups: Array<{ phase: string | null; items: typeof tasks }> = [];
-	for (const task of tasks) {
+	for (const task of topLevel) {
 		const last = groups[groups.length - 1];
 		if (last && last.phase === (task.phase ?? null)) last.items.push(task);
 		else groups.push({ phase: task.phase ?? null, items: [task] });
@@ -196,6 +224,249 @@ export function BuildDetail({
 				await deleteBuildMutation.mutateAsync({ id: buildId });
 			},
 		});
+	};
+
+	const renderTaskRow = (task: (typeof tasks)[number], depth: 0 | 1) => {
+		const owners = task.assignments.filter(
+			(assignment) => assignment.role === "owner",
+		);
+		const blockers = task.dependencies
+			.map((dep) => tasks.find((t) => t.id === dep.dependsOnBuildTaskId))
+			.filter((t) => t && t.status !== "done");
+		const subtasks = subtasksByParent.get(task.id) ?? [];
+		const isCollapsed = collapsed.has(task.id);
+		return (
+			<div
+				key={task.id}
+				className={cn(
+					"group/row flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-3 last:border-b-0 hover:bg-muted/30",
+					depth === 1 && "pl-11",
+				)}
+			>
+				{depth === 0 && subtasks.length > 0 && (
+					<button
+						type="button"
+						aria-label={isCollapsed ? "Show subtasks" : "Hide subtasks"}
+						aria-expanded={!isCollapsed}
+						className="-mr-2 -ml-1 rounded p-0.5 text-muted-foreground hover:text-foreground"
+						onClick={() => toggleCollapsed(task.id)}
+					>
+						{isCollapsed ? (
+							<ChevronRightIcon className="size-4" />
+						) : (
+							<ChevronDownIcon className="size-4" />
+						)}
+					</button>
+				)}
+				{depth === 1 && (
+					<CornerDownRightIcon className="-mr-2 -ml-1 size-3.5 shrink-0 text-muted-foreground/60" />
+				)}
+				<button
+					type="button"
+					onClick={() => openTaskDetail(task.id, canPlan)}
+					className="min-w-0 flex-1 basis-64 rounded-md text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+				>
+					<div className="flex flex-wrap items-center gap-2">
+						<span className="font-medium hover:underline">{task.title}</span>
+						{subtasks.length > 0 && (
+							<span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+								<ListTreeIcon className="size-3.5" />
+								{task.subtaskDoneCount}/{task.subtaskTotalCount}
+							</span>
+						)}
+						{task.sourceTemplateTaskId === null && (
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<span className="rounded border px-1 text-[10px] leading-4 text-muted-foreground">
+										ad-hoc
+									</span>
+								</TooltipTrigger>
+								<TooltipContent>
+									Added to this unit only; template upgrades leave it untouched.
+								</TooltipContent>
+							</Tooltip>
+						)}
+						{task.requiresPhoto && (
+							<CameraIcon className="size-3.5 text-muted-foreground" />
+						)}
+						{task.checklistTotalCount > 0 && (
+							<span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+								<ListChecksIcon className="size-3.5" />
+								{task.checklistDoneCount}/{task.checklistTotalCount}
+							</span>
+						)}
+						{task.commentCount > 0 && (
+							<span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+								<MessageSquareIcon className="size-3.5" />
+								{task.commentCount}
+							</span>
+						)}
+						{task.attachmentCount > 0 && (
+							<span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+								<PaperclipIcon className="size-3.5" />
+								{task.attachmentCount}
+							</span>
+						)}
+					</div>
+					<p className="mt-0.5 text-xs text-muted-foreground">
+						{formatDate(task.startDate)} → {formatEndDate(task.endDate)} ·{" "}
+						{formatEffort(task.plannedDurationDays, task.plannedHours)}
+						{task.dependencies.length > 0 && (
+							<>
+								{" · after "}
+								{task.dependencies
+									.map((dep) => titleById.get(dep.dependsOnBuildTaskId) ?? "?")
+									.join(", ")}
+								{blockers.length > 0 && task.status !== "done" && (
+									<span className="text-amber-600 dark:text-amber-400">
+										{" "}
+										(waiting)
+									</span>
+								)}
+							</>
+						)}
+					</p>
+				</button>
+
+				{canPlan && depth === 0 && (
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								variant="ghost"
+								size="icon-xs"
+								aria-label="Add subtask"
+								className="text-muted-foreground opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100"
+								onClick={() => {
+									setCollapsed((prev) => {
+										const next = new Set(prev);
+										next.delete(task.id);
+										return next;
+									});
+									setAddingSubtaskFor(task.id);
+								}}
+							>
+								<ListTreeIcon />
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>Add subtask</TooltipContent>
+					</Tooltip>
+				)}
+
+				{/* Assignees */}
+				<div className="flex items-center gap-1">
+					{owners.map((assignment) => (
+						<Tooltip key={assignment.id}>
+							<TooltipTrigger asChild>
+								<span className="group/assignee relative">
+									<UserAvatar
+										name={assignment.user.name}
+										src={assignment.user.image}
+										className="size-7"
+										fallbackClassName="text-xs"
+									/>
+									{canPlan && (
+										<button
+											type="button"
+											aria-label={`Unassign ${assignment.user.name}`}
+											className="absolute -top-1 -right-1 hidden size-4 items-center justify-center rounded-full bg-background text-muted-foreground shadow ring-1 ring-border group-hover/assignee:flex hover:text-destructive"
+											onClick={() =>
+												unassignMutation.mutate({
+													buildTaskIds: [task.id],
+													userId: assignment.userId,
+												})
+											}
+										>
+											<XIcon className="size-3" />
+										</button>
+									)}
+								</span>
+							</TooltipTrigger>
+							<TooltipContent>{assignment.user.name}</TooltipContent>
+						</Tooltip>
+					))}
+					{canPlan ? (
+						<AssigneePicker
+							selectedIds={owners.map((a) => a.userId)}
+							onSelect={(user) =>
+								assignMutation.mutate({
+									buildTaskIds: [task.id],
+									userId: user.id,
+									replace: false,
+								})
+							}
+							onDeselect={(user) =>
+								unassignMutation.mutate({
+									buildTaskIds: [task.id],
+									userId: user.id,
+								})
+							}
+							disabled={assignMutation.isPending}
+							label={owners.length === 0 ? "Assign" : ""}
+							buttonProps={{
+								variant: owners.length === 0 ? "outline" : "ghost",
+								size: owners.length === 0 ? "sm" : "icon-xs",
+								"aria-label": "Add assignee",
+							}}
+						/>
+					) : owners.length === 0 ? (
+						<span className="text-xs text-muted-foreground">Unassigned</span>
+					) : null}
+				</div>
+
+				{/* Status */}
+				{canPlan ? (
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<button type="button" className="rounded-md">
+								<TaskStatusBadge status={task.status} />
+							</button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							{BuildTaskStatuses.map((status) => (
+								<DropdownMenuItem
+									key={status}
+									disabled={status === task.status}
+									onClick={() =>
+										statusMutation.mutate({
+											id: task.id,
+											status,
+										})
+									}
+								>
+									{taskStatusLabels[status]}
+								</DropdownMenuItem>
+							))}
+						</DropdownMenuContent>
+					</DropdownMenu>
+				) : (
+					<TaskStatusBadge status={task.status} />
+				)}
+			</div>
+		);
+	};
+
+	const renderTaskTree = (task: (typeof tasks)[number]) => {
+		const subtasks = subtasksByParent.get(task.id) ?? [];
+		const isCollapsed = collapsed.has(task.id);
+		const showSubtaskAdd =
+			canPlan &&
+			!isCollapsed &&
+			(subtasks.length > 0 || addingSubtaskFor === task.id);
+		return (
+			<React.Fragment key={task.id}>
+				{renderTaskRow(task, 0)}
+				{!isCollapsed && subtasks.map((subtask) => renderTaskRow(subtask, 1))}
+				{showSubtaskAdd && (
+					<QuickAddTask
+						className="border-b pl-11 last:border-b-0"
+						placeholder="Add a subtask and press Enter"
+						hint={`→ ${task.title}`}
+						focusOnMount={addingSubtaskFor === task.id}
+						onAdd={quickAddSubtask(task.id)}
+					/>
+				)}
+			</React.Fragment>
+		);
 	};
 
 	return (
@@ -342,191 +613,7 @@ export function BuildDetail({
 											</Button>
 										)}
 									</div>
-									{group.items.map((task) => {
-										const owners = task.assignments.filter(
-											(assignment) => assignment.role === "owner",
-										);
-										const blockers = task.dependencies
-											.map((dep) =>
-												tasks.find((t) => t.id === dep.dependsOnBuildTaskId),
-											)
-											.filter((t) => t && t.status !== "done");
-										return (
-											<div
-												key={task.id}
-												className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-3 last:border-b-0 hover:bg-muted/30"
-											>
-												<button
-													type="button"
-													onClick={() => openTaskDetail(task.id, canPlan)}
-													className="min-w-0 flex-1 basis-64 rounded-md text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-												>
-													<div className="flex flex-wrap items-center gap-2">
-														<span className="font-medium hover:underline">
-															{task.title}
-														</span>
-														{task.sourceTemplateTaskId === null && (
-															<Tooltip>
-																<TooltipTrigger asChild>
-																	<span className="rounded border px-1 text-[10px] leading-4 text-muted-foreground">
-																		ad-hoc
-																	</span>
-																</TooltipTrigger>
-																<TooltipContent>
-																	Added to this unit only; template upgrades
-																	leave it untouched.
-																</TooltipContent>
-															</Tooltip>
-														)}
-														{task.requiresPhoto && (
-															<CameraIcon className="size-3.5 text-muted-foreground" />
-														)}
-														{task.checklistTotalCount > 0 && (
-															<span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-																<ListChecksIcon className="size-3.5" />
-																{task.checklistDoneCount}/
-																{task.checklistTotalCount}
-															</span>
-														)}
-														{task.commentCount > 0 && (
-															<span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-																<MessageSquareIcon className="size-3.5" />
-																{task.commentCount}
-															</span>
-														)}
-														{task.attachmentCount > 0 && (
-															<span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-																<PaperclipIcon className="size-3.5" />
-																{task.attachmentCount}
-															</span>
-														)}
-													</div>
-													<p className="mt-0.5 text-xs text-muted-foreground">
-														{formatDate(task.startDate)} →{" "}
-														{formatEndDate(task.endDate)} ·{" "}
-														{formatEffort(
-															task.plannedDurationDays,
-															task.plannedHours,
-														)}
-														{task.dependencies.length > 0 && (
-															<>
-																{" · after "}
-																{task.dependencies
-																	.map(
-																		(dep) =>
-																			titleById.get(dep.dependsOnBuildTaskId) ??
-																			"?",
-																	)
-																	.join(", ")}
-																{blockers.length > 0 &&
-																	task.status !== "done" && (
-																		<span className="text-amber-600 dark:text-amber-400">
-																			{" "}
-																			(waiting)
-																		</span>
-																	)}
-															</>
-														)}
-													</p>
-												</button>
-
-												{/* Assignees */}
-												<div className="flex items-center gap-1">
-													{owners.map((assignment) => (
-														<Tooltip key={assignment.id}>
-															<TooltipTrigger asChild>
-																<span className="group/assignee relative">
-																	<UserAvatar
-																		name={assignment.user.name}
-																		src={assignment.user.image}
-																		className="size-7"
-																		fallbackClassName="text-xs"
-																	/>
-																	{canPlan && (
-																		<button
-																			type="button"
-																			aria-label={`Unassign ${assignment.user.name}`}
-																			className="absolute -top-1 -right-1 hidden size-4 items-center justify-center rounded-full bg-background text-muted-foreground shadow ring-1 ring-border group-hover/assignee:flex hover:text-destructive"
-																			onClick={() =>
-																				unassignMutation.mutate({
-																					buildTaskIds: [task.id],
-																					userId: assignment.userId,
-																				})
-																			}
-																		>
-																			<XIcon className="size-3" />
-																		</button>
-																	)}
-																</span>
-															</TooltipTrigger>
-															<TooltipContent>
-																{assignment.user.name}
-															</TooltipContent>
-														</Tooltip>
-													))}
-													{canPlan ? (
-														<AssigneePicker
-															selectedIds={owners.map((a) => a.userId)}
-															onSelect={(user) =>
-																assignMutation.mutate({
-																	buildTaskIds: [task.id],
-																	userId: user.id,
-																	replace: false,
-																})
-															}
-															onDeselect={(user) =>
-																unassignMutation.mutate({
-																	buildTaskIds: [task.id],
-																	userId: user.id,
-																})
-															}
-															disabled={assignMutation.isPending}
-															label={owners.length === 0 ? "Assign" : ""}
-															buttonProps={{
-																variant:
-																	owners.length === 0 ? "outline" : "ghost",
-																size: owners.length === 0 ? "sm" : "icon-xs",
-																"aria-label": "Add assignee",
-															}}
-														/>
-													) : owners.length === 0 ? (
-														<span className="text-xs text-muted-foreground">
-															Unassigned
-														</span>
-													) : null}
-												</div>
-
-												{/* Status */}
-												{canPlan ? (
-													<DropdownMenu>
-														<DropdownMenuTrigger asChild>
-															<button type="button" className="rounded-md">
-																<TaskStatusBadge status={task.status} />
-															</button>
-														</DropdownMenuTrigger>
-														<DropdownMenuContent align="end">
-															{BuildTaskStatuses.map((status) => (
-																<DropdownMenuItem
-																	key={status}
-																	disabled={status === task.status}
-																	onClick={() =>
-																		statusMutation.mutate({
-																			id: task.id,
-																			status,
-																		})
-																	}
-																>
-																	{taskStatusLabels[status]}
-																</DropdownMenuItem>
-															))}
-														</DropdownMenuContent>
-													</DropdownMenu>
-												) : (
-													<TaskStatusBadge status={task.status} />
-												)}
-											</div>
-										);
-									})}
+									{group.items.map((task) => renderTaskTree(task))}
 									{canPlan && (
 										<QuickAddTask
 											className="border-b last:border-b-0"

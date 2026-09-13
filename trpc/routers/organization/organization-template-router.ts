@@ -19,7 +19,11 @@ import {
 	templateVersionTable,
 } from "@/lib/db/schema/manufacturing-tables";
 import { assertCanPlan } from "@/lib/manufacturing/permissions";
-import { nextSortOrderForPhase } from "@/lib/manufacturing/sort-order";
+import {
+	nextSiblingSortOrder,
+	nextSortOrderForPhase,
+} from "@/lib/manufacturing/sort-order";
+import { getSubtaskParent } from "@/lib/manufacturing/subtasks";
 import {
 	ensureDraftVersion,
 	getOwnedDraftTask,
@@ -410,20 +414,38 @@ export const organizationTemplateRouter = createTRPCRouter({
 				ctx.organization.id,
 			);
 
-			const sortOrder = await nextSortOrderForPhase(
-				templateTaskTable,
-				eq(templateTaskTable.versionId, draft.id),
-				input.phase ?? null,
-			);
+			// Subtasks sit under their parent (one level), share its phase and
+			// are appended after their siblings. Top-level tasks land in their
+			// phase group.
+			const parent = input.parentTaskId
+				? await getSubtaskParent(templateTaskTable, input.parentTaskId, {
+						versionId: draft.id,
+					})
+				: null;
+			const phase = parent ? parent.phase : (input.phase ?? null);
+			const sortOrder = parent
+				? await nextSiblingSortOrder(
+						templateTaskTable,
+						eq(templateTaskTable.parentTaskId, parent.id),
+					)
+				: await nextSortOrderForPhase(
+						templateTaskTable,
+						and(
+							eq(templateTaskTable.versionId, draft.id),
+							isNull(templateTaskTable.parentTaskId),
+						)!,
+						phase,
+					);
 
 			const task = await db.transaction(async (tx) => {
 				const [created] = await tx
 					.insert(templateTaskTable)
 					.values({
 						versionId: draft.id,
+						parentTaskId: parent?.id ?? null,
 						title: input.title,
 						instructions: input.instructions ?? null,
-						phase: input.phase ?? null,
+						phase,
 						sortOrder,
 						durationDays: input.durationDays,
 						plannedHours: input.plannedHours ?? null,
@@ -480,6 +502,14 @@ export const organizationTemplateRouter = createTRPCRouter({
 				)
 				.where(eq(templateTaskTable.id, id))
 				.returning();
+
+			// Subtasks follow their parent's phase.
+			if (changes.phase !== undefined) {
+				await db
+					.update(templateTaskTable)
+					.set({ phase: changes.phase ?? null })
+					.where(eq(templateTaskTable.parentTaskId, id));
+			}
 
 			await recordRevision({
 				organizationId: ctx.organization.id,
