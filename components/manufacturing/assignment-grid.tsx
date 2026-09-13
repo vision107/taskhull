@@ -1,5 +1,6 @@
 "use client";
 
+import { InfoIcon } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { toast } from "sonner";
@@ -10,6 +11,7 @@ import {
 	taskStatusDot,
 	taskStatusLabels,
 } from "@/components/manufacturing/status-badge";
+import { openTaskDetail } from "@/components/manufacturing/task-detail-sheet";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -332,60 +334,74 @@ export function AssignmentGrid({
 													isSelected && "bg-primary/10",
 												)}
 											>
-												<button
-													type="button"
-													disabled={!selectable}
-													onClick={() => toggle([cell.id])}
-													className={cn(
-														"flex h-full w-full items-center gap-2 px-3 py-2 text-left",
-														selectable && "hover:bg-muted/40",
-														!selectable && "cursor-default",
-													)}
-												>
+												<div className="flex h-full w-full items-stretch">
 													<Tooltip>
 														<TooltipTrigger asChild>
-															<span
-																className={cn(
-																	"size-2.5 shrink-0 rounded-full",
-																	taskStatusDot[cell.status],
-																)}
-															/>
+															<button
+																type="button"
+																aria-label="Open task details"
+																onClick={() => openTaskDetail(cell.id, canPlan)}
+																className="flex shrink-0 items-center pr-1.5 pl-3 hover:bg-muted/40"
+															>
+																<span
+																	className={cn(
+																		"size-2.5 rounded-full ring-offset-background",
+																		taskStatusDot[cell.status],
+																	)}
+																/>
+																<InfoIcon className="ml-1 size-3 text-muted-foreground/60" />
+															</button>
 														</TooltipTrigger>
 														<TooltipContent>
-															{taskStatusLabels[cell.status]}
+															{taskStatusLabels[cell.status]} · open details
 														</TooltipContent>
 													</Tooltip>
-													{owners.length === 0 ? (
-														<span className="text-xs text-muted-foreground">
-															Unassigned
-														</span>
-													) : (
-														<span className="flex items-center gap-1">
-															{owners.map((assignment) => (
-																<Tooltip key={assignment.id}>
-																	<TooltipTrigger asChild>
-																		<span>
-																			<UserAvatar
-																				name={assignment.user.name}
-																				src={assignment.user.image}
-																				className="size-6"
-																				fallbackClassName="text-[10px]"
-																			/>
-																		</span>
-																	</TooltipTrigger>
-																	<TooltipContent>
-																		{assignment.user.name}
-																	</TooltipContent>
-																</Tooltip>
-															))}
-															{owners.length === 1 && (
-																<span className="truncate text-xs">
-																	{owners[0]?.user.name}
-																</span>
-															)}
-														</span>
-													)}
-												</button>
+													<button
+														type="button"
+														aria-label={
+															selectable
+																? "Select task for assignment"
+																: "Open task details"
+														}
+														onClick={() =>
+															selectable
+																? toggle([cell.id])
+																: openTaskDetail(cell.id, canPlan)
+														}
+														className="flex min-w-0 flex-1 items-center gap-2 py-2 pr-3 pl-1.5 text-left hover:bg-muted/40"
+													>
+														{owners.length === 0 ? (
+															<span className="text-xs text-muted-foreground">
+																Unassigned
+															</span>
+														) : (
+															<span className="flex items-center gap-1">
+																{owners.map((assignment) => (
+																	<Tooltip key={assignment.id}>
+																		<TooltipTrigger asChild>
+																			<span>
+																				<UserAvatar
+																					name={assignment.user.name}
+																					src={assignment.user.image}
+																					className="size-6"
+																					fallbackClassName="text-[10px]"
+																				/>
+																			</span>
+																		</TooltipTrigger>
+																		<TooltipContent>
+																			{assignment.user.name}
+																		</TooltipContent>
+																	</Tooltip>
+																))}
+																{owners.length === 1 && (
+																	<span className="truncate text-xs">
+																		{owners[0]?.user.name}
+																	</span>
+																)}
+															</span>
+														)}
+													</button>
+												</div>
 											</td>
 										);
 									})}

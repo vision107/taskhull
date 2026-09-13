@@ -29,6 +29,7 @@ import {
 	TaskStatusBadge,
 	taskStatusLabels,
 } from "@/components/manufacturing/status-badge";
+import { openTaskDetail } from "@/components/manufacturing/task-detail-sheet";
 import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/ui/custom/page";
 import {
@@ -278,9 +279,15 @@ export function BuildDetail({
 												key={task.id}
 												className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-3 last:border-b-0 hover:bg-muted/30"
 											>
-												<div className="min-w-0 flex-1 basis-64">
+												<button
+													type="button"
+													onClick={() => openTaskDetail(task.id, canPlan)}
+													className="min-w-0 flex-1 basis-64 rounded-md text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+												>
 													<div className="flex flex-wrap items-center gap-2">
-														<span className="font-medium">{task.title}</span>
+														<span className="font-medium hover:underline">
+															{task.title}
+														</span>
 														{task.requiresPhoto && (
 															<CameraIcon className="size-3.5 text-muted-foreground" />
 														)}
@@ -328,7 +335,7 @@ export function BuildDetail({
 															</>
 														)}
 													</p>
-												</div>
+												</button>
 
 												{/* Assignees */}
 												<div className="flex items-center gap-1">
