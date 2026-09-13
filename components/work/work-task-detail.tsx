@@ -41,7 +41,12 @@ import {
 	normalizeContentType,
 	PHOTO_ACCEPT,
 } from "@/lib/manufacturing/uploads";
-import { isNetworkError } from "@/lib/offline/queue";
+import {
+	canUsePhotoStore,
+	deletePhoto,
+	putPhoto,
+} from "@/lib/offline/photo-store";
+import { isNetworkError, removeWrite } from "@/lib/offline/queue";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 
@@ -58,6 +63,10 @@ export function WorkTaskDetail({
 	});
 
 	const offline = useOffline();
+	const pendingPhotos = offline.pending.filter(
+		(item): item is Extract<typeof item, { kind: "uploadPhoto" }> =>
+			item.kind === "uploadPhoto" && item.taskId === taskId,
+	);
 	const pendingComments = offline.pending.filter(
 		(item): item is Extract<typeof item, { kind: "addComment" }> =>
 			item.kind === "addComment" && item.taskId === taskId,
@@ -113,6 +122,33 @@ export function WorkTaskDetail({
 		});
 		setComment("");
 		toast("Comment saved offline");
+	};
+
+	const queuePhoto = async (file: File, contentType: string) => {
+		if (!canUsePhotoStore()) {
+			throw new Error("Photos cannot be stored offline on this device.");
+		}
+		const photoId = crypto.randomUUID();
+		await putPhoto({
+			id: photoId,
+			taskId,
+			fileName: file.name,
+			contentType,
+			sizeBytes: file.size,
+			blob: file,
+			createdAt: Date.now(),
+		});
+		offline.enqueue({
+			kind: "uploadPhoto",
+			taskId,
+			input: {
+				buildTaskId: taskId,
+				photoId,
+				fileName: file.name,
+				contentType,
+				sizeBytes: file.size,
+			},
+		});
 	};
 
 	const statusMutation = trpc.organization.work.updateStatus.useMutation({
@@ -180,7 +216,12 @@ export function WorkTaskDetail({
 	const openChecklist = task.checklistItems.filter(
 		(item) => item.status === "open",
 	).length;
-	const missingPhoto = task.requiresPhoto && task.uploads.length === 0;
+	// A photo waiting in the offline queue counts: it is replayed before any
+	// queued "done" so the server-side check passes as well.
+	const missingPhoto =
+		task.requiresPhoto &&
+		task.uploads.length === 0 &&
+		pendingPhotos.length === 0;
 	const missingComment = task.requiresComment && task.comments.length === 0;
 
 	const setStatus = (next: BuildTaskStatus, reason?: string) => {
@@ -212,6 +253,8 @@ export function WorkTaskDetail({
 	const handleFiles = async (files: FileList | null) => {
 		if (!files || files.length === 0) return;
 		setUploading(true);
+		let uploaded = 0;
+		let queued = 0;
 		try {
 			for (const original of Array.from(files)) {
 				// Reject obviously wrong files before touching the network, then
@@ -228,30 +271,56 @@ export function WorkTaskDetail({
 					sizeBytes: file.size,
 				});
 				const contentType = normalizeContentType(file.type);
-				const { storageKey, signedUrl } = await uploadUrlMutation.mutateAsync({
-					buildTaskId: task.id,
-					fileName: file.name,
-					contentType,
-					sizeBytes: file.size,
-				});
-				const response = await fetch(signedUrl, {
-					method: "PUT",
-					body: file,
-					headers: { "Content-Type": contentType },
-				});
-				if (!response.ok) {
-					throw new Error(`Upload of ${file.name} failed (${response.status})`);
+
+				if (!offline.online) {
+					await queuePhoto(file, contentType);
+					queued++;
+					continue;
 				}
-				await addAttachmentMutation.mutateAsync({
-					buildTaskId: task.id,
-					storageKey,
-					fileName: file.name,
-					contentType,
-					sizeBytes: file.size,
+
+				try {
+					const { storageKey, signedUrl } = await uploadUrlMutation.mutateAsync(
+						{
+							buildTaskId: task.id,
+							fileName: file.name,
+							contentType,
+							sizeBytes: file.size,
+						},
+					);
+					const response = await fetch(signedUrl, {
+						method: "PUT",
+						body: file,
+						headers: { "Content-Type": contentType },
+					});
+					if (!response.ok) {
+						throw new Error(
+							`Upload of ${file.name} failed (${response.status})`,
+						);
+					}
+					await addAttachmentMutation.mutateAsync({
+						buildTaskId: task.id,
+						storageKey,
+						fileName: file.name,
+						contentType,
+						sizeBytes: file.size,
+					});
+					uploaded++;
+				} catch (error) {
+					// Connection dropped mid-way: keep the photo and retry later.
+					if (!isNetworkError(error)) throw error;
+					await queuePhoto(file, contentType);
+					queued++;
+				}
+			}
+			if (uploaded > 0) {
+				toast.success(uploaded === 1 ? "Photo added" : "Photos added");
+				invalidate();
+			}
+			if (queued > 0) {
+				toast(queued === 1 ? "Photo saved offline" : "Photos saved offline", {
+					description: "Will upload when you're back online.",
 				});
 			}
-			toast.success(files.length === 1 ? "Photo added" : "Photos added");
-			invalidate();
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Upload failed");
 		} finally {
@@ -435,6 +504,37 @@ export function WorkTaskDetail({
 					) : undefined
 				}
 			>
+				{pendingPhotos.length > 0 && (
+					<ul className="-mx-2 mb-2 divide-y">
+						{pendingPhotos.map((item) => (
+							<li
+								key={item.id}
+								className="flex items-center gap-3 px-2 py-2 opacity-70"
+							>
+								<ImageIcon className="size-5 shrink-0 text-muted-foreground" />
+								<span className="min-w-0 flex-1">
+									<span className="block truncate text-sm">
+										{item.input.fileName}
+									</span>
+									<span className="block text-xs text-muted-foreground">
+										{formatBytes(item.input.sizeBytes)} · waiting to sync
+									</span>
+								</span>
+								<Button
+									variant="ghost"
+									size="icon-xs"
+									aria-label={`Discard ${item.input.fileName}`}
+									onClick={() => {
+										removeWrite(item.id);
+										void deletePhoto(item.input.photoId).catch(() => undefined);
+									}}
+								>
+									<XIcon />
+								</Button>
+							</li>
+						))}
+					</ul>
+				)}
 				{task.uploads.length > 0 && (
 					<ul className="-mx-2 mb-2 divide-y">
 						{task.uploads.map((upload) => (
@@ -492,7 +592,9 @@ export function WorkTaskDetail({
 							disabled={uploading}
 						>
 							<CameraIcon />
-							{task.uploads.length === 0 ? "Take or add photo" : "Add another"}
+							{task.uploads.length === 0 && pendingPhotos.length === 0
+								? "Take or add photo"
+								: "Add another"}
 						</Button>
 					</>
 				)}

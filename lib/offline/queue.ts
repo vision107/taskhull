@@ -1,10 +1,9 @@
 /**
  * Tiny persistent write queue for the worker PWA.
  *
- * When the phone has no signal, status changes, checklist ticks and comments
- * are stored here (localStorage) and replayed in order once the app is back
- * online. Only the three worker mutations are supported on purpose — photo
- * uploads need a live connection for the presigned PUT anyway.
+ * When the phone has no signal, status changes, checklist ticks, comments and
+ * photos are stored here (localStorage; photo bytes live in IndexedDB, see
+ * ./photo-store.ts) and replayed in order once the app is back online.
  */
 
 import type { ChecklistItemStatus } from "@/lib/db/schema/enums";
@@ -30,6 +29,20 @@ export type QueuedWrite =
 			kind: "addComment";
 			taskId: string;
 			input: { buildTaskId: string; body: string };
+			createdAt: number;
+	  }
+	| {
+			id: string;
+			kind: "uploadPhoto";
+			taskId: string;
+			/** Metadata only; the bytes are in the photo store under `photoId`. */
+			input: {
+				buildTaskId: string;
+				photoId: string;
+				fileName: string;
+				contentType: string;
+				sizeBytes: number;
+			};
 			createdAt: number;
 	  };
 
@@ -81,11 +94,16 @@ export function enqueueWrite(
 	// Collapse repeated writes to the same target: only the latest status of a
 	// task or checklist item matters; comments are all kept.
 	const deduped =
-		queued.kind === "addComment"
+		queued.kind === "addComment" || queued.kind === "uploadPhoto"
 			? queue
 			: queue.filter(
 					(item) =>
-						!(item.kind === queued.kind && item.input.id === queued.input.id),
+						!(
+							(item.kind === "updateStatus" ||
+								item.kind === "updateChecklistItem") &&
+							item.kind === queued.kind &&
+							item.input.id === queued.input.id
+						),
 				);
 
 	writeQueue([...deduped, queued]);

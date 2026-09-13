@@ -3,6 +3,7 @@
 import * as React from "react";
 import { toast } from "sonner";
 
+import { deletePhoto, getPhoto } from "@/lib/offline/photo-store";
 import {
 	enqueueWrite,
 	isNetworkError,
@@ -127,6 +128,43 @@ export function OfflineProvider({
 								item.input,
 							);
 							break;
+						case "uploadPhoto": {
+							const stored = await getPhoto(item.input.photoId);
+							if (!stored) {
+								// Bytes are gone (storage evicted) – nothing we can replay.
+								throw new Error(
+									`${item.input.fileName} was lost before it could be uploaded`,
+								);
+							}
+							const { storageKey, signedUrl } =
+								await utils.client.organization.work.attachmentUploadUrl.mutate(
+									{
+										buildTaskId: item.input.buildTaskId,
+										fileName: item.input.fileName,
+										contentType: item.input.contentType,
+										sizeBytes: item.input.sizeBytes,
+									},
+								);
+							const response = await fetch(signedUrl, {
+								method: "PUT",
+								body: stored.blob,
+								headers: { "Content-Type": item.input.contentType },
+							});
+							if (!response.ok) {
+								throw new Error(
+									`Upload of ${item.input.fileName} failed (${response.status})`,
+								);
+							}
+							await utils.client.organization.work.addAttachment.mutate({
+								buildTaskId: item.input.buildTaskId,
+								storageKey,
+								fileName: item.input.fileName,
+								contentType: item.input.contentType,
+								sizeBytes: item.input.sizeBytes,
+							});
+							await deletePhoto(item.input.photoId).catch(() => undefined);
+							break;
+						}
 					}
 					removeWrite(item.id);
 					touchedTasks.add(item.taskId);
@@ -139,6 +177,9 @@ export function OfflineProvider({
 					// The server rejected it (e.g. blocker not done anymore). Drop it
 					// and tell the worker rather than retrying forever.
 					removeWrite(item.id);
+					if (item.kind === "uploadPhoto") {
+						void deletePhoto(item.input.photoId).catch(() => undefined);
+					}
 					touchedTasks.add(item.taskId);
 					dropped++;
 					toast.error(
