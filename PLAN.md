@@ -158,6 +158,60 @@ subscribePush / unsubscribePush`, `lib/notifications/push.ts` (web‑push,
     only shows when VAPID keys are configured. Push is fire‑and‑forget after
     the in‑app notification is written.
 
+- **Phase 6 — Beta hardening** (planned, in this order)
+  1. _Role‑based landing after sign‑in._ New server page
+     `app/(saas)/dashboard/start/page.tsx`: loads the session + memberships;
+     if every membership is `member` → `redirect("/dashboard/work")`, if the
+     user has exactly one org → that org's dashboard, otherwise the existing
+     organizations grid. `authConfig.redirectAfterSignIn` becomes
+     `/dashboard/start`; `?redirectTo=` and invitation links keep priority
+     (`getAuthRedirectPath`). Sidebar "Home" stays on `/dashboard`.
+  2. _Planner‑side task editing on the build page._ Router already has
+     `build.createTask / updateTask / deleteTask`; add the UI:
+     `components/manufacturing/build-task-modal.tsx` (NiceModal form: title,
+     phase, instructions, start date, duration, requires photo/comment,
+     optional "after" dependencies) opened from an "Add task" button per phase
+     group and from an "Edit" item in the task detail sheet; "Delete task" in
+     the same menu with confirmation (blocked if the task has progress).
+     Ad‑hoc tasks show a small "ad‑hoc" badge (`sourceTemplateTaskId` is
+     null) so it is clear they will not be touched by version upgrades.
+  3. _Upload guardrails._ Shared constants in `lib/manufacturing/uploads.ts`:
+     photos ≤ 15 MB, allowed types `image/jpeg|png|webp|heic`; template
+     documents ≤ 50 MB, images + PDF + office formats. Enforced in the Zod
+     schemas (`sizeBytes` and `contentType` become required) and again in
+     `attachmentUploadUrl` / template upload before signing, with
+     `ContentLength`/`ContentType` pinned in the presigned PUT. Client side:
+     check before requesting the URL and show the limit in the error. Photos
+     from the camera are downscaled to ≤ 2000 px on the longest edge with
+     `canvas` before upload (keeps 4K phone photos under the cap).
+  4. _Worker PWA in German (and English)._ No framework: `lib/i18n/work.ts`
+     exports a typed dictionary `{ de, en }` for every string in
+     `components/work/*` and the worker notifications; `useWorkT()` picks the
+     language from `user.locale` (new nullable `locale` column on `user`,
+     settable in the worker account menu) and falls back to
+     `navigator.language`. Dates via `date-fns/locale/de`. Planner UI stays
+     English for now.
+  5. _Blocked always needs a reason._ `updateBuildTaskStatusSchema` gets an
+     optional `comment`; the server rejects `→ blocked` without a non‑empty
+     comment (planners included) and writes comment + status change in one
+     transaction so the "blocked" notification carries the reason. Worker UI:
+     the Blocked button opens a bottom sheet with a textarea ("What is
+     missing?") and quick chips (material missing, tool missing, waiting for
+     colleague, drawing unclear). The offline queue's `updateStatus` item
+     carries the comment too. Planner task sheet already shows the latest
+     worker comment in the blocked callout.
+  6. _Offline photos._ Queue kind `uploadPhoto` stores `{ taskId, fileName,
+contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
+     (`lib/offline/blob-store.ts`, tiny wrapper, no dependency). Replay:
+     `attachmentUploadUrl` → PUT → `addAttachment`, in order after status
+     writes so a "done with photo" made offline lands correctly. Pending
+     photos render as local thumbnails with "waiting to sync"; failures with a
+     4xx are dropped with a toast, network failures stay queued. Same
+     `isNetworkError` path as the other writes.
+
+  Not in this phase: hiding the starter marketing/billing pages (separate
+  decision), planner UI localisation, teammate visibility in the PWA.
+
 ## Local setup
 
 ```bash
