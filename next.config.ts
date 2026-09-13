@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
 		},
 	},
 
+	// Dev only: lets a phone reach the dev server through a Cloudflare quick
+	// tunnel or the LAN IP without Next blocking /_next/* as cross-origin.
+	allowedDevOrigins: ["*.trycloudflare.com", "192.168.*.*", "10.*.*.*"],
 	reactStrictMode: true,
 	poweredByHeader: false,
 	images: {

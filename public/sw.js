@@ -18,7 +18,9 @@ const DATA_CACHE = `taskhull-data-${VERSION}`;
 const OFFLINE_URL = "/offline.html";
 const IS_DEV =
 	self.location.hostname === "localhost" ||
-	self.location.hostname === "127.0.0.1";
+	self.location.hostname === "127.0.0.1" ||
+	self.location.hostname.endsWith(".trycloudflare.com") ||
+	/^(192\.168|10)\./.test(self.location.hostname);
 
 self.addEventListener("install", (event) => {
 	event.waitUntil(

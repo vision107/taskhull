@@ -18,6 +18,11 @@ const origins = Array.from(
 			env.NEXT_PUBLIC_NODE_ENV === "development"
 				? "http://localhost:3000"
 				: undefined,
+			// Dev only: allow testing the PWA on a phone through a Cloudflare
+			// quick tunnel (`cloudflared tunnel --url http://localhost:3000`).
+			env.NEXT_PUBLIC_NODE_ENV === "development"
+				? "https://*.trycloudflare.com"
+				: undefined,
 		].filter(Boolean) as string[],
 	),
 );
@@ -35,7 +40,13 @@ export const authConfig = {
 	enableSocialLogin: true,
 	enablePasskeys: true,
 	cors: {
-		allowedOrigins: [...origins, /^https:\/\/.*\.vercel\.app$/],
+		allowedOrigins: [
+			...origins,
+			/^https:\/\/.*\.vercel\.app$/,
+			...(env.NEXT_PUBLIC_NODE_ENV === "development"
+				? [/^https:\/\/.*\.trycloudflare\.com$/]
+				: []),
+		],
 		allowedMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 		allowedHeaders: [
 			"Authorization",
