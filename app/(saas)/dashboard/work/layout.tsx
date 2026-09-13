@@ -4,6 +4,7 @@ import type * as React from "react";
 
 import { OfflineProvider } from "@/components/work/offline-provider";
 import { WorkHeader } from "@/components/work/work-header";
+import { WorkLocaleProvider } from "@/components/work/work-locale-provider";
 import { WorkOrganizationPicker } from "@/components/work/work-org-picker";
 import { appConfig } from "@/config/app.config";
 import { getOrganizationById, getSession } from "@/lib/auth/server";
@@ -11,7 +12,7 @@ import { canPlan } from "@/lib/manufacturing/permissions";
 
 export const metadata: Metadata = {
 	title: {
-		default: "My tasks",
+		default: appConfig.appName,
 		template: `%s | ${appConfig.appName}`,
 	},
 	appleWebApp: {
@@ -51,22 +52,27 @@ export default async function WorkLayout({
 		(member) => member.userId === session.user.id,
 	);
 
+	const userLocale =
+		(session.user as { locale?: string | null }).locale ?? null;
+
 	return (
-		<OfflineProvider>
-			<div className="flex min-h-dvh flex-col bg-muted/30">
-				<WorkHeader
-					organizationName={organization?.name ?? ""}
-					user={{
-						name: session.user.name,
-						email: session.user.email,
-						image: session.user.image ?? null,
-					}}
-					canPlan={canPlan(membership?.role)}
-				/>
-				<main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-					{organization ? children : <WorkOrganizationPicker />}
-				</main>
-			</div>
-		</OfflineProvider>
+		<WorkLocaleProvider initialLocale={userLocale}>
+			<OfflineProvider>
+				<div className="flex min-h-dvh flex-col bg-muted/30">
+					<WorkHeader
+						organizationName={organization?.name ?? ""}
+						user={{
+							name: session.user.name,
+							email: session.user.email,
+							image: session.user.image ?? null,
+						}}
+						canPlan={canPlan(membership?.role)}
+					/>
+					<main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+						{organization ? children : <WorkOrganizationPicker />}
+					</main>
+				</div>
+			</OfflineProvider>
+		</WorkLocaleProvider>
 	);
 }

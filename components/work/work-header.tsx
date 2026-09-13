@@ -5,6 +5,7 @@ import {
 	BellIcon,
 	BellOffIcon,
 	CloudOffIcon,
+	LanguagesIcon,
 	LayoutDashboardIcon,
 	LogOutIcon,
 	RefreshCwIcon,
@@ -24,8 +25,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { useOffline } from "@/components/work/offline-provider";
+import { useWorkLocale } from "@/components/work/work-locale-provider";
 import { appConfig } from "@/config/app.config";
 import { authClient } from "@/lib/auth/client";
+import { WorkLocales, workDictionaries } from "@/lib/i18n/work";
 import { cn } from "@/lib/utils";
 
 export function WorkHeader({
@@ -40,6 +43,8 @@ export function WorkHeader({
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { online, pending, syncing, flush, push } = useOffline();
+	const { t, locale, setLocale, saving } = useWorkLocale();
+	const otherLocale = WorkLocales.find((item) => item !== locale) ?? locale;
 
 	const handleSignOut = async () => {
 		try {
@@ -76,8 +81,8 @@ export function WorkHeader({
 							)}
 							aria-label={
 								online
-									? `${pending.length} changes waiting to sync`
-									: "You are offline"
+									? t.header.changesWaiting(pending.length)
+									: t.header.youAreOffline
 							}
 						>
 							{online ? (
@@ -87,7 +92,7 @@ export function WorkHeader({
 							) : (
 								<CloudOffIcon className="size-3" />
 							)}
-							{online ? `${pending.length} to sync` : "Offline"}
+							{online ? t.header.toSync(pending.length) : t.header.offline}
 						</button>
 					)}
 					<DropdownMenu>
@@ -95,7 +100,7 @@ export function WorkHeader({
 							<button
 								type="button"
 								className="rounded-full"
-								aria-label="Account menu"
+								aria-label={t.header.accountMenu}
 							>
 								<UserAvatar
 									name={user.name}
@@ -119,7 +124,7 @@ export function WorkHeader({
 									onClick={() => router.push("/dashboard/organization")}
 								>
 									<LayoutDashboardIcon />
-									Planner dashboard
+									{t.header.plannerDashboard}
 								</DropdownMenuItem>
 							)}
 							{push.supported && push.enabled && (
@@ -128,14 +133,21 @@ export function WorkHeader({
 									onClick={() => void push.toggle()}
 								>
 									{push.subscribed ? <BellOffIcon /> : <BellIcon />}
-									{push.subscribed
-										? "Turn off push notifications"
-										: "Enable push notifications"}
+									{push.subscribed ? t.header.pushOff : t.header.pushOn}
 								</DropdownMenuItem>
 							)}
+							<DropdownMenuItem
+								disabled={saving}
+								onClick={() => void setLocale(otherLocale)}
+							>
+								<LanguagesIcon />
+								{t.header.switchLanguage(
+									workDictionaries[otherLocale].languageName,
+								)}
+							</DropdownMenuItem>
 							<DropdownMenuItem onClick={handleSignOut}>
 								<LogOutIcon />
-								Sign out
+								{t.header.signOut}
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>

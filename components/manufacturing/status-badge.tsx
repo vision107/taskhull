@@ -101,16 +101,19 @@ export const taskStatusLabels: Record<BuildTaskStatus, string> = {
 export function TaskStatusBadge({
 	status,
 	className,
+	labels = taskStatusLabels,
 }: {
 	status: BuildTaskStatus;
 	className?: string;
+	/** Localized labels (worker PWA); defaults to English. */
+	labels?: Record<BuildTaskStatus, string>;
 }): React.JSX.Element {
 	return (
 		<Badge
 			variant="secondary"
 			className={cn("border-0", taskStatusStyles[status], className)}
 		>
-			{taskStatusLabels[status]}
+			{labels[status]}
 		</Badge>
 	);
 }

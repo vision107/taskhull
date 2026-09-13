@@ -245,6 +245,8 @@ export const userTable = pgTable(
 		banExpires: timestamp("ban_expires", { withTimezone: true }),
 		onboardingComplete: boolean("onboarding_complete").default(false).notNull(),
 		twoFactorEnabled: boolean("two_factor_enabled").default(false),
+		/** UI language for the worker PWA ("de" | "en"); null = browser default. */
+		locale: text("locale"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useWorkT } from "@/components/work/work-locale-provider";
 import { authClient } from "@/lib/auth/client";
 import { trpc } from "@/trpc/client";
 
@@ -18,6 +19,7 @@ import { trpc } from "@/trpc/client";
 export function WorkOrganizationPicker(): React.JSX.Element {
 	const router = useRouter();
 	const queryClient = useQueryClient();
+	const t = useWorkT();
 	const { data: organizations, isLoading } = trpc.organization.list.useQuery();
 	const [selecting, setSelecting] = React.useState<string | null>(null);
 	const autoSelected = React.useRef(false);
@@ -31,12 +33,12 @@ export function WorkOrganizationPicker(): React.JSX.Element {
 				router.refresh();
 			} catch (error) {
 				toast.error(
-					error instanceof Error ? error.message : "Could not open team",
+					error instanceof Error ? error.message : t.orgPicker.couldNotOpen,
 				);
 				setSelecting(null);
 			}
 		},
-		[queryClient, router],
+		[queryClient, router, t],
 	);
 
 	React.useEffect(() => {
@@ -59,9 +61,9 @@ export function WorkOrganizationPicker(): React.JSX.Element {
 	if (organizations.length === 0) {
 		return (
 			<div className="rounded-xl border bg-background px-4 py-10 text-center">
-				<p className="font-medium">You're not part of a team yet</p>
+				<p className="font-medium">{t.orgPicker.noTeamTitle}</p>
 				<p className="text-sm text-muted-foreground">
-					Ask your planner to add you to their organization.
+					{t.orgPicker.noTeamHint}
 				</p>
 			</div>
 		);
@@ -69,7 +71,7 @@ export function WorkOrganizationPicker(): React.JSX.Element {
 
 	return (
 		<div className="space-y-3 pt-4">
-			<h1 className="text-lg font-semibold">Choose your team</h1>
+			<h1 className="text-lg font-semibold">{t.orgPicker.chooseTeam}</h1>
 			{organizations.map((organization) => (
 				<Button
 					key={organization.id}

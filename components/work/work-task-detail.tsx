@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { BlockReasonSheet } from "@/components/work/block-reason-sheet";
 import { useOffline } from "@/components/work/offline-provider";
+import { useWorkLocale } from "@/components/work/work-locale-provider";
 import { useSession } from "@/hooks/use-session";
 import type {
 	BuildTaskStatus,
@@ -63,6 +64,7 @@ export function WorkTaskDetail({
 	});
 
 	const offline = useOffline();
+	const { t, dateLocale } = useWorkLocale();
 	const pendingPhotos = offline.pending.filter(
 		(item): item is Extract<typeof item, { kind: "uploadPhoto" }> =>
 			item.kind === "uploadPhoto" && item.taskId === taskId,
@@ -91,8 +93,8 @@ export function WorkTaskDetail({
 		utils.organization.work.getTask.setData({ id: taskId }, (old) =>
 			old ? { ...old, status: next } : old,
 		);
-		toast("Saved offline", {
-			description: "Will sync when you're back online.",
+		toast(t.detail.savedOffline, {
+			description: t.detail.willSyncOnline,
 		});
 	};
 
@@ -121,12 +123,12 @@ export function WorkTaskDetail({
 			input: { buildTaskId: taskId, body },
 		});
 		setComment("");
-		toast("Comment saved offline");
+		toast(t.detail.commentSavedOffline);
 	};
 
 	const queuePhoto = async (file: File, contentType: string) => {
 		if (!canUsePhotoStore()) {
-			throw new Error("Photos cannot be stored offline on this device.");
+			throw new Error(t.detail.offlinePhotosUnsupported);
 		}
 		const photoId = crypto.randomUUID();
 		await putPhoto({
@@ -153,7 +155,7 @@ export function WorkTaskDetail({
 
 	const statusMutation = trpc.organization.work.updateStatus.useMutation({
 		onSuccess: (after) => {
-			if (after.status === "done") toast.success("Task finished");
+			if (after.status === "done") toast.success(t.detail.taskFinished);
 			invalidate();
 		},
 		onError: (error, variables) => {
@@ -235,6 +237,7 @@ export function WorkTaskDetail({
 	const askBlockReason = () => {
 		void NiceModal.show(BlockReasonSheet, {
 			taskTitle: task.title,
+			labels: t.block,
 			onSubmit: (reason) => setStatus("blocked", reason),
 		});
 	};
@@ -246,7 +249,9 @@ export function WorkTaskDetail({
 			});
 			window.open(result.url, "_blank", "noopener");
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : "Download failed");
+			toast.error(
+				error instanceof Error ? error.message : t.detail.downloadFailed,
+			);
 		}
 	};
 
@@ -313,16 +318,23 @@ export function WorkTaskDetail({
 				}
 			}
 			if (uploaded > 0) {
-				toast.success(uploaded === 1 ? "Photo added" : "Photos added");
+				toast.success(
+					uploaded === 1 ? t.detail.photoAdded : t.detail.photosAdded,
+				);
 				invalidate();
 			}
 			if (queued > 0) {
-				toast(queued === 1 ? "Photo saved offline" : "Photos saved offline", {
-					description: "Will upload when you're back online.",
-				});
+				toast(
+					queued === 1
+						? t.detail.photoSavedOffline
+						: t.detail.photosSavedOffline,
+					{ description: t.detail.willUploadOnline },
+				);
 			}
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : "Upload failed");
+			toast.error(
+				error instanceof Error ? error.message : t.detail.uploadFailed,
+			);
 		} finally {
 			setUploading(false);
 			if (fileInputRef.current) fileInputRef.current.value = "";
@@ -335,7 +347,7 @@ export function WorkTaskDetail({
 			<div className="flex items-center gap-2">
 				<Link
 					href="/dashboard/work"
-					aria-label="Back to my tasks"
+					aria-label={t.detail.back}
 					className="inline-flex size-9 shrink-0 items-center justify-center rounded-md hover:bg-muted"
 				>
 					<ArrowLeftIcon className="size-5" />
@@ -349,7 +361,7 @@ export function WorkTaskDetail({
 						{task.title}
 					</h1>
 				</div>
-				<TaskStatusBadge status={status} />
+				<TaskStatusBadge status={status} labels={t.status} />
 			</div>
 
 			{/* Schedule + assignees */}
@@ -357,8 +369,8 @@ export function WorkTaskDetail({
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<span className="text-muted-foreground">
 						{task.startDate
-							? `${format(parseISO(task.startDate), "EEE, MMM d")} · ${task.plannedDurationDays}d`
-							: "Unscheduled"}
+							? `${format(parseISO(task.startDate), "EEE, d. MMM", { locale: dateLocale })} · ${t.detail.days(task.plannedDurationDays)}`
+							: t.detail.unscheduled}
 					</span>
 					<span className="flex items-center gap-1">
 						{task.assignments.map((assignment) => (
@@ -376,7 +388,7 @@ export function WorkTaskDetail({
 					<div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
 						<LockIcon className="mt-0.5 size-4 shrink-0" />
 						<div>
-							<p className="font-medium">Waiting on</p>
+							<p className="font-medium">{t.detail.waitingOn}</p>
 							<ul className="mt-0.5 list-inside list-disc">
 								{task.blockers.map((blocker) => (
 									<li key={blocker.id}>{blocker.title}</li>
@@ -387,14 +399,14 @@ export function WorkTaskDetail({
 				)}
 				{!task.isAssigned && canEdit && (
 					<p className="mt-3 text-xs text-muted-foreground">
-						You're viewing this task as a planner.
+						{t.detail.viewingAsPlanner}
 					</p>
 				)}
 			</div>
 
 			{/* Instructions */}
 			{task.instructions && (
-				<Card title="Instructions">
+				<Card title={t.detail.instructions}>
 					<p className="text-sm whitespace-pre-wrap">{task.instructions}</p>
 				</Card>
 			)}
@@ -402,7 +414,7 @@ export function WorkTaskDetail({
 			{/* Checklist */}
 			{task.checklistItems.length > 0 && (
 				<Card
-					title="Checklist"
+					title={t.detail.checklist}
 					aside={`${task.checklistItems.length - openChecklist}/${task.checklistItems.length}`}
 				>
 					<ul className="-mx-2 divide-y">
@@ -458,7 +470,7 @@ export function WorkTaskDetail({
 
 			{/* Documents from the template */}
 			{task.documents.length > 0 && (
-				<Card title="Documents">
+				<Card title={t.detail.documents}>
 					<ul className="-mx-2 divide-y">
 						{task.documents.map((doc) => (
 							<li key={doc.id}>
@@ -488,7 +500,7 @@ export function WorkTaskDetail({
 
 			{/* Photos & uploads */}
 			<Card
-				title="Photos"
+				title={t.detail.photos}
 				aside={
 					task.requiresPhoto ? (
 						<span
@@ -499,7 +511,7 @@ export function WorkTaskDetail({
 									: "text-emerald-600",
 							)}
 						>
-							{missingPhoto ? "required" : "✓ required"}
+							{missingPhoto ? t.detail.required : t.detail.requiredDone}
 						</span>
 					) : undefined
 				}
@@ -517,13 +529,14 @@ export function WorkTaskDetail({
 										{item.input.fileName}
 									</span>
 									<span className="block text-xs text-muted-foreground">
-										{formatBytes(item.input.sizeBytes)} · waiting to sync
+										{formatBytes(item.input.sizeBytes)} ·{" "}
+										{t.detail.waitingToSync}
 									</span>
 								</span>
 								<Button
 									variant="ghost"
 									size="icon-xs"
-									aria-label={`Discard ${item.input.fileName}`}
+									aria-label={t.detail.discard(item.input.fileName)}
 									onClick={() => {
 										removeWrite(item.id);
 										void deletePhoto(item.input.photoId).catch(() => undefined);
@@ -550,9 +563,10 @@ export function WorkTaskDetail({
 											{upload.fileName}
 										</span>
 										<span className="block text-xs text-muted-foreground">
-											{upload.uploadedBy?.name ?? "Unknown"} ·{" "}
+											{upload.uploadedBy?.name ?? t.detail.unknownUser} ·{" "}
 											{formatDistanceToNow(upload.createdAt, {
 												addSuffix: true,
+												locale: dateLocale,
 											})}
 										</span>
 									</span>
@@ -561,7 +575,7 @@ export function WorkTaskDetail({
 									<Button
 										variant="ghost"
 										size="icon-xs"
-										aria-label={`Remove ${upload.fileName}`}
+										aria-label={t.detail.remove(upload.fileName)}
 										onClick={() =>
 											deleteAttachmentMutation.mutate({ id: upload.id })
 										}
@@ -593,8 +607,8 @@ export function WorkTaskDetail({
 						>
 							<CameraIcon />
 							{task.uploads.length === 0 && pendingPhotos.length === 0
-								? "Take or add photo"
-								: "Add another"}
+								? t.detail.takePhoto
+								: t.detail.addAnother}
 						</Button>
 					</>
 				)}
@@ -602,7 +616,7 @@ export function WorkTaskDetail({
 
 			{/* Comments */}
 			<Card
-				title="Comments"
+				title={t.detail.comments}
 				aside={
 					task.requiresComment ? (
 						<span
@@ -613,7 +627,7 @@ export function WorkTaskDetail({
 									: "text-emerald-600",
 							)}
 						>
-							{missingComment ? "required" : "✓ required"}
+							{missingComment ? t.detail.required : t.detail.requiredDone}
 						</span>
 					) : undefined
 				}
@@ -631,16 +645,19 @@ export function WorkTaskDetail({
 								<div className="min-w-0 flex-1">
 									<div className="flex items-baseline gap-2">
 										<span className="text-sm font-medium">
-											{item.author?.name ?? "Former member"}
+											{item.author?.name ?? t.detail.formerMember}
 										</span>
 										<span className="text-xs text-muted-foreground">
-											{formatDistanceToNow(item.createdAt, { addSuffix: true })}
+											{formatDistanceToNow(item.createdAt, {
+												addSuffix: true,
+												locale: dateLocale,
+											})}
 										</span>
 										{item.authorId === currentUserId && (
 											<button
 												type="button"
 												className="ml-auto text-muted-foreground hover:text-destructive"
-												aria-label="Delete comment"
+												aria-label={t.detail.deleteComment}
 												onClick={() =>
 													deleteCommentMutation.mutate({ id: item.id })
 												}
@@ -669,7 +686,7 @@ export function WorkTaskDetail({
 									<div className="flex items-baseline gap-2">
 										<span className="text-sm font-medium">{user?.name}</span>
 										<span className="text-xs text-muted-foreground">
-											waiting to sync
+											{t.detail.waitingToSync}
 										</span>
 									</div>
 									<p className="text-sm whitespace-pre-wrap">
@@ -696,15 +713,15 @@ export function WorkTaskDetail({
 					<Textarea
 						value={comment}
 						onChange={(event) => setComment(event.target.value)}
-						placeholder="Write a comment…"
+						placeholder={t.detail.commentPlaceholder}
 						rows={2}
 						className="min-h-0 flex-1 resize-none"
-						aria-label="New comment"
+						aria-label={t.detail.newComment}
 					/>
 					<Button
 						type="submit"
 						size="icon"
-						aria-label="Send comment"
+						aria-label={t.detail.sendComment}
 						disabled={!comment.trim() || commentMutation.isPending}
 						loading={commentMutation.isPending}
 					>
@@ -715,7 +732,7 @@ export function WorkTaskDetail({
 
 			<details className="group rounded-xl border bg-background px-4 py-3">
 				<summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium">
-					History
+					{t.detail.history}
 					<ChevronDownIcon className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
 				</summary>
 				<div className="pt-3">
@@ -736,7 +753,7 @@ export function WorkTaskDetail({
 									disabled={statusMutation.isPending}
 								>
 									<PlayIcon />
-									Start
+									{t.detail.start}
 								</Button>
 								<Button
 									variant="outline"
@@ -744,7 +761,7 @@ export function WorkTaskDetail({
 									onClick={askBlockReason}
 									disabled={statusMutation.isPending}
 								>
-									Blocked
+									{t.detail.blocked}
 								</Button>
 							</>
 						)}
@@ -757,7 +774,7 @@ export function WorkTaskDetail({
 									disabled={statusMutation.isPending || blocked}
 								>
 									<CheckIcon />
-									Mark done
+									{t.detail.markDone}
 								</Button>
 								<Button
 									variant="outline"
@@ -765,7 +782,7 @@ export function WorkTaskDetail({
 									onClick={askBlockReason}
 									disabled={statusMutation.isPending}
 								>
-									Blocked
+									{t.detail.blocked}
 								</Button>
 							</>
 						)}
@@ -777,7 +794,7 @@ export function WorkTaskDetail({
 								disabled={statusMutation.isPending}
 							>
 								<PlayIcon />
-								Resume
+								{t.detail.resume}
 							</Button>
 						)}
 						{status === "review" && (
@@ -789,7 +806,7 @@ export function WorkTaskDetail({
 									disabled={statusMutation.isPending}
 								>
 									<CheckIcon />
-									Mark done
+									{t.detail.markDone}
 								</Button>
 								<Button
 									variant="outline"
@@ -797,7 +814,7 @@ export function WorkTaskDetail({
 									onClick={() => setStatus("in_progress")}
 									disabled={statusMutation.isPending}
 								>
-									Reopen
+									{t.detail.reopen}
 								</Button>
 							</>
 						)}
@@ -810,18 +827,18 @@ export function WorkTaskDetail({
 								disabled={statusMutation.isPending}
 							>
 								<RotateCcwIcon />
-								Reopen
+								{t.detail.reopen}
 							</Button>
 						)}
 					</div>
 					{status === "in_progress" && (missingPhoto || missingComment) && (
 						<p className="mx-auto max-w-lg px-4 pt-2 text-center text-xs text-muted-foreground">
-							{`Before finishing: ${[
-								missingPhoto && "add a photo",
-								missingComment && "leave a comment",
-							]
-								.filter(Boolean)
-								.join(" and ")}.`}
+							{t.detail.beforeFinishing(
+								[
+									missingPhoto ? t.detail.addPhoto : null,
+									missingComment ? t.detail.leaveComment : null,
+								].filter((part): part is string => Boolean(part)),
+							)}
 						</p>
 					)}
 				</div>

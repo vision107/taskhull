@@ -3,6 +3,7 @@
 import * as React from "react";
 import { toast } from "sonner";
 
+import { useWorkT } from "@/components/work/work-locale-provider";
 import { deletePhoto, getPhoto } from "@/lib/offline/photo-store";
 import {
 	enqueueWrite,
@@ -60,6 +61,7 @@ export function OfflineProvider({
 	children,
 }: React.PropsWithChildren): React.JSX.Element {
 	const utils = trpc.useUtils();
+	const t = useWorkT();
 	const [online, setOnline] = React.useState(true);
 	const [pending, setPending] = React.useState<QueuedWrite[]>([]);
 	const [syncing, setSyncing] = React.useState(false);
@@ -132,9 +134,7 @@ export function OfflineProvider({
 							const stored = await getPhoto(item.input.photoId);
 							if (!stored) {
 								// Bytes are gone (storage evicted) – nothing we can replay.
-								throw new Error(
-									`${item.input.fileName} was lost before it could be uploaded`,
-								);
+								throw new Error(t.sync.photoLost(item.input.fileName));
 							}
 							const { storageKey, signedUrl } =
 								await utils.client.organization.work.attachmentUploadUrl.mutate(
@@ -152,7 +152,7 @@ export function OfflineProvider({
 							});
 							if (!response.ok) {
 								throw new Error(
-									`Upload of ${item.input.fileName} failed (${response.status})`,
+									t.sync.uploadFailed(item.input.fileName, response.status),
 								);
 							}
 							await utils.client.organization.work.addAttachment.mutate({
@@ -182,9 +182,7 @@ export function OfflineProvider({
 					}
 					touchedTasks.add(item.taskId);
 					dropped++;
-					toast.error(
-						error instanceof Error ? error.message : "Change was rejected",
-					);
+					toast.error(error instanceof Error ? error.message : t.sync.rejected);
 				}
 			}
 		} finally {
@@ -198,17 +196,13 @@ export function OfflineProvider({
 				void utils.organization.work.activity.invalidate();
 			}
 			if (synced > 0) {
-				toast.success(
-					synced === 1
-						? "1 offline change synced"
-						: `${synced} offline changes synced`,
-				);
+				toast.success(t.sync.synced(synced));
 			}
 			if (dropped > 0 && synced === 0) {
 				// error toasts already shown
 			}
 		}
-	}, [utils]);
+	}, [utils, t]);
 
 	React.useEffect(() => {
 		if (online) void flush();
@@ -257,13 +251,13 @@ export function OfflineProvider({
 				await unsubscribeMutation.mutateAsync({ endpoint: existing.endpoint });
 				await existing.unsubscribe();
 				setPushSubscribed(false);
-				toast.success("Push notifications turned off");
+				toast.success(t.sync.pushOff);
 				return;
 			}
 
 			const permission = await Notification.requestPermission();
 			if (permission !== "granted") {
-				toast.error("Notifications are blocked for this site");
+				toast.error(t.sync.pushBlocked);
 				return;
 			}
 			const subscription = await reg.pushManager.subscribe({
@@ -272,7 +266,7 @@ export function OfflineProvider({
 			});
 			const json = subscription.toJSON();
 			if (!json.endpoint || !json.keys?.p256dh || !json.keys.auth) {
-				throw new Error("Browser returned an incomplete subscription");
+				throw new Error(t.sync.pushIncomplete);
 			}
 			await subscribeMutation.mutateAsync({
 				endpoint: json.endpoint,
@@ -280,15 +274,13 @@ export function OfflineProvider({
 				userAgent: navigator.userAgent,
 			});
 			setPushSubscribed(true);
-			toast.success("You'll get a push when tasks are assigned or unblocked");
+			toast.success(t.sync.pushOn);
 		} catch (error) {
-			toast.error(
-				error instanceof Error ? error.message : "Could not enable push",
-			);
+			toast.error(error instanceof Error ? error.message : t.sync.pushFailed);
 		} finally {
 			setPushBusy(false);
 		}
-	}, [pushSupported, pushConfig, subscribeMutation, unsubscribeMutation]);
+	}, [pushSupported, pushConfig, subscribeMutation, unsubscribeMutation, t]);
 
 	const value = React.useMemo<OfflineContextValue>(
 		() => ({

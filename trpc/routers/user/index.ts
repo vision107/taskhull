@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { z } from "zod/v4";
 
 import {
 	getActiveSessions,
@@ -7,6 +8,7 @@ import {
 } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { userTable } from "@/lib/db/schema";
+import { WorkLocales } from "@/lib/i18n/work";
 import {
 	createTRPCRouter,
 	protectedProcedure,
@@ -25,4 +27,13 @@ export const userRouter = createTRPCRouter({
 			.set({ onboardingComplete: true })
 			.where(eq(userTable.id, ctx.user.id));
 	}),
+	setLocale: protectedProcedure
+		.input(z.object({ locale: z.enum(WorkLocales) }))
+		.mutation(async ({ ctx, input }) => {
+			await db
+				.update(userTable)
+				.set({ locale: input.locale })
+				.where(eq(userTable.id, ctx.user.id));
+			return { locale: input.locale };
+		}),
 });

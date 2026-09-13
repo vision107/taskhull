@@ -7,22 +7,50 @@ import {
 	buildTaskDependencyTable,
 	buildTaskTable,
 } from "@/lib/db/schema/manufacturing-tables";
-import { memberTable, notificationTable } from "@/lib/db/schema/tables";
+import {
+	memberTable,
+	notificationTable,
+	userTable,
+} from "@/lib/db/schema/tables";
+import {
+	getWorkDictionary,
+	resolveWorkLocale,
+	type WorkDictionary,
+	type WorkLocale,
+} from "@/lib/i18n/work";
 import { logger } from "@/lib/logger";
 import { sendPushToUsers } from "@/lib/notifications/push";
 
 export type NotificationKind = "info" | "success" | "warning";
 
+interface NotificationText {
+	title: string;
+	message: string;
+}
+
 interface NotifyParams {
 	userIds: string[];
 	/** Never notify the person who caused the event. */
 	actorId?: string | null;
-	title: string;
-	message: string;
+	/**
+	 * Fixed text, or a function producing it per recipient language (used for
+	 * worker-facing notifications; planners currently always get English).
+	 */
+	text:
+		| NotificationText
+		| ((t: WorkDictionary, locale: WorkLocale) => NotificationText);
 	type?: NotificationKind;
 	actionUrl?: string | null;
 	/** Send a web push as well (default true). */
 	push?: boolean;
+}
+
+async function localesFor(userIds: string[]): Promise<Map<string, WorkLocale>> {
+	const rows = await db.query.userTable.findMany({
+		where: inArray(userTable.id, userIds),
+		columns: { id: true, locale: true },
+	});
+	return new Map(rows.map((row) => [row.id, resolveWorkLocale(row.locale)]));
 }
 
 /**
@@ -35,28 +63,52 @@ export async function notifyUsers(params: NotifyParams): Promise<number> {
 	);
 	if (recipients.length === 0) return 0;
 
+	// Group recipients by the text they should receive.
+	const groups = new Map<
+		string,
+		{ text: NotificationText; userIds: string[] }
+	>();
+	if (typeof params.text === "function") {
+		const locales = await localesFor(recipients);
+		for (const userId of recipients) {
+			const locale = locales.get(userId) ?? resolveWorkLocale(null);
+			const group = groups.get(locale) ?? {
+				text: params.text(getWorkDictionary(locale), locale),
+				userIds: [],
+			};
+			group.userIds.push(userId);
+			groups.set(locale, group);
+		}
+	} else {
+		groups.set("*", { text: params.text, userIds: recipients });
+	}
+
 	try {
 		await db.insert(notificationTable).values(
-			recipients.map((userId) => ({
-				userId,
-				createdById: params.actorId ?? null,
-				title: params.title,
-				message: params.message,
-				type: params.type ?? "info",
-				actionUrl: params.actionUrl ?? null,
-			})),
+			Array.from(groups.values()).flatMap((group) =>
+				group.userIds.map((userId) => ({
+					userId,
+					createdById: params.actorId ?? null,
+					title: group.text.title,
+					message: group.text.message,
+					type: params.type ?? "info",
+					actionUrl: params.actionUrl ?? null,
+				})),
+			),
 		);
 	} catch (error) {
-		logger.warn({ error, title: params.title }, "Failed to write notification");
+		logger.warn({ error }, "Failed to write notification");
 		return 0;
 	}
 
 	if (params.push !== false) {
-		void sendPushToUsers(recipients, {
-			title: params.title,
-			body: params.message,
-			url: params.actionUrl ?? null,
-		}).catch((error) => logger.warn({ error }, "Push fan-out failed"));
+		for (const group of groups.values()) {
+			void sendPushToUsers(group.userIds, {
+				title: group.text.title,
+				body: group.text.message,
+				url: params.actionUrl ?? null,
+			}).catch((error) => logger.warn({ error }, "Push fan-out failed"));
+		}
 	}
 
 	return recipients.length;
@@ -124,25 +176,24 @@ export async function notifyTasksAssigned(params: {
 	const firstSerial = params.serialByBuildId.get(first.buildId) ?? "";
 	const sameTitle = tasks.every((task) => task.title === first.title);
 
-	const title =
-		tasks.length === 1
-			? "New task assigned"
-			: `${tasks.length} tasks assigned to you`;
-	const message =
-		tasks.length === 1
-			? `${first.title} · ${firstSerial}`
-			: sameTitle
-				? `${first.title} on ${tasks.length} builds`
-				: tasks
-						.slice(0, 3)
-						.map((task) => task.title)
-						.join(", ") + (tasks.length > 3 ? ", …" : "");
-
 	await notifyUsers({
 		userIds: [params.assigneeId],
 		actorId: params.actorId,
-		title,
-		message,
+		text: (t) => ({
+			title:
+				tasks.length === 1
+					? t.notifications.newTask
+					: t.notifications.tasksAssigned(tasks.length),
+			message:
+				tasks.length === 1
+					? `${first.title} · ${firstSerial}`
+					: sameTitle
+						? t.notifications.onBuilds(first.title, tasks.length)
+						: tasks
+								.slice(0, 3)
+								.map((task) => task.title)
+								.join(", ") + (tasks.length > 3 ? ", …" : ""),
+		}),
 		actionUrl: tasks.length === 1 ? workTaskUrl(first.id) : "/dashboard/work",
 	});
 }
@@ -165,7 +216,6 @@ export async function notifyTaskCommented(params: {
 	]);
 	const excerpt =
 		params.body.length > 120 ? `${params.body.slice(0, 117)}…` : params.body;
-	const title = `${params.actorName} commented on ${params.task.title}`;
 	const message = `${params.serialNumber} · ${excerpt}`;
 
 	const plannerSet = new Set(planners);
@@ -173,15 +223,19 @@ export async function notifyTaskCommented(params: {
 		notifyUsers({
 			userIds: assignees.filter((id) => !plannerSet.has(id)),
 			actorId: params.actorId,
-			title,
-			message,
+			text: (t) => ({
+				title: t.notifications.commented(params.actorName, params.task.title),
+				message,
+			}),
 			actionUrl: workTaskUrl(params.task.id),
 		}),
 		notifyUsers({
 			userIds: planners,
 			actorId: params.actorId,
-			title,
-			message,
+			text: {
+				title: `${params.actorName} commented on ${params.task.title}`,
+				message,
+			},
 			actionUrl: plannerBuildUrl(params.task.buildId),
 		}),
 	]);
@@ -215,8 +269,10 @@ export async function notifyTaskStatusChanged(params: {
 				notifyUsers({
 					userIds: planners,
 					actorId: params.actorId,
-					title: `Task blocked: ${task.title}`,
-					message: `${params.serialNumber} · ${params.actorName}${reason}`,
+					text: {
+						title: `Task blocked: ${task.title}`,
+						message: `${params.serialNumber} · ${params.actorName}${reason}`,
+					},
 					type: "warning",
 					actionUrl: plannerBuildUrl(task.buildId),
 				}),
@@ -230,8 +286,10 @@ export async function notifyTaskStatusChanged(params: {
 				notifyUsers({
 					userIds: planners,
 					actorId: params.actorId,
-					title: `Task finished: ${task.title}`,
-					message: `${params.serialNumber} · by ${params.actorName}`,
+					text: {
+						title: `Task finished: ${task.title}`,
+						message: `${params.serialNumber} · by ${params.actorName}`,
+					},
 					type: "success",
 					actionUrl: plannerBuildUrl(task.buildId),
 					// Planners get plenty of these; keep them in-app only.
@@ -295,8 +353,13 @@ async function notifyDependentsReady(params: {
 				notifyUsers({
 					userIds: dependent.assignments.map((a) => a.userId),
 					actorId: params.actorId,
-					title: `Ready to start: ${dependent.title}`,
-					message: `${params.serialNumber} · "${params.task.title}" is finished`,
+					text: (t) => ({
+						title: t.notifications.readyToStart(dependent.title),
+						message: t.notifications.isFinished(
+							params.serialNumber,
+							params.task.title,
+						),
+					}),
 					type: "success",
 					actionUrl: workTaskUrl(dependent.id),
 				}),

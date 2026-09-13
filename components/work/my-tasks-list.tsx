@@ -1,7 +1,7 @@
 "use client";
 
 import type { inferRouterOutputs } from "@trpc/server";
-import { format, isPast, isToday, parseISO } from "date-fns";
+import { format, isPast, isToday, type Locale, parseISO } from "date-fns";
 import {
 	CameraIcon,
 	CheckCircle2Icon,
@@ -16,6 +16,8 @@ import * as React from "react";
 import { TaskStatusBadge } from "@/components/manufacturing/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useWorkLocale } from "@/components/work/work-locale-provider";
+import type { WorkDictionary } from "@/lib/i18n/work";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 import type { AppRouter } from "@/trpc/routers/app";
@@ -23,15 +25,23 @@ import type { AppRouter } from "@/trpc/routers/app";
 type MyTask =
 	inferRouterOutputs<AppRouter>["organization"]["work"]["myTasks"][number];
 
-function dateLabel(task: MyTask): { text: string; overdue: boolean } {
-	if (!task.startDate) return { text: "Unscheduled", overdue: false };
+function dateLabel(
+	task: MyTask,
+	t: WorkDictionary,
+	dateLocale: Locale,
+): { text: string; overdue: boolean } {
+	if (!task.startDate) return { text: t.list.unscheduled, overdue: false };
 	const start = parseISO(task.startDate);
-	if (isToday(start)) return { text: "Today", overdue: false };
+	if (isToday(start)) return { text: t.list.today, overdue: false };
 	const overdue = isPast(start) && task.status !== "done";
-	return { text: format(start, "EEE, MMM d"), overdue };
+	return {
+		text: format(start, "EEE, d. MMM", { locale: dateLocale }),
+		overdue,
+	};
 }
 
 export function MyTasksList(): React.JSX.Element {
+	const { t } = useWorkLocale();
 	const [showDone, setShowDone] = React.useState(false);
 	const { data, isLoading, refetch, isRefetching } =
 		trpc.organization.work.myTasks.useQuery(
@@ -60,29 +70,27 @@ export function MyTasksList(): React.JSX.Element {
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
-				<h1 className="text-lg font-semibold">My tasks</h1>
+				<h1 className="text-lg font-semibold">{t.list.title}</h1>
 				<Button
 					variant="ghost"
 					size="sm"
 					onClick={() => refetch()}
 					loading={isRefetching}
 				>
-					Refresh
+					{t.list.refresh}
 				</Button>
 			</div>
 
 			{data.length === 0 && (
 				<div className="rounded-xl border bg-background px-4 py-10 text-center">
 					<CheckCircle2Icon className="mx-auto size-8 text-emerald-500" />
-					<p className="mt-2 font-medium">Nothing assigned to you</p>
-					<p className="text-sm text-muted-foreground">
-						New tasks show up here as soon as a planner assigns them.
-					</p>
+					<p className="mt-2 font-medium">{t.list.emptyTitle}</p>
+					<p className="text-sm text-muted-foreground">{t.list.emptyHint}</p>
 				</div>
 			)}
 
 			{active.length > 0 && (
-				<Section title="Ready to work on" count={active.length}>
+				<Section title={t.list.ready} count={active.length}>
 					{active.map((task) => (
 						<TaskCard key={task.id} task={task} />
 					))}
@@ -90,7 +98,7 @@ export function MyTasksList(): React.JSX.Element {
 			)}
 
 			{waiting.length > 0 && (
-				<Section title="Waiting on other tasks" count={waiting.length}>
+				<Section title={t.list.waiting} count={waiting.length}>
 					{waiting.map((task) => (
 						<TaskCard key={task.id} task={task} />
 					))}
@@ -104,12 +112,12 @@ export function MyTasksList(): React.JSX.Element {
 					className="w-full"
 					onClick={() => setShowDone((value) => !value)}
 				>
-					{showDone ? "Hide finished tasks" : "Show finished tasks"}
+					{showDone ? t.list.hideDone : t.list.showDone}
 				</Button>
 			</div>
 
 			{showDone && done.length > 0 && (
-				<Section title="Finished" count={done.length}>
+				<Section title={t.list.finished} count={done.length}>
 					{done.map((task) => (
 						<TaskCard key={task.id} task={task} />
 					))}
@@ -135,7 +143,8 @@ function Section({
 }
 
 function TaskCard({ task }: { task: MyTask }): React.JSX.Element {
-	const date = dateLabel(task);
+	const { t, dateLocale } = useWorkLocale();
+	const date = dateLabel(task, t, dateLocale);
 	const blocked = task.openBlockers.length > 0;
 	return (
 		<Link
@@ -173,16 +182,20 @@ function TaskCard({ task }: { task: MyTask }): React.JSX.Element {
 					{task.requiresPhoto && (
 						<span className="inline-flex items-center gap-1">
 							<CameraIcon className="size-3.5" />
-							photo
+							{t.list.photo}
 						</span>
 					)}
 					{task.requiresComment && (
 						<span className="inline-flex items-center gap-1">
 							<MessageSquareTextIcon className="size-3.5" />
-							comment
+							{t.list.comment}
 						</span>
 					)}
-					<TaskStatusBadge status={task.status} className="ml-auto" />
+					<TaskStatusBadge
+						status={task.status}
+						className="ml-auto"
+						labels={t.status}
+					/>
 				</div>
 			</div>
 			<ChevronRightIcon className="size-5 shrink-0 text-muted-foreground" />

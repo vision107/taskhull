@@ -1266,5 +1266,62 @@ describe("manufacturing routers", () => {
 				`/dashboard/work/tasks/${byTitle["Wire control cabinet"]!.id}`,
 			);
 		});
+
+		it("speaks the worker's language in notifications", async () => {
+			const w = callerAs(worker, ORG_ID, MemberRole.member);
+			await w.user.setLocale({ locale: "de" });
+
+			const c = callerAs(planner);
+			const { template } = await createPublishedTemplate(c);
+			const product = await c.organization.product.create({
+				name: "Machine DE",
+				templateId: template.id,
+			});
+			const build = await c.organization.build.create({
+				productId: product.id,
+				serialNumber: "DE-0001",
+				plannedStartDate: "2026-10-01",
+			});
+			const detail = await c.organization.build.get({ id: build.id });
+			const frame = detail.tasks.find((t) => t.title === "Mount frame")!;
+			await c.organization.build.assign({
+				buildTaskIds: [frame.id],
+				userId: WORKER_ID,
+			});
+			await c.organization.work.addComment({
+				buildTaskId: frame.id,
+				body: "Bitte zuerst prüfen.",
+			});
+
+			const inbox = await callerAs(
+				worker,
+				ORG_ID,
+				MemberRole.member,
+			).notification.list({ limit: 20, status: "all" });
+			expect(inbox.map((n) => n.title).sort()).toEqual(
+				[
+					"Neue Aufgabe zugewiesen",
+					"Planner hat Mount frame kommentiert",
+				].sort(),
+			);
+
+			// Planner side stays English.
+			await w.organization.work.updateStatus({
+				id: frame.id,
+				status: "in_progress",
+			});
+			await w.organization.work.updateStatus({
+				id: frame.id,
+				status: "blocked",
+				reason: "Teile fehlen",
+			});
+			const plannerInbox = await callerAs(planner).notification.list({
+				limit: 20,
+				status: "all",
+			});
+			expect(
+				plannerInbox.some((n) => n.title === "Task blocked: Mount frame"),
+			).toBe(true);
+		});
 	});
 });

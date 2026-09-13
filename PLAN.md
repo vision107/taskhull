@@ -158,7 +158,7 @@ subscribePush / unsubscribePush`, `lib/notifications/push.ts` (web‑push,
     only shows when VAPID keys are configured. Push is fire‑and‑forget after
     the in‑app notification is written.
 
-- **Phase 6 — Beta hardening** (planned, in this order)
+- **Phase 6 — Beta hardening** (done; implemented in this order)
   1. _Role‑based landing after sign‑in._ New server page
      `app/(saas)/dashboard/start/page.tsx`: loads the session + memberships;
      if every membership is `member` → `redirect("/dashboard/work")`, if the
@@ -188,8 +188,10 @@ subscribePush / unsubscribePush`, `lib/notifications/push.ts` (web‑push,
      exports a typed dictionary `{ de, en }` for every string in
      `components/work/*` and the worker notifications; `useWorkT()` picks the
      language from `user.locale` (new nullable `locale` column on `user`,
-     settable in the worker account menu) and falls back to
-     `navigator.language`. Dates via `date-fns/locale/de`. Planner UI stays
+     toggled from the worker account menu via `user.setLocale`) and falls
+     back to `navigator.language`, default `en`. Dates via
+     `date-fns/locale/de`. Notifications are rendered per recipient locale
+     (`notifyUsers` groups recipients by `user.locale`). Planner UI stays
      English for now.
   5. _Blocked always needs a reason._ `updateBuildTaskStatusSchema` gets an
      optional `comment`; the server rejects `→ blocked` without a non‑empty
@@ -202,7 +204,7 @@ subscribePush / unsubscribePush`, `lib/notifications/push.ts` (web‑push,
      worker comment in the blocked callout.
   6. _Offline photos._ Queue kind `uploadPhoto` stores `{ taskId, fileName,
 contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
-     (`lib/offline/blob-store.ts`, tiny wrapper, no dependency). Replay:
+     (`lib/offline/photo-store.ts`, tiny wrapper, no dependency). Replay:
      `attachmentUploadUrl` → PUT → `addAttachment`, in order after status
      writes so a "done with photo" made offline lands correctly. Pending
      photos render as local thumbnails with "waiting to sync"; failures with a
@@ -228,6 +230,5 @@ them the opt‑in button is hidden and only in‑app notifications are sent.
 ## Known gaps / next ideas
 
 - Bulk "upgrade all open builds of this product" (currently per build).
-- Photo uploads are not queued offline (presigned PUT needs a connection).
 - Pre‑existing starter flake: `tests/lib/proxy-session.test.ts` fails only
   when run together with the DB suite (`RUN_DB_TESTS=true`).
