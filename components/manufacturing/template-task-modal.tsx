@@ -347,9 +347,9 @@ export const TemplateTaskModal = NiceModal.create<TemplateTaskModalProps>(
 						<Form {...form}>
 							<form
 								onSubmit={onSubmit}
-								className="flex flex-1 flex-col overflow-hidden"
+								className="flex min-h-0 flex-1 flex-col overflow-hidden"
 							>
-								<ScrollArea className="flex-1">
+								<ScrollArea className="min-h-0 flex-1">
 									<fieldset disabled={readOnly} className="space-y-5 px-6 py-4">
 										<FormField
 											control={form.control}
