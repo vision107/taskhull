@@ -2,7 +2,12 @@ const prepareFiles = (filenames) =>
 	filenames
 		.filter((filename) => {
 			const normalizedPath = filename.replace(/\\/g, "/");
-			return !normalizedPath.includes("lib/db/migrations/");
+			// Skip paths that oxfmt/oxlint ignore (see .oxfmtrc.json ignorePatterns),
+			// otherwise oxfmt errors when every matched file is ignored.
+			return (
+				!normalizedPath.includes("lib/db/migrations/") &&
+				!normalizedPath.includes(".cursor/")
+			);
 		})
 		.map((filename) => `'${filename.replace(/'/g, "'\\''")}'`)
 		.join(" ");
