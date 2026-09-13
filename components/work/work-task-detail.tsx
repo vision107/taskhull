@@ -5,6 +5,7 @@ import {
 	ArrowLeftIcon,
 	CameraIcon,
 	CheckIcon,
+	ChevronDownIcon,
 	DownloadIcon,
 	FileIcon,
 	ImageIcon,
@@ -19,14 +20,20 @@ import Link from "next/link";
 import * as React from "react";
 import { toast } from "sonner";
 
+import { ActivityTimeline } from "@/components/manufacturing/activity-timeline";
 import { TaskStatusBadge } from "@/components/manufacturing/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/user/user-avatar";
+import { useOffline } from "@/components/work/offline-provider";
 import { useSession } from "@/hooks/use-session";
-import type { BuildTaskStatus } from "@/lib/db/schema/enums";
+import type {
+	BuildTaskStatus,
+	ChecklistItemStatus,
+} from "@/lib/db/schema/enums";
 import { formatBytes } from "@/lib/manufacturing/format";
+import { isNetworkError } from "@/lib/offline/queue";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 
@@ -42,9 +49,62 @@ export function WorkTaskDetail({
 		id: taskId,
 	});
 
+	const offline = useOffline();
+	const pendingComments = offline.pending.filter(
+		(item): item is Extract<typeof item, { kind: "addComment" }> =>
+			item.kind === "addComment" && item.taskId === taskId,
+	);
+
 	const invalidate = () => {
 		void utils.organization.work.getTask.invalidate({ id: taskId });
 		void utils.organization.work.myTasks.invalidate();
+	};
+
+	// -- offline fallbacks ----------------------------------------------------
+	// When there is no connection the change is stored locally, the cached
+	// task is patched so the screen reflects it, and the provider replays it
+	// once the phone is back online.
+
+	const queueStatus = (next: BuildTaskStatus) => {
+		offline.enqueue({
+			kind: "updateStatus",
+			taskId,
+			input: { id: taskId, status: next },
+		});
+		utils.organization.work.getTask.setData({ id: taskId }, (old) =>
+			old ? { ...old, status: next } : old,
+		);
+		toast("Saved offline", {
+			description: "Will sync when you're back online.",
+		});
+	};
+
+	const queueChecklist = (itemId: string, next: ChecklistItemStatus) => {
+		offline.enqueue({
+			kind: "updateChecklistItem",
+			taskId,
+			input: { id: itemId, status: next },
+		});
+		utils.organization.work.getTask.setData({ id: taskId }, (old) =>
+			old
+				? {
+						...old,
+						checklistItems: old.checklistItems.map((item) =>
+							item.id === itemId ? { ...item, status: next } : item,
+						),
+					}
+				: old,
+		);
+	};
+
+	const queueComment = (body: string) => {
+		offline.enqueue({
+			kind: "addComment",
+			taskId,
+			input: { buildTaskId: taskId, body },
+		});
+		setComment("");
+		toast("Comment saved offline");
 	};
 
 	const statusMutation = trpc.organization.work.updateStatus.useMutation({
@@ -52,19 +112,29 @@ export function WorkTaskDetail({
 			if (after.status === "done") toast.success("Task finished");
 			invalidate();
 		},
-		onError: (error) => toast.error(error.message),
+		onError: (error, variables) => {
+			if (isNetworkError(error)) queueStatus(variables.status);
+			else toast.error(error.message);
+		},
 	});
 	const checklistMutation =
 		trpc.organization.work.updateChecklistItem.useMutation({
 			onSuccess: invalidate,
-			onError: (error) => toast.error(error.message),
+			onError: (error, variables) => {
+				if (isNetworkError(error))
+					queueChecklist(variables.id, variables.status);
+				else toast.error(error.message);
+			},
 		});
 	const commentMutation = trpc.organization.work.addComment.useMutation({
 		onSuccess: () => {
 			setComment("");
 			invalidate();
 		},
-		onError: (error) => toast.error(error.message),
+		onError: (error, variables) => {
+			if (isNetworkError(error)) queueComment(variables.body);
+			else toast.error(error.message);
+		},
 	});
 	const deleteCommentMutation =
 		trpc.organization.work.deleteComment.useMutation({
@@ -104,8 +174,13 @@ export function WorkTaskDetail({
 	const missingPhoto = task.requiresPhoto && task.uploads.length === 0;
 	const missingComment = task.requiresComment && task.comments.length === 0;
 
-	const setStatus = (next: BuildTaskStatus) =>
+	const setStatus = (next: BuildTaskStatus) => {
+		if (!offline.online) {
+			queueStatus(next);
+			return;
+		}
 		statusMutation.mutate({ id: task.id, status: next });
+	};
 
 	const download = async (attachmentId: string) => {
 		try {
@@ -238,12 +313,14 @@ export function WorkTaskDetail({
 									<button
 										type="button"
 										disabled={!canEdit || checklistMutation.isPending}
-										onClick={() =>
-											checklistMutation.mutate({
-												id: item.id,
-												status: done ? "open" : "done",
-											})
-										}
+										onClick={() => {
+											const next = done ? "open" : "done";
+											if (!offline.online) {
+												queueChecklist(item.id, next);
+												return;
+											}
+											checklistMutation.mutate({ id: item.id, status: next });
+										}}
 										className="flex w-full items-start gap-3 px-2 py-3 text-left active:bg-muted/60 disabled:opacity-70"
 									>
 										<span
@@ -445,12 +522,41 @@ export function WorkTaskDetail({
 						))}
 					</ul>
 				)}
+				{pendingComments.length > 0 && (
+					<ul className="mb-3 space-y-3">
+						{pendingComments.map((item) => (
+							<li key={item.id} className="flex gap-3 opacity-70">
+								<UserAvatar
+									name={user?.name ?? "?"}
+									src={user?.image ?? null}
+									className="size-7"
+									fallbackClassName="text-xs"
+								/>
+								<div className="min-w-0 flex-1">
+									<div className="flex items-baseline gap-2">
+										<span className="text-sm font-medium">{user?.name}</span>
+										<span className="text-xs text-muted-foreground">
+											waiting to sync
+										</span>
+									</div>
+									<p className="text-sm whitespace-pre-wrap">
+										{item.input.body}
+									</p>
+								</div>
+							</li>
+						))}
+					</ul>
+				)}
 				<form
 					className="flex items-end gap-2"
 					onSubmit={(event) => {
 						event.preventDefault();
 						const body = comment.trim();
 						if (!body) return;
+						if (!offline.online) {
+							queueComment(body);
+							return;
+						}
 						commentMutation.mutate({ buildTaskId: task.id, body });
 					}}
 				>
@@ -473,6 +579,16 @@ export function WorkTaskDetail({
 					</Button>
 				</form>
 			</Card>
+
+			<details className="group rounded-xl border bg-background px-4 py-3">
+				<summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium">
+					History
+					<ChevronDownIcon className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
+				</summary>
+				<div className="pt-3">
+					<ActivityTimeline buildTaskId={task.id} limit={30} compact />
+				</div>
+			</details>
 
 			{/* Sticky action bar */}
 			{canEdit && (

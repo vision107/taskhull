@@ -294,6 +294,32 @@ export const notificationTable = pgTable(
 	],
 );
 
+/**
+ * Web Push subscriptions (one per browser/device). Used to mirror in-app
+ * notifications to the worker PWA on the phone.
+ */
+export const pushSubscriptionTable = pgTable(
+	"push_subscription",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => userTable.id, { onDelete: "cascade" }),
+		endpoint: text("endpoint").notNull(),
+		p256dh: text("p256dh").notNull(),
+		auth: text("auth").notNull(),
+		userAgent: text("user_agent"),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+		lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+	},
+	(table) => [
+		uniqueIndex("push_subscription_endpoint_idx").on(table.endpoint),
+		index("push_subscription_user_id_idx").on(table.userId),
+	],
+);
+
 export const verificationTable = pgTable(
 	"verification",
 	{

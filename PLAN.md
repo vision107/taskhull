@@ -120,10 +120,43 @@ their list, each labeled with the build's serial number.
   comments, sticky Start / Mark done / Blocked / Reopen bar with the
   photo/comment requirements surfaced. Auto‑selects the organization for
   workers with a single membership (`work-org-picker.tsx`). `app/manifest.ts`
-  - icons; "My tasks" link in the planner sidebar. Not yet: service worker /
-    offline, push.
-- **Phase 5 — Polish** Notifications on assign/comment, activity timeline,
-  upgrade‑build‑to‑version, offline write queue, web push.
+  - icons; "My tasks" link in the planner sidebar.
+- **Phase 5 — Polish** ✅
+  - _Notifications_ (`lib/manufacturing/notifications.ts`, reuses the
+    starter's `notification` table + bell): worker gets one aggregated
+    notification per `build.assign` call ("Mount frame on 4 builds"), planners
+    (owner/admin) get comment / blocked / finished, other assignees get
+    comments, and assignees of dependent tasks get "Ready to start: …" once
+    all their blockers are done. Actor is never notified about their own
+    action.
+  - _Activity timeline_ (`components/manufacturing/activity-timeline.tsx`):
+    "Activity" tab on the build page, collapsible "History" on the worker task
+    page. Reads `work.activity`.
+  - _Upgrade build to version_: `template_task.lineage_id` (inherited when a
+    draft is copied) identifies the same task across versions.
+    `build.upgradeToVersion` (`upgradeBuildToVersion` in
+    `lib/manufacturing/builds.ts`) merges a newer published version into an
+    open build: matching tasks are updated in place (finished ones untouched),
+    new tasks added unassigned, dropped tasks deleted only if untouched
+    (otherwise kept as ad‑hoc), checklists merged by title, template documents
+    synced, template dependencies rebuilt, open tasks rescheduled. Banner on
+    the build page when `build.get().availableUpgrades` is non‑empty. The
+    assignment grid now merges rows by lineage instead of title.
+  - _Offline write queue_ (`lib/offline/queue.ts`,
+    `components/work/offline-provider.tsx`): status / checklist / comment
+    writes made without connectivity (or that fail with a network error) are
+    stored in `localStorage`, shown as "waiting to sync", and replayed in order
+    on `online` / tab focus. Server rejections on replay are dropped with a
+    toast. Header shows "Offline" / "N to sync".
+  - _Service worker_ (`public/sw.js`, registered from the worker layout):
+    network‑first with cache fallback for worker pages, RSC payloads and tRPC
+    GET queries; `offline.html` fallback; cache‑first for hashed static assets
+    in production only.
+  - _Web push_: `push_subscription` table, `notification.pushConfig /
+subscribePush / unsubscribePush`, `lib/notifications/push.ts` (web‑push,
+    prunes 404/410 endpoints). Opt‑in lives in the worker account menu and
+    only shows when VAPID keys are configured. Push is fire‑and‑forget after
+    the in‑app notification is written.
 
 ## Local setup
 
@@ -134,3 +167,13 @@ npm run dev
 ```
 
 Storage (R2/S3) credentials in `.env` are required for document/photo uploads.
+Web push needs VAPID keys (`npx web-push generate-vapid-keys`) in
+`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`; without
+them the opt‑in button is hidden and only in‑app notifications are sent.
+
+## Known gaps / next ideas
+
+- Bulk "upgrade all open builds of this product" (currently per build).
+- Photo uploads are not queued offline (presigned PUT needs a connection).
+- Pre‑existing starter flake: `tests/lib/proxy-session.test.ts` fails only
+  when run together with the DB suite (`RUN_DB_TESTS=true`).

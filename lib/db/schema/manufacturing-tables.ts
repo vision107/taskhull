@@ -106,6 +106,13 @@ export const templateTaskTable = pgTable(
 		versionId: uuid("version_id")
 			.notNull()
 			.references(() => templateVersionTable.id, { onDelete: "cascade" }),
+		/**
+		 * Stable identity of a task across versions of the same template. A brand
+		 * new task gets its own id as lineage; copies made for the next draft
+		 * inherit it. Lets a build be upgraded to a newer version while keeping
+		 * progress on tasks that still exist.
+		 */
+		lineageId: uuid("lineage_id").notNull().defaultRandom(),
 		title: text("title").notNull(),
 		instructions: text("instructions"),
 		phase: text("phase"),
@@ -118,6 +125,7 @@ export const templateTaskTable = pgTable(
 	(table) => [
 		index("template_task_version_id_idx").on(table.versionId),
 		index("template_task_sort_order_idx").on(table.versionId, table.sortOrder),
+		index("template_task_lineage_id_idx").on(table.lineageId),
 	],
 );
 

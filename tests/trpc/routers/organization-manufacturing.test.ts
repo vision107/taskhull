@@ -5,6 +5,7 @@ import {
 	buildTaskActivityTable,
 	db,
 	memberTable,
+	notificationTable,
 	organizationTable,
 	productTable,
 	revisionTable,
@@ -104,6 +105,7 @@ vi.mock("@/lib/storage", () => ({
  * below them) and seed users/orgs idempotently.
  */
 async function seed() {
+	await db.delete(notificationTable);
 	await db.delete(buildTaskActivityTable);
 	await db.delete(revisionTable);
 	await db.delete(productTable);
@@ -812,6 +814,336 @@ describe("manufacturing routers", () => {
 					userId: OUTSIDER_ID,
 				}),
 			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+		});
+	});
+
+	describe("template upgrades & notifications", () => {
+		it("upgrades an open build to a newer version while keeping progress", async () => {
+			const plannerCaller = callerAs(planner);
+			const { template, tasks } = await createPublishedTemplate(plannerCaller);
+			const product = await plannerCaller.organization.product.create({
+				name: "Machine XY",
+				templateId: template.id,
+			});
+			const build = await plannerCaller.organization.build.create({
+				productId: product.id,
+				serialNumber: "XY-0001",
+				plannedStartDate: "2026-10-01",
+			});
+
+			// Worker finishes the frame and starts the cabinet before v2 lands.
+			let detail = await plannerCaller.organization.build.get({ id: build.id });
+			expect(detail.availableUpgrades).toHaveLength(0);
+			const byTitle = Object.fromEntries(detail.tasks.map((t) => [t.title, t]));
+			await plannerCaller.organization.build.assign({
+				buildTaskIds: [
+					byTitle["Mount frame"]!.id,
+					byTitle["Assemble cabinet"]!.id,
+				],
+				userId: WORKER_ID,
+			});
+			const workerCaller = callerAs(worker, ORG_ID, MemberRole.member);
+			await workerCaller.organization.work.updateStatus({
+				id: byTitle["Mount frame"]!.id,
+				status: "in_progress",
+			});
+			await workerCaller.organization.work.updateStatus({
+				id: byTitle["Mount frame"]!.id,
+				status: "done",
+			});
+			await workerCaller.organization.work.updateStatus({
+				id: byTitle["Assemble cabinet"]!.id,
+				status: "in_progress",
+			});
+			await workerCaller.organization.work.addComment({
+				buildTaskId: byTitle["Assemble cabinet"]!.id,
+				body: "Halfway there",
+			});
+
+			// Planner improves the template: rename wiring, add a new checklist
+			// item, drop "Function test", add "Paint".
+			const c = callerAs(planner);
+			const draft = await c.organization.template.ensureDraft({
+				templateId: template.id,
+			});
+			const draftDetail = await c.organization.template.getVersion({
+				versionId: draft.id,
+			});
+			const draftByTitle = Object.fromEntries(
+				draftDetail.tasks.map((t) => [t.title, t]),
+			);
+			await c.organization.template.updateTask({
+				id: draftByTitle["Wire control cabinet"]!.id,
+				title: "Wire control cabinet (rev B)",
+				durationDays: 2,
+			});
+			await c.organization.template.setChecklist({
+				templateTaskId: draftByTitle["Mount frame"]!.id,
+				items: [
+					{ title: "Check bolts" },
+					{ title: "Level base" },
+					{ title: "Torque to spec" },
+				],
+			});
+			await c.organization.template.deleteTask({
+				id: draftByTitle["Function test"]!.id,
+			});
+			const paint = await c.organization.template.createTask({
+				versionId: draft.id,
+				title: "Paint",
+				phase: "Finish",
+				durationDays: 1,
+			});
+			await c.organization.template.addDependency({
+				templateTaskId: paint.id,
+				dependsOnTemplateTaskId: draftByTitle["Wire control cabinet"]!.id,
+			});
+			const v2 = await c.organization.template.publish({
+				versionId: draft.id,
+				changeNote: "Rev B wiring, paint step",
+			});
+
+			detail = await c.organization.build.get({ id: build.id });
+			expect(detail.availableUpgrades.map((v) => v.versionNumber)).toEqual([2]);
+
+			const result = await c.organization.build.upgradeToVersion({
+				buildId: build.id,
+				templateVersionId: v2.id,
+			});
+			expect(result).toMatchObject({
+				fromVersionNumber: 1,
+				toVersionNumber: 2,
+				added: 1, // Paint
+				removed: 1, // Function test (untouched)
+				kept: 0,
+				updated: 3, // frame, cabinet, wiring
+			});
+
+			detail = await c.organization.build.get({ id: build.id });
+			expect(detail.templateVersion?.versionNumber).toBe(2);
+			expect(detail.availableUpgrades).toHaveLength(0);
+			const after = Object.fromEntries(detail.tasks.map((t) => [t.title, t]));
+
+			// Renamed in place, still the same build task.
+			expect(after["Wire control cabinet (rev B)"]!.id).toBe(
+				byTitle["Wire control cabinet"]!.id,
+			);
+			expect(after["Wire control cabinet (rev B)"]!.plannedDurationDays).toBe(
+				2,
+			);
+			// Progress and assignments survived.
+			expect(after["Mount frame"]!.status).toBe("done");
+			expect(after["Assemble cabinet"]!.status).toBe("in_progress");
+			expect(after["Assemble cabinet"]!.assignments).toHaveLength(1);
+			expect(after["Assemble cabinet"]!.commentCount).toBe(1);
+			// Finished task keeps its old checklist (no new item forced on it).
+			expect(after["Mount frame"]!.checklistTotalCount).toBe(2);
+			// New task present and depends on wiring; dropped task gone.
+			expect(after["Paint"]).toBeDefined();
+			expect(
+				after["Paint"]!.dependencies.map((d) => d.dependsOnBuildTaskId),
+			).toEqual([byTitle["Wire control cabinet"]!.id]);
+			expect(after["Function test"]).toBeUndefined();
+
+			// Second upgrade to the same version is refused.
+			await expect(
+				c.organization.build.upgradeToVersion({
+					buildId: build.id,
+					templateVersionId: v2.id,
+				}),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+			// Workers cannot upgrade.
+			await expect(
+				callerAs(
+					worker,
+					ORG_ID,
+					MemberRole.member,
+				).organization.build.upgradeToVersion({
+					buildId: build.id,
+					templateVersionId: tasks.frame.versionId,
+				}),
+			).rejects.toMatchObject({ code: "FORBIDDEN" });
+		});
+
+		it("keeps a dropped task as ad-hoc when it has been worked on", async () => {
+			const c = callerAs(planner);
+			const { template } = await createPublishedTemplate(c);
+			const product = await c.organization.product.create({
+				name: "Machine XY",
+				templateId: template.id,
+			});
+			const build = await c.organization.build.create({
+				productId: product.id,
+				serialNumber: "XY-0001",
+				plannedStartDate: "2026-10-01",
+			});
+			let detail = await c.organization.build.get({ id: build.id });
+			const test = detail.tasks.find((t) => t.title === "Function test")!;
+			await c.organization.build.assign({
+				buildTaskIds: [test.id],
+				userId: WORKER_ID,
+			});
+
+			const draft = await c.organization.template.ensureDraft({
+				templateId: template.id,
+			});
+			const draftDetail = await c.organization.template.getVersion({
+				versionId: draft.id,
+			});
+			await c.organization.template.deleteTask({
+				id: draftDetail.tasks.find((t) => t.title === "Function test")!.id,
+			});
+			const v2 = await c.organization.template.publish({ versionId: draft.id });
+
+			const result = await c.organization.build.upgradeToVersion({
+				buildId: build.id,
+				templateVersionId: v2.id,
+			});
+			expect(result.removed).toBe(0);
+			expect(result.kept).toBe(1);
+
+			detail = await c.organization.build.get({ id: build.id });
+			const keptTask = detail.tasks.find((t) => t.title === "Function test")!;
+			expect(keptTask.sourceTemplateTaskId).toBeNull();
+			expect(keptTask.assignments).toHaveLength(1);
+		});
+
+		it("notifies workers on assignment and planners on comments and blockers", async () => {
+			const c = callerAs(planner);
+			const { template } = await createPublishedTemplate(c);
+			const product = await c.organization.product.create({
+				name: "Machine XY",
+				templateId: template.id,
+			});
+			const builds = [];
+			for (let i = 1; i <= 3; i++) {
+				builds.push(
+					await c.organization.build.create({
+						productId: product.id,
+						serialNumber: `XY-000${i}`,
+						plannedStartDate: `2026-10-0${i}`,
+					}),
+				);
+			}
+			const grid = await c.organization.build.assignmentGrid({
+				productId: product.id,
+			});
+			const frameRow = grid.rows.find((r) => r.title === "Mount frame")!;
+			const frameIds = Object.values(frameRow.cells)
+				.filter((cell): cell is NonNullable<typeof cell> => cell !== null)
+				.map((cell) => cell.id);
+
+			await c.organization.build.assign({
+				buildTaskIds: frameIds,
+				userId: WORKER_ID,
+			});
+
+			// One aggregated notification for the worker, none for the planner.
+			const w = callerAs(worker, ORG_ID, MemberRole.member);
+			let workerInbox = await w.notification.list({ limit: 20, status: "all" });
+			expect(workerInbox).toHaveLength(1);
+			expect(workerInbox[0]!.title).toBe("3 tasks assigned to you");
+			expect(workerInbox[0]!.message).toBe("Mount frame on 3 builds");
+			expect(workerInbox[0]!.actionUrl).toBe("/dashboard/work");
+
+			// Worker blocks one task and comments -> planner gets both.
+			await w.organization.work.updateStatus({
+				id: frameIds[0]!,
+				status: "in_progress",
+			});
+			await w.organization.work.updateStatus({
+				id: frameIds[0]!,
+				status: "blocked",
+			});
+			await w.organization.work.addComment({
+				buildTaskId: frameIds[0]!,
+				body: "Missing bolts, ordered new ones",
+			});
+
+			const plannerInbox = await callerAs(planner).notification.list({
+				limit: 20,
+				status: "all",
+			});
+			expect(plannerInbox.map((n) => n.title).sort()).toEqual(
+				["Task blocked: Mount frame", "Worker commented on Mount frame"].sort(),
+			);
+			const blocked = plannerInbox.find((n) => n.type === "warning")!;
+			expect(blocked.actionUrl).toBe(
+				`/dashboard/organization/builds/${builds[0]!.id}`,
+			);
+
+			// Author does not get notified about their own comment.
+			workerInbox = await callerAs(
+				worker,
+				ORG_ID,
+				MemberRole.member,
+			).notification.list({
+				limit: 20,
+				status: "all",
+			});
+			expect(workerInbox).toHaveLength(1);
+		});
+
+		it("tells the next worker when their task becomes ready", async () => {
+			const c = callerAs(planner);
+			const { template } = await createPublishedTemplate(c);
+			const product = await c.organization.product.create({
+				name: "Machine XY",
+				templateId: template.id,
+			});
+			const build = await c.organization.build.create({
+				productId: product.id,
+				serialNumber: "XY-0001",
+				plannedStartDate: "2026-10-01",
+			});
+			const detail = await c.organization.build.get({ id: build.id });
+			const byTitle = Object.fromEntries(detail.tasks.map((t) => [t.title, t]));
+
+			// Planner does frame + cabinet themselves; worker owns wiring.
+			await c.organization.build.assign({
+				buildTaskIds: [
+					byTitle["Mount frame"]!.id,
+					byTitle["Assemble cabinet"]!.id,
+				],
+				userId: PLANNER_ID,
+			});
+			await c.organization.build.assign({
+				buildTaskIds: [byTitle["Wire control cabinet"]!.id],
+				userId: WORKER_ID,
+			});
+
+			await c.organization.work.updateStatus({
+				id: byTitle["Mount frame"]!.id,
+				status: "done",
+			});
+			// Cabinet still open -> wiring not ready yet.
+			let inbox = await callerAs(
+				worker,
+				ORG_ID,
+				MemberRole.member,
+			).notification.list({ limit: 20, status: "all" });
+			expect(inbox.some((n) => n.title.startsWith("Ready to start"))).toBe(
+				false,
+			);
+
+			await callerAs(planner).organization.work.updateStatus({
+				id: byTitle["Assemble cabinet"]!.id,
+				status: "done",
+			});
+			inbox = await callerAs(
+				worker,
+				ORG_ID,
+				MemberRole.member,
+			).notification.list({
+				limit: 20,
+				status: "all",
+			});
+			const ready = inbox.find((n) => n.title.startsWith("Ready to start"))!;
+			expect(ready.title).toBe("Ready to start: Wire control cabinet");
+			expect(ready.actionUrl).toBe(
+				`/dashboard/work/tasks/${byTitle["Wire control cabinet"]!.id}`,
+			);
 		});
 	});
 });

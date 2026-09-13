@@ -48,6 +48,10 @@ export const env = createEnv({
 		// Cloudflare Turnstile (Captcha)
 		TURNSTILE_SECRET_KEY: z.string().optional(),
 
+		// Web Push (VAPID)
+		VAPID_PRIVATE_KEY: z.string().optional(),
+		VAPID_SUBJECT: z.string().optional(),
+
 		// Build / CI
 		ANALYZE: z
 			.string()
@@ -78,6 +82,9 @@ export const env = createEnv({
 
 		// Cloudflare Turnstile (Captcha)
 		NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional(),
+
+		// Web Push (VAPID public key)
+		NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().optional(),
 		// Stripe Price IDs for each plan
 		NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY: z.string().optional(),
 		NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY: z.string().optional(),
@@ -127,6 +134,8 @@ export const env = createEnv({
 		STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
 		STRIPE_CHECKOUT_MODE: process.env.STRIPE_CHECKOUT_MODE,
 		TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
+		VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
+		VAPID_SUBJECT: process.env.VAPID_SUBJECT,
 		ANALYZE: process.env.ANALYZE,
 		CI: process.env.CI,
 		VERCEL: process.env.VERCEL,
@@ -141,6 +150,7 @@ export const env = createEnv({
 		NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
 			process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
 		NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+		NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
 		NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY:
 			process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY,
 		NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY:

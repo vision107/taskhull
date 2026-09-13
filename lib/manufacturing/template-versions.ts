@@ -172,6 +172,7 @@ export async function copyVersionContents(
 			.insert(templateTaskTable)
 			.values({
 				versionId: toVersionId,
+				lineageId: task.lineageId,
 				title: task.title,
 				instructions: task.instructions,
 				phase: task.phase,

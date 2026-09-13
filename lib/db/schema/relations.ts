@@ -10,6 +10,7 @@ import {
 	memberTable,
 	notificationTable,
 	passkeyTable,
+	pushSubscriptionTable,
 	orderItemTable,
 	orderTable,
 	organizationTable,
@@ -87,6 +88,7 @@ export const userRelations = relations(userTable, ({ many }) => ({
 	sessions: many(sessionTable),
 	accounts: many(accountTable),
 	passkeys: many(passkeyTable),
+	pushSubscriptions: many(pushSubscriptionTable),
 	invitations: many(invitationTable),
 	memberships: many(memberTable),
 	twoFactors: many(twoFactorTable),
@@ -203,6 +205,16 @@ export const creditDeductionFailureRelations = relations(
 			fields: [creditDeductionFailureTable.resolvedBy],
 			references: [userTable.id],
 			relationName: "deductionFailureResolvedBy",
+		}),
+	}),
+);
+
+export const pushSubscriptionRelations = relations(
+	pushSubscriptionTable,
+	({ one }) => ({
+		user: one(userTable, {
+			fields: [pushSubscriptionTable.userId],
+			references: [userTable.id],
 		}),
 	}),
 );

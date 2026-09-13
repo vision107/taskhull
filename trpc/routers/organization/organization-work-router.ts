@@ -22,9 +22,14 @@ import {
 import { ActivityAction, logActivity } from "@/lib/manufacturing/activity";
 import {
 	getOpenBlockers,
+	getOwnedBuild,
 	getOwnedBuildTask,
 	syncBuildStatus,
 } from "@/lib/manufacturing/builds";
+import {
+	notifyTaskCommented,
+	notifyTaskStatusChanged,
+} from "@/lib/manufacturing/notifications";
 import { canPlan } from "@/lib/manufacturing/permissions";
 import { getSignedUploadUrl, getSignedUrl } from "@/lib/storage";
 import {
@@ -347,6 +352,17 @@ export const organizationWorkRouter = createTRPCRouter({
 				syncBuildStatus(before.buildId),
 			]);
 
+			const build = await getOwnedBuild(before.buildId, ctx.organization.id);
+			await notifyTaskStatusChanged({
+				organizationId: ctx.organization.id,
+				actorId: ctx.user.id,
+				actorName: ctx.user.name,
+				task: { id: before.id, title: before.title, buildId: before.buildId },
+				serialNumber: build.serialNumber,
+				from: before.status,
+				to: input.status,
+			});
+
 			return after;
 		}),
 
@@ -418,6 +434,16 @@ export const organizationWorkRouter = createTRPCRouter({
 				actorId: ctx.user.id,
 				action: ActivityAction.taskCommented,
 				metadata: { commentId: comment?.id ?? null },
+			});
+
+			const build = await getOwnedBuild(task.buildId, ctx.organization.id);
+			await notifyTaskCommented({
+				organizationId: ctx.organization.id,
+				actorId: ctx.user.id,
+				actorName: ctx.user.name,
+				task: { id: task.id, title: task.title, buildId: task.buildId },
+				serialNumber: build.serialNumber,
+				body: input.body,
 			});
 
 			return comment;

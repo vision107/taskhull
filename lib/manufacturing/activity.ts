@@ -6,6 +6,7 @@ export const ActivityAction = {
 	buildCreated: "build.created",
 	buildUpdated: "build.updated",
 	buildStatusChanged: "build.status_changed",
+	buildUpgraded: "build.upgraded",
 	taskCreated: "task.created",
 	taskUpdated: "task.updated",
 	taskStatusChanged: "task.status_changed",

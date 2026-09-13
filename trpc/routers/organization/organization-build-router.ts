@@ -24,11 +24,14 @@ import {
 } from "@/lib/manufacturing/activity";
 import {
 	createBuildFromVersion,
+	getAvailableUpgrades,
 	getOwnedBuild,
 	getOwnedBuildTask,
 	getOwnedBuildTasks,
 	getOwnedProduct,
+	upgradeBuildToVersion,
 } from "@/lib/manufacturing/builds";
+import { notifyTasksAssigned } from "@/lib/manufacturing/notifications";
 import { assertCanPlan } from "@/lib/manufacturing/permissions";
 import { toDateString } from "@/lib/manufacturing/scheduling";
 import {
@@ -43,6 +46,7 @@ import {
 	unassignBuildTasksSchema,
 	updateBuildSchema,
 	updateBuildTaskSchema,
+	upgradeBuildSchema,
 } from "@/schemas/manufacturing-schemas";
 import { createTRPCRouter, protectedOrganizationProcedure } from "@/trpc/init";
 
@@ -148,8 +152,11 @@ export const organizationBuildRouter = createTRPCRouter({
 				throw new TRPCError({ code: "NOT_FOUND", message: "Build not found." });
 			}
 
+			const availableUpgrades = await getAvailableUpgrades(build);
+
 			return {
 				...build,
+				availableUpgrades,
 				tasks: build.tasks.map((task) => ({
 					...task,
 					commentCount: task.comments.length,
@@ -284,6 +291,22 @@ export const organizationBuildRouter = createTRPCRouter({
 	// -------------------------------------------------------------------------
 	// Tasks (planner edits)
 	// -------------------------------------------------------------------------
+
+	/**
+	 * Apply a newer published template version to an open build, keeping the
+	 * work already done. See `upgradeBuildToVersion` for the merge rules.
+	 */
+	upgradeToVersion: protectedOrganizationProcedure
+		.input(upgradeBuildSchema)
+		.mutation(async ({ ctx, input }) => {
+			assertCanPlan(ctx.membership.role);
+			return upgradeBuildToVersion({
+				organizationId: ctx.organization.id,
+				userId: ctx.user.id,
+				buildId: input.buildId,
+				templateVersionId: input.templateVersionId,
+			});
+		}),
 
 	createTask: protectedOrganizationProcedure
 		.input(createBuildTaskSchema)
@@ -485,6 +508,25 @@ export const organizationBuildRouter = createTRPCRouter({
 				})),
 			);
 
+			const builds = await db.query.buildTable.findMany({
+				where: inArray(
+					buildTable.id,
+					Array.from(new Set(tasks.map((task) => task.buildId))),
+				),
+				columns: { id: true, serialNumber: true },
+			});
+			await notifyTasksAssigned({
+				organizationId: ctx.organization.id,
+				actorId: ctx.user.id,
+				assigneeId: input.userId,
+				tasks: tasks.map((task) => ({
+					id: task.id,
+					title: task.title,
+					buildId: task.buildId,
+				})),
+				serialByBuildId: new Map(builds.map((b) => [b.id, b.serialNumber])),
+			});
+
 			return { assigned: taskIds.length };
 		}),
 
@@ -607,25 +649,26 @@ export const organizationBuildRouter = createTRPCRouter({
 				row.cells[task.buildId] = task;
 			}
 
-			// Template tasks may differ between versions; merge rows with the same
-			// title from different versions so the grid stays compact.
+			// Builds may run on different template versions; merge rows that share
+			// a task lineage (falling back to title) so the grid stays compact.
 			const sourceIds = tasks
 				.map((task) => task.sourceTemplateTaskId)
 				.filter((id): id is string => Boolean(id));
 			if (sourceIds.length > 0) {
 				const sourceTasks = await db.query.templateTaskTable.findMany({
 					where: inArray(templateTaskTable.id, Array.from(new Set(sourceIds))),
-					columns: { id: true, title: true },
+					columns: { id: true, lineageId: true },
 				});
-				const titleBySource = new Map(
-					sourceTasks.map((task) => [task.id, task.title.toLowerCase()]),
+				const lineageBySource = new Map(
+					sourceTasks.map((task) => [task.id, task.lineageId]),
 				);
 				const merged = new Map<string, Row>();
 				for (const row of rows.values()) {
 					const sourceId = row.key.startsWith("tpl:") ? row.key.slice(4) : null;
-					const mergeKey = sourceId
-						? `title:${titleBySource.get(sourceId) ?? row.title.toLowerCase()}`
-						: row.key;
+					const lineage = sourceId ? lineageBySource.get(sourceId) : null;
+					const mergeKey = lineage
+						? `lineage:${lineage}`
+						: `title:${row.title.toLowerCase()}`;
 					const existing = merged.get(mergeKey);
 					if (!existing) {
 						merged.set(mergeKey, { ...row, key: mergeKey });

@@ -178,6 +178,12 @@ export const updateBuildSchema = z.object({
 
 export const deleteBuildSchema = idSchema;
 
+export const upgradeBuildSchema = z.object({
+	buildId: z.uuid(),
+	templateVersionId: z.uuid(),
+});
+export type UpgradeBuildInput = z.infer<typeof upgradeBuildSchema>;
+
 // Build tasks (planner side)
 
 export const getBuildTaskSchema = idSchema;

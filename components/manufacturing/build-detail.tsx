@@ -16,8 +16,10 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import { ConfirmationModal } from "@/components/confirmation-modal";
+import { ActivityTimeline } from "@/components/manufacturing/activity-timeline";
 import { AssigneePicker } from "@/components/manufacturing/assignee-picker";
 import { BuildGantt } from "@/components/manufacturing/build-gantt";
+import { BuildUpgradeBanner } from "@/components/manufacturing/build-upgrade-banner";
 import {
 	formatDate,
 	formatEndDate,
@@ -38,6 +40,7 @@ import {
 import {
 	DropdownMenu,
 	DropdownMenuContent,
+	DropdownMenuGroup,
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
@@ -201,18 +204,20 @@ export function BuildDetail({
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
-							<DropdownMenuLabel>Set status</DropdownMenuLabel>
-							{BuildStatuses.map((status) => (
-								<DropdownMenuItem
-									key={status}
-									disabled={status === build.status}
-									onClick={() =>
-										updateBuildMutation.mutate({ id: buildId, status })
-									}
-								>
-									{buildStatusLabels[status]}
-								</DropdownMenuItem>
-							))}
+							<DropdownMenuGroup>
+								<DropdownMenuLabel>Set status</DropdownMenuLabel>
+								{BuildStatuses.map((status) => (
+									<DropdownMenuItem
+										key={status}
+										disabled={status === build.status}
+										onClick={() =>
+											updateBuildMutation.mutate({ id: buildId, status })
+										}
+									>
+										{buildStatusLabels[status]}
+									</DropdownMenuItem>
+								))}
+							</DropdownMenuGroup>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem variant="destructive" onClick={handleDelete}>
 								<Trash2Icon />
@@ -223,6 +228,16 @@ export function BuildDetail({
 				)}
 			</div>
 
+			{canPlan &&
+				build.status !== BuildStatus.completed &&
+				build.status !== BuildStatus.archived && (
+					<BuildUpgradeBanner
+						buildId={buildId}
+						currentVersionNumber={build.templateVersion?.versionNumber ?? null}
+						upgrades={build.availableUpgrades}
+					/>
+				)}
+
 			<UnderlinedTabs
 				value={tab}
 				onValueChange={(value) => setTab(String(value))}
@@ -231,6 +246,9 @@ export function BuildDetail({
 					<UnderlinedTabsTrigger value="tasks">Tasks</UnderlinedTabsTrigger>
 					<UnderlinedTabsTrigger value="timeline">
 						Timeline
+					</UnderlinedTabsTrigger>
+					<UnderlinedTabsTrigger value="activity">
+						Activity
 					</UnderlinedTabsTrigger>
 				</UnderlinedTabsList>
 
@@ -432,6 +450,10 @@ export function BuildDetail({
 							),
 						}))}
 					/>
+				</UnderlinedTabsContent>
+
+				<UnderlinedTabsContent value="activity">
+					<ActivityTimeline buildId={buildId} limit={100} linkToTasks />
 				</UnderlinedTabsContent>
 			</UnderlinedTabs>
 		</div>

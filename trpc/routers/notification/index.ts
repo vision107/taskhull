@@ -1,10 +1,17 @@
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, isNull } from "drizzle-orm";
 
-import { db, notificationTable } from "@/lib/db";
+import { db, notificationTable, pushSubscriptionTable } from "@/lib/db";
+import { env } from "@/lib/env";
+import {
+	isPushConfigured,
+	removePushSubscription,
+} from "@/lib/notifications/push";
 import {
 	listNotificationsSchema,
 	notificationIdSchema,
+	pushEndpointSchema,
+	pushSubscriptionSchema,
 } from "@/schemas/notification-schemas";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
@@ -104,4 +111,42 @@ export const notificationRouter = createTRPCRouter({
 			.returning({ id: notificationTable.id });
 		return { count: rows.length };
 	}),
+
+	// -------------------------------------------------------------------------
+	// Web push (worker PWA)
+	// -------------------------------------------------------------------------
+
+	pushConfig: protectedProcedure.query(() => ({
+		enabled: isPushConfigured(),
+		publicKey: isPushConfigured() ? env.NEXT_PUBLIC_VAPID_PUBLIC_KEY! : null,
+	})),
+	subscribePush: protectedProcedure
+		.input(pushSubscriptionSchema)
+		.mutation(async ({ ctx, input }) => {
+			await db
+				.insert(pushSubscriptionTable)
+				.values({
+					userId: ctx.user.id,
+					endpoint: input.endpoint,
+					p256dh: input.keys.p256dh,
+					auth: input.keys.auth,
+					userAgent: input.userAgent ?? null,
+				})
+				.onConflictDoUpdate({
+					target: pushSubscriptionTable.endpoint,
+					set: {
+						userId: ctx.user.id,
+						p256dh: input.keys.p256dh,
+						auth: input.keys.auth,
+						userAgent: input.userAgent ?? null,
+					},
+				});
+			return { success: true };
+		}),
+	unsubscribePush: protectedProcedure
+		.input(pushEndpointSchema)
+		.mutation(async ({ ctx, input }) => {
+			await removePushSubscription(ctx.user.id, input.endpoint);
+			return { success: true };
+		}),
 });
