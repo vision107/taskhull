@@ -2,7 +2,9 @@ import { ImageResponse } from "next/og";
 
 import { appConfig } from "@/config/app.config";
 
-export const runtime = "edge";
+// Node runtime on purpose: `next/og` ships Satori + resvg (~1 MB), which
+// exceeds Vercel's 1 MB Edge Function limit on the Hobby plan.
+export const dynamic = "force-static";
 
 function OgImage(): React.JSX.Element {
 	return (
