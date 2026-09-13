@@ -212,7 +212,7 @@ export default async function proxy(req: NextRequest) {
 					new URL(`/dashboard/organization-invitation/${invitationId}`, origin),
 				);
 			}
-			return NextResponse.redirect(new URL("/dashboard", origin));
+			return NextResponse.redirect(new URL("/dashboard/start", origin));
 		}
 	}
 

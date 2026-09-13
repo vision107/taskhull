@@ -28,7 +28,7 @@ const origins = Array.from(
 );
 
 export const authConfig = {
-	redirectAfterSignIn: "/dashboard",
+	redirectAfterSignIn: "/dashboard/start",
 	redirectAfterLogout: "/",
 	sessionCookieMaxAge: 60 * 60 * 24 * 30,
 	verificationExpiresIn: 60 * 60 * 24 * 14,
