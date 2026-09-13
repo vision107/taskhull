@@ -34,17 +34,17 @@ import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 
 type GridProps = {
-	productId: string;
+	templateId: string;
 	canPlan: boolean;
 };
 
 /**
- * Template tasks (rows) × builds (columns). Select any set of cells — most
+ * Template tasks (rows) × projects (columns). Select any set of cells — most
  * commonly a whole row, i.e. the same task on every open unit — and hand them
  * to one worker in a single action.
  */
 export function AssignmentGrid({
-	productId,
+	templateId,
 	canPlan,
 }: GridProps): React.JSX.Element {
 	const utils = trpc.useUtils();
@@ -52,12 +52,12 @@ export function AssignmentGrid({
 	const [selected, setSelected] = React.useState<Set<string>>(new Set());
 
 	const { data, isLoading } = trpc.organization.build.assignmentGrid.useQuery({
-		productId,
+		templateId,
 		includeCompleted,
 	});
 
 	const invalidate = () => {
-		void utils.organization.build.assignmentGrid.invalidate({ productId });
+		void utils.organization.build.assignmentGrid.invalidate({ templateId });
 		void utils.organization.build.list.invalidate();
 		void utils.organization.build.get.invalidate();
 	};
@@ -96,10 +96,10 @@ export function AssignmentGrid({
 		return (
 			<Empty className="border py-12">
 				<EmptyHeader>
-					<EmptyTitle>No open builds</EmptyTitle>
+					<EmptyTitle>No open projects</EmptyTitle>
 					<EmptyDescription>
-						Create a build for this product and its tasks will show up here, one
-						column per unit.
+						Create a project from this template and its tasks will show up here,
+						one column per unit.
 					</EmptyDescription>
 				</EmptyHeader>
 			</Empty>
@@ -150,7 +150,7 @@ export function AssignmentGrid({
 						size="sm"
 					/>
 					<Label htmlFor="grid-include-completed" className="font-normal">
-						Include completed builds
+						Include completed projects
 					</Label>
 				</div>
 
@@ -239,7 +239,7 @@ export function AssignmentGrid({
 											)}
 											<div className="min-w-0">
 												<Link
-													href={`/dashboard/organization/builds/${build.id}`}
+													href={`/dashboard/organization/projects/${build.id}`}
 													className="block truncate hover:underline"
 												>
 													{build.serialNumber}
@@ -273,7 +273,7 @@ export function AssignmentGrid({
 										<div className="flex items-center gap-2">
 											{canPlan && (
 												<Checkbox
-													aria-label={`Select ${row.title} on all builds`}
+													aria-label={`Select ${row.title} on all projects`}
 													checked={allSelected}
 													disabled={rowIds.length === 0}
 													onCheckedChange={(checked) =>

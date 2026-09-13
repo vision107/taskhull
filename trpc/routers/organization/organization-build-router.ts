@@ -1,9 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 
+import { storageConfig } from "@/config/storage.config";
 import { db } from "@/lib/db";
 import { recordRevision } from "@/lib/db/revision";
 import {
+	AttachmentKind,
 	BuildStatus,
 	BuildTaskStatus,
 	RevisionAction,
@@ -12,10 +14,12 @@ import {
 import {
 	buildTable,
 	buildTaskAssignmentTable,
+	buildTaskAttachmentTable,
 	buildTaskCommentTable,
 	buildTaskDependencyTable,
 	buildTaskTable,
 	templateTaskTable,
+	templateVersionTable,
 } from "@/lib/db/schema/manufacturing-tables";
 import { memberTable, userTable } from "@/lib/db/schema/tables";
 import {
@@ -29,24 +33,37 @@ import {
 	getOwnedBuild,
 	getOwnedBuildTask,
 	getOwnedBuildTasks,
-	getOwnedProduct,
 	upgradeBuildToVersion,
 } from "@/lib/manufacturing/builds";
 import { notifyTasksAssigned } from "@/lib/manufacturing/notifications";
 import { assertCanPlan } from "@/lib/manufacturing/permissions";
-import { toDateString } from "@/lib/manufacturing/scheduling";
 import {
+	previewTemplateUpdate,
+	saveBuildAsTemplate,
+	updateTemplateFromBuild,
+} from "@/lib/manufacturing/promote";
+import { toDateString } from "@/lib/manufacturing/scheduling";
+import { getOwnedTemplate } from "@/lib/manufacturing/template-versions";
+import { normalizeContentType } from "@/lib/manufacturing/uploads";
+import { getSignedUploadUrl } from "@/lib/storage";
+import {
+	addBuildTaskDocumentSchema,
 	assignBuildTasksSchema,
 	assignmentGridSchema,
+	buildTaskDocumentUploadUrlSchema,
 	createBuildSchema,
 	createBuildTaskSchema,
 	deleteBuildSchema,
 	deleteBuildTaskSchema,
 	getBuildSchema,
 	listBuildsSchema,
+	removeBuildTaskDocumentSchema,
+	saveBuildAsTemplateSchema,
+	templateDiffSchema,
 	unassignBuildTasksSchema,
 	updateBuildSchema,
 	updateBuildTaskSchema,
+	updateTemplateFromBuildSchema,
 	upgradeBuildSchema,
 } from "@/schemas/manufacturing-schemas";
 import { createTRPCRouter, protectedOrganizationProcedure } from "@/trpc/init";
@@ -56,6 +73,18 @@ const OPEN_BUILD_STATUSES = [
 	BuildStatus.active,
 	BuildStatus.blocked,
 ];
+
+function sanitizeFileName(fileName: string): string {
+	return fileName.replace(/[^a-zA-Z0-9\-_.]/g, "_").slice(0, 120);
+}
+
+/** Subquery: ids of all versions of a template. */
+function versionIdsOf(templateId: string) {
+	return db
+		.select({ id: templateVersionTable.id })
+		.from(templateVersionTable)
+		.where(eq(templateVersionTable.templateId, templateId));
+}
 
 function addDays(isoDate: string, days: number): string {
 	const date = new Date(`${isoDate}T00:00:00.000Z`);
@@ -142,6 +171,11 @@ export const organizationBuildRouter = createTRPCRouter({
 			if (input.productId) {
 				conditions.push(eq(buildTable.productId, input.productId));
 			}
+			if (input.templateId) {
+				conditions.push(
+					inArray(buildTable.templateVersionId, versionIdsOf(input.templateId)),
+				);
+			}
 			if (input.status && input.status.length > 0) {
 				conditions.push(inArray(buildTable.status, input.status));
 			} else if (!input.includeArchived) {
@@ -153,7 +187,10 @@ export const organizationBuildRouter = createTRPCRouter({
 				orderBy: [asc(buildTable.plannedStartDate), desc(buildTable.createdAt)],
 				with: {
 					product: { columns: { id: true, name: true } },
-					templateVersion: { columns: { id: true, versionNumber: true } },
+					templateVersion: {
+						columns: { id: true, versionNumber: true, templateId: true },
+						with: { template: { columns: { id: true, name: true } } },
+					},
 				},
 			});
 
@@ -201,6 +238,7 @@ export const organizationBuildRouter = createTRPCRouter({
 					product: { columns: { id: true, name: true } },
 					templateVersion: {
 						columns: { id: true, versionNumber: true, templateId: true },
+						with: { template: { columns: { id: true, name: true } } },
 					},
 					tasks: {
 						orderBy: [
@@ -256,7 +294,7 @@ export const organizationBuildRouter = createTRPCRouter({
 
 			const duplicate = await db.query.buildTable.findFirst({
 				where: and(
-					eq(buildTable.productId, input.productId),
+					eq(buildTable.organizationId, ctx.organization.id),
 					eq(buildTable.serialNumber, input.serialNumber),
 				),
 				columns: { id: true },
@@ -264,7 +302,7 @@ export const organizationBuildRouter = createTRPCRouter({
 			if (duplicate) {
 				throw new TRPCError({
 					code: "CONFLICT",
-					message: "A build with this serial number already exists.",
+					message: "A project with this serial number already exists.",
 				});
 			}
 
@@ -272,6 +310,7 @@ export const organizationBuildRouter = createTRPCRouter({
 				organizationId: ctx.organization.id,
 				userId: ctx.user.id,
 				productId: input.productId,
+				templateId: input.templateId,
 				templateVersionId: input.templateVersionId,
 				serialNumber: input.serialNumber,
 				name: input.name,
@@ -296,6 +335,23 @@ export const organizationBuildRouter = createTRPCRouter({
 		.mutation(async ({ ctx, input }) => {
 			assertCanPlan(ctx.membership.role);
 			const before = await getOwnedBuild(input.id, ctx.organization.id);
+
+			if (input.serialNumber && input.serialNumber !== before.serialNumber) {
+				const duplicate = await db.query.buildTable.findFirst({
+					where: and(
+						eq(buildTable.organizationId, ctx.organization.id),
+						eq(buildTable.serialNumber, input.serialNumber),
+						ne(buildTable.id, input.id),
+					),
+					columns: { id: true },
+				});
+				if (duplicate) {
+					throw new TRPCError({
+						code: "CONFLICT",
+						message: "A project with this serial number already exists.",
+					});
+				}
+			}
 
 			const { id, ...changes } = input;
 			const [after] = await db
@@ -384,6 +440,147 @@ export const organizationBuildRouter = createTRPCRouter({
 				buildId: input.buildId,
 				templateVersionId: input.templateVersionId,
 			});
+		}),
+
+	// -------------------------------------------------------------------------
+	// Project ⇄ template
+	// -------------------------------------------------------------------------
+
+	/** Turn an unlinked project into a new template (published v1). */
+	saveAsTemplate: protectedOrganizationProcedure
+		.input(saveBuildAsTemplateSchema)
+		.mutation(async ({ ctx, input }) => {
+			assertCanPlan(ctx.membership.role);
+			const result = await saveBuildAsTemplate({
+				organizationId: ctx.organization.id,
+				userId: ctx.user.id,
+				buildId: input.buildId,
+				name: input.name,
+				description: input.description,
+			});
+			await recordRevision({
+				organizationId: ctx.organization.id,
+				entityType: RevisionEntity.template,
+				entityId: result.template.id,
+				action: RevisionAction.create,
+				changedById: ctx.user.id,
+				after: result.template,
+			});
+			return result;
+		}),
+
+	/** Preview of what "Update template" would change. */
+	templateDiff: protectedOrganizationProcedure
+		.input(templateDiffSchema)
+		.query(async ({ ctx, input }) =>
+			previewTemplateUpdate({
+				organizationId: ctx.organization.id,
+				buildId: input.buildId,
+			}),
+		),
+
+	/** Push a linked project's tasks into its template as a new version. */
+	updateTemplate: protectedOrganizationProcedure
+		.input(updateTemplateFromBuildSchema)
+		.mutation(async ({ ctx, input }) => {
+			assertCanPlan(ctx.membership.role);
+			return updateTemplateFromBuild({
+				organizationId: ctx.organization.id,
+				userId: ctx.user.id,
+				buildId: input.buildId,
+				changeNote: input.changeNote,
+			});
+		}),
+
+	// -------------------------------------------------------------------------
+	// Documents on project tasks (planner side)
+	// -------------------------------------------------------------------------
+
+	taskDocumentUploadUrl: protectedOrganizationProcedure
+		.input(buildTaskDocumentUploadUrlSchema)
+		.mutation(async ({ ctx, input }) => {
+			assertCanPlan(ctx.membership.role);
+			const task = await getOwnedBuildTask(
+				input.buildTaskId,
+				ctx.organization.id,
+			);
+			const storageKey = `orgs/${ctx.organization.id}/builds/${task.buildId}/tasks/${task.id}/docs/${crypto.randomUUID()}-${sanitizeFileName(input.fileName)}`;
+			const signedUrl = await getSignedUploadUrl(
+				storageKey,
+				storageConfig.bucketNames.images,
+				normalizeContentType(input.contentType),
+				input.sizeBytes,
+			);
+			return { storageKey, signedUrl };
+		}),
+
+	addTaskDocument: protectedOrganizationProcedure
+		.input(addBuildTaskDocumentSchema)
+		.mutation(async ({ ctx, input }) => {
+			assertCanPlan(ctx.membership.role);
+			const task = await getOwnedBuildTask(
+				input.buildTaskId,
+				ctx.organization.id,
+			);
+			if (!input.storageKey.startsWith(`orgs/${ctx.organization.id}/`)) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Invalid storage key.",
+				});
+			}
+			const [attachment] = await db
+				.insert(buildTaskAttachmentTable)
+				.values({
+					buildTaskId: task.id,
+					kind: AttachmentKind.document,
+					uploadedById: ctx.user.id,
+					storageKey: input.storageKey,
+					fileName: input.fileName,
+					contentType: normalizeContentType(input.contentType),
+					sizeBytes: input.sizeBytes,
+				})
+				.returning();
+			if (!attachment) {
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Failed to add document.",
+				});
+			}
+			await logActivity({
+				organizationId: ctx.organization.id,
+				buildId: task.buildId,
+				buildTaskId: task.id,
+				actorId: ctx.user.id,
+				action: ActivityAction.taskAttachmentAdded,
+				metadata: { fileName: attachment.fileName, kind: attachment.kind },
+			});
+			return attachment;
+		}),
+
+	removeTaskDocument: protectedOrganizationProcedure
+		.input(removeBuildTaskDocumentSchema)
+		.mutation(async ({ ctx, input }) => {
+			assertCanPlan(ctx.membership.role);
+			const attachment = await db.query.buildTaskAttachmentTable.findFirst({
+				where: eq(buildTaskAttachmentTable.id, input.id),
+			});
+			if (!attachment) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Document not found.",
+				});
+			}
+			await getOwnedBuildTask(attachment.buildTaskId, ctx.organization.id);
+			if (attachment.kind !== AttachmentKind.document) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Only documents can be removed here.",
+				});
+			}
+			await db
+				.delete(buildTaskAttachmentTable)
+				.where(eq(buildTaskAttachmentTable.id, input.id));
+			return { success: true };
 		}),
 
 	createTask: protectedOrganizationProcedure
@@ -722,18 +919,18 @@ export const organizationBuildRouter = createTRPCRouter({
 		}),
 
 	/**
-	 * Grid of template tasks (rows) × open builds (columns) for a product, each
-	 * cell being the concrete build task with its assignees and status. Powers
-	 * the cross-build assignment screen.
+	 * Grid of template tasks (rows) × open projects (columns) of a template,
+	 * each cell being the concrete build task with its assignees and status.
+	 * Powers the cross-project assignment screen.
 	 */
 	assignmentGrid: protectedOrganizationProcedure
 		.input(assignmentGridSchema)
 		.query(async ({ ctx, input }) => {
-			await getOwnedProduct(input.productId, ctx.organization.id);
+			await getOwnedTemplate(input.templateId, ctx.organization.id);
 
 			const buildConditions = [
 				eq(buildTable.organizationId, ctx.organization.id),
-				eq(buildTable.productId, input.productId),
+				inArray(buildTable.templateVersionId, versionIdsOf(input.templateId)),
 			];
 			if (input.buildIds && input.buildIds.length > 0) {
 				buildConditions.push(inArray(buildTable.id, input.buildIds));

@@ -23,8 +23,11 @@ export type BuildRow = {
 	status: BuildStatus;
 	plannedStartDate: string | null;
 	plannedEndDate: string | null;
-	product?: { id: string; name: string } | null;
-	templateVersion?: { id: string; versionNumber: number } | null;
+	templateVersion?: {
+		id: string;
+		versionNumber: number;
+		template?: { id: string; name: string } | null;
+	} | null;
 	taskCount?: number;
 	doneTaskCount?: number;
 	blockedTaskCount?: number;
@@ -46,19 +49,18 @@ export function formatEndDate(value: string | null | undefined): string {
 
 export function BuildsTable({
 	builds,
-	showProduct = true,
+	showTemplate = true,
 }: {
 	builds: BuildRow[];
-	showProduct?: boolean;
+	showTemplate?: boolean;
 }): React.JSX.Element {
 	return (
 		<div className="overflow-hidden rounded-lg border">
 			<Table>
 				<TableHeader>
 					<TableRow>
-						<TableHead>Serial</TableHead>
-						{showProduct && <TableHead>Product</TableHead>}
-						<TableHead>Version</TableHead>
+						<TableHead>Project</TableHead>
+						{showTemplate && <TableHead>Template</TableHead>}
 						<TableHead>Status</TableHead>
 						<TableHead>Start</TableHead>
 						<TableHead>End</TableHead>
@@ -75,7 +77,7 @@ export function BuildsTable({
 							<TableRow key={build.id} className="hover:bg-muted/40">
 								<TableCell>
 									<Link
-										href={`/dashboard/organization/builds/${build.id}`}
+										href={`/dashboard/organization/projects/${build.id}`}
 										className="font-medium hover:underline"
 									>
 										{build.serialNumber}
@@ -86,25 +88,25 @@ export function BuildsTable({
 										</span>
 									)}
 								</TableCell>
-								{showProduct && (
+								{showTemplate && (
 									<TableCell className="text-muted-foreground">
-										{build.product ? (
+										{build.templateVersion?.template ? (
 											<Link
-												href={`/dashboard/organization/products/${build.product.id}`}
+												href={`/dashboard/organization/templates/${build.templateVersion.template.id}`}
 												className="hover:underline"
 											>
-												{build.product.name}
+												{build.templateVersion.template.name}
 											</Link>
 										) : (
-											"–"
+											<span className="text-xs">ad-hoc</span>
+										)}
+										{build.templateVersion && (
+											<span className="ml-1 text-xs">
+												v{build.templateVersion.versionNumber}
+											</span>
 										)}
 									</TableCell>
 								)}
-								<TableCell className="text-muted-foreground">
-									{build.templateVersion
-										? `v${build.templateVersion.versionNumber}`
-										: "–"}
-								</TableCell>
 								<TableCell>
 									<BuildStatusBadge status={build.status} />
 								</TableCell>

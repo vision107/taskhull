@@ -165,6 +165,16 @@ export type ChecklistItemStatus =
 	(typeof ChecklistItemStatus)[keyof typeof ChecklistItemStatus];
 export const ChecklistItemStatuses = Object.values(ChecklistItemStatus);
 
+// What a build task attachment is: a document for the worker (drawing, PDF)
+// or a photo taken on the floor.
+export const AttachmentKind = {
+	document: "document",
+	photo: "photo",
+} as const;
+export type AttachmentKind =
+	(typeof AttachmentKind)[keyof typeof AttachmentKind];
+export const AttachmentKinds = Object.values(AttachmentKind);
+
 // Entities tracked by the generic revision (audit) log
 export const RevisionEntity = {
 	template: "template",

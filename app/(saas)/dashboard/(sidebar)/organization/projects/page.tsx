@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type * as React from "react";
 
-import { ProductsList } from "@/components/manufacturing/products-list";
+import { BuildsList } from "@/components/manufacturing/builds-list";
 import {
 	Page,
 	PageBody,
@@ -13,10 +13,10 @@ import {
 import { getPlannerPageContext } from "@/lib/manufacturing/page-context";
 
 export const metadata: Metadata = {
-	title: "Products",
+	title: "Projects",
 };
 
-export default async function ProductsPage(): Promise<React.JSX.Element> {
+export default async function ProjectsPage(): Promise<React.JSX.Element> {
 	const { organization, canPlan } = await getPlannerPageContext();
 
 	return (
@@ -27,14 +27,14 @@ export default async function ProductsPage(): Promise<React.JSX.Element> {
 						segments={[
 							{ label: "Home", href: "/dashboard" },
 							{ label: organization.name, href: "/dashboard/organization" },
-							{ label: "Products" },
+							{ label: "Projects" },
 						]}
 					/>
 				</PagePrimaryBar>
 			</PageHeader>
 			<PageBody>
-				<PageContent title="Products">
-					<ProductsList canPlan={canPlan} />
+				<PageContent title="Projects">
+					<BuildsList canPlan={canPlan} />
 				</PageContent>
 			</PageBody>
 		</Page>

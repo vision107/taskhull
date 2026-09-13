@@ -45,17 +45,18 @@ export function BuildsList({
 					<EmptyMedia variant="icon">
 						<FactoryIcon />
 					</EmptyMedia>
-					<EmptyTitle>No builds yet</EmptyTitle>
+					<EmptyTitle>No projects yet</EmptyTitle>
 					<EmptyDescription>
-						A build is one unit of a product. Creating one copies the tasks from
-						the product's template version and schedules them.
+						A project is one unit you build. Start blank and add tasks, or copy
+						the task plan from a template. When a project turns out well, save
+						it as a template for the next one.
 					</EmptyDescription>
 				</EmptyHeader>
 				{canPlan && (
 					<EmptyContent>
 						<Button onClick={handleCreate}>
 							<PlusIcon />
-							New build
+							New project
 						</Button>
 					</EmptyContent>
 				)}
@@ -80,7 +81,7 @@ export function BuildsList({
 				{canPlan && (
 					<Button onClick={handleCreate}>
 						<PlusIcon />
-						New build
+						New project
 					</Button>
 				)}
 			</div>

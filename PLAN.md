@@ -1,8 +1,9 @@
 # Taskhull — Build Plan
 
-Taskhull is a task management tool for series production: planners create task
-templates on the web, instantiate them for every unit that gets built, assign the
-resulting tasks to workers, and workers complete them from a phone‑first PWA.
+Taskhull is a task management tool for series production: planners plan each
+unit as a project with tasks on the web, save a good plan as a template and reuse
+it for the next unit, assign the resulting tasks to workers, and workers complete
+them from a phone‑first PWA.
 
 This repo is based on the Achromatic `pro-nextjs-drizzle` starter (v2.7.0). The
 starter remote is kept as `upstream` so framework updates can be merged in.
@@ -25,15 +26,18 @@ Better Auth 1.7, so UI is rebuilt rather than copied.
 
 ## Vocabulary
 
-- **Template** — a reusable task plan for a product. Stable identity.
+- **Project** — one manufactured unit, with a serial number. Starts blank or from
+  a template; when linked to a template it is pinned to a specific version.
+  (Code and tables still say `build`; the UI says project.)
+- **Template** — a reusable task plan for one unit. Stable identity. Usually
+  created by saving a project as a template; can also be built by hand.
 - **Template version** — an immutable, numbered snapshot of a template's tasks.
-  Editing happens on a _draft_; publishing freezes it.
-- **Product** — a product type that is manufactured repeatedly (e.g. "Machine XY").
-  Linked to one template.
-- **Build** — one manufactured unit of a product, with a serial number. Created
-  from a specific template version and pinned to it.
-- **Build task** — a task on a build, copied from a template task at creation.
-  Has assignees, checklist, comments, attachments, status.
+  Editing happens on a _draft_; publishing freezes it. "Update template from
+  project" publishes a new version directly.
+- **Project task** (`build_task`) — a task on a project, copied from a template
+  task or added ad hoc. Has assignees, checklist, comments, attachments, status.
+- **Product** — legacy grouping (table + router kept, no UI). Projects are
+  grouped by template now.
 - **Planner** — org `owner`/`admin`; works in the web dashboard.
 - **Worker** — org `member`; works in the PWA under `/work`.
 
@@ -53,10 +57,10 @@ Template side
 
 Execution side
 
-- `product` (org, name, description, templateId)
-- `build` (org, productId, templateVersionId, serialNumber, name, status
-  planned|active|blocked|completed|archived, plannedStartDate, plannedEndDate,
-  actualStartedAt, actualCompletedAt)
+- `product` (org, name, description, templateId) — legacy, unused by the UI
+- `build` (org, productId?, templateVersionId?, serialNumber — unique per org,
+  name, status planned|active|blocked|completed|archived, plannedStartDate,
+  plannedEndDate, actualStartedAt, actualCompletedAt)
 - `build_task` (buildId, sourceTemplateTaskId, title, instructions, phase,
   sortOrder, plannedDurationDays, startDate, endDate, status
   todo|in_progress|blocked|review|done, requiresPhoto, requiresComment,
@@ -66,7 +70,8 @@ Execution side
 - `build_task_checklist_item` (buildTaskId, title, sortOrder, status
   open|done|skipped, completedById, completedAt)
 - `build_task_comment` (buildTaskId, authorId, body)
-- `build_task_attachment` (buildTaskId, uploadedById, storageKey, fileName, ...)
+- `build_task_attachment` (buildTaskId, kind document|photo, templateDocumentId?,
+  uploadedById, storageKey, fileName, ...)
 - `build_task_activity` (org, buildId, buildTaskId, actorId, action, metadata)
 - `revision` — generic before/after audit snapshots for template and build changes
 
@@ -77,17 +82,24 @@ Execution side
    immutable. Creating a build defaults to the latest published version.
 3. Editing a template with no draft creates a new draft as a deep copy of the
    latest published version (tasks, checklist, dependencies, documents).
-4. Builds pin `templateVersionId`; publishing a new version never changes
-   existing builds.
-5. Later: "upgrade build to version N" applies the diff to not‑yet‑started tasks.
+4. Projects pin `templateVersionId`; publishing a new version never changes
+   existing projects.
+5. "Upgrade project to version N" merges the diff by task lineage, keeping work
+   already done.
+6. Project → template: **Save as template** turns an unlinked project into a new
+   template with a published v1 and links the project to it. **Update template
+   from project** compares a linked project with the template's latest version
+   (by lineage), publishes the result as the next version (refused while a
+   draft is open) and re‑points the project. `lib/manufacturing/promote.ts`.
 
 ### Cross‑build assignment
 
-A product is built several times a month; every build gets the same task set.
-Planners must be able to select the same task across multiple builds (e.g. all
-open "Wire control cabinet" tasks) and assign them to one worker in one action.
-This is plain multi‑assignment — no batch entity. The worker just sees N items in
-their list, each labeled with the build's serial number.
+The same unit is built several times a month; every project from the template
+gets the same task set. Planners select the same task across multiple projects
+(e.g. all open "Wire control cabinet" tasks) on the template's _Assignments_ tab
+and assign them to one worker in one action. This is plain multi‑assignment — no
+batch entity. The worker just sees N items in their list, each labeled with
+template name and serial number.
 
 ## Phases
 
@@ -103,7 +115,8 @@ their list, each labeled with the build's serial number.
   `app/(saas)/dashboard/(sidebar)/organization/templates/`, components in
   `components/manufacturing/`.
 - **Phase 3 — Web planner: products & builds** ✅ Products list/detail
-  (`/organization/products`), builds list/detail (`/organization/builds`).
+  (`/organization/products`), builds list/detail (`/organization/builds`) —
+  superseded by Phase 7 (projects at `/organization/projects`, no product UI).
   New build picks version (default latest published), serial, start date.
   Build detail: task list grouped by phase with inline assign/unassign and
   status change, day‑scale gantt (`build-gantt.tsx`), build status/delete menu.
@@ -214,6 +227,41 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
   Not in this phase: hiding the starter marketing/billing pages (separate
   decision), planner UI localisation, teammate visibility in the PWA.
 
+- **Phase 7 — Projects first** ✅ Rethink after using the app: the
+  template → product → build chain forced planners to design a template before
+  they could plan a single unit. Now the flow matches ordinary project tools.
+  1. _Projects._ `/organization/projects` replaces `/builds` and `/products`
+     in the UI. "New project" starts **blank** (add tasks by hand) or **from a
+     template** (latest published version by default, older selectable).
+     `build.product_id` is nullable, serial numbers are unique per
+     organization, `createBuildFromVersion` accepts `templateId` or
+     `templateVersionId` (migration `projects_first`).
+  2. _Save as template._ Project menu → "Save as template…" creates a template
+     with a published v1 from the project's tasks (title, instructions, phase,
+     order, duration, flags, checklist, dependencies, documents) and links the
+     project + its tasks to it. Progress, comments and photos stay on the
+     project.
+  3. _Update template from project._ For linked projects the same menu shows
+     "Update <template> from this project…" with a preview diff (added /
+     changed with fields / removed, vs. the latest published version, matched
+     by task lineage). Publishing writes the next version, keeps lineage so
+     other projects can upgrade, and re‑points this project. Refused while the
+     template has an open draft or when nothing changed.
+     `build.templateDiff`, `build.saveAsTemplate`, `build.updateTemplate`.
+  4. _Templates._ Template page gained tabs: **Task plan** (versions + editor,
+     unchanged), **Projects** (list) and **Assignments across projects** (the
+     grid, now keyed by `templateId` instead of product). "New project" button
+     on the template.
+  5. _Documents on project tasks._ `build_task_attachment.kind`
+     (`document|photo`) replaces the implicit "has templateDocumentId" split.
+     Planners attach documents (drawings, PDFs) from the task sheet
+     (`build.taskDocumentUploadUrl` / `addTaskDocument` / `removeTaskDocument`);
+     they travel into templates on save/update. Photo requirement counts
+     `kind = photo` only.
+  6. _Worker labels_ show template name · serial (or the project label for
+     ad‑hoc projects). Activity timeline knows `build.saved_as_template` and
+     `build.pushed_to_template`.
+
 ## Local setup
 
 ```bash
@@ -229,6 +277,10 @@ them the opt‑in button is hidden and only in‑app notifications are sent.
 
 ## Known gaps / next ideas
 
-- Bulk "upgrade all open builds of this product" (currently per build).
+- Bulk "upgrade all open projects of this template" (currently per project).
+- Drop the legacy `product` table/router once nothing references it (tests
+  still exercise `organization.product`).
+- Template documents and project documents share storage keys by reference;
+  deleting one side never removes the object.
 - Pre‑existing starter flake: `tests/lib/proxy-session.test.ts` fails only
   when run together with the DB suite (`RUN_DB_TESTS=true`).

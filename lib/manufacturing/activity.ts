@@ -7,6 +7,8 @@ export const ActivityAction = {
 	buildUpdated: "build.updated",
 	buildStatusChanged: "build.status_changed",
 	buildUpgraded: "build.upgraded",
+	buildSavedAsTemplate: "build.saved_as_template",
+	buildPushedToTemplate: "build.pushed_to_template",
 	taskCreated: "task.created",
 	taskUpdated: "task.updated",
 	taskStatusChanged: "task.status_changed",

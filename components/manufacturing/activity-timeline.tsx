@@ -4,6 +4,7 @@ import type { inferRouterOutputs } from "@trpc/server";
 import { formatDistanceToNow } from "date-fns";
 import {
 	ArrowUpCircleIcon,
+	FileStackIcon,
 	CheckSquareIcon,
 	CircleDotIcon,
 	FilePlusIcon,
@@ -33,6 +34,8 @@ const icons: Record<string, React.ComponentType<{ className?: string }>> = {
 	"build.updated": PencilIcon,
 	"build.status_changed": CircleDotIcon,
 	"build.upgraded": ArrowUpCircleIcon,
+	"build.saved_as_template": FileStackIcon,
+	"build.pushed_to_template": FileStackIcon,
 	"task.created": PlusCircleIcon,
 	"task.updated": PencilIcon,
 	"task.status_changed": CircleDotIcon,
@@ -69,24 +72,37 @@ function describe(
 		case "build.created":
 			return (
 				<>
-					created the build
+					created the project
 					{typeof meta.taskCount === "number" && (
 						<> with {meta.taskCount} tasks</>
 					)}
 				</>
 			);
 		case "build.updated":
-			return <>updated the build</>;
+			return <>updated the project</>;
 		case "build.status_changed":
 			return (
 				<>
-					set the build to <b>{text(meta.to)}</b>
+					set the project to <b>{text(meta.to)}</b>
+				</>
+			);
+		case "build.saved_as_template":
+			return (
+				<>
+					saved the project as template <b>{text(meta.templateName)}</b>
+				</>
+			);
+		case "build.pushed_to_template":
+			return (
+				<>
+					published <b>{text(meta.templateName)}</b>{" "}
+					<b>v{text(meta.versionNumber)}</b> from this project
 				</>
 			);
 		case "build.upgraded":
 			return (
 				<>
-					upgraded the build from <b>v{text(meta.fromVersionNumber)}</b> to{" "}
+					upgraded the project from <b>v{text(meta.fromVersionNumber)}</b> to{" "}
 					<b>v{text(meta.toVersionNumber)}</b>
 					{" · "}
 					{[

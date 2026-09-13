@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+	buildTable,
 	buildTaskActivityTable,
 	db,
 	memberTable,
@@ -108,6 +109,7 @@ async function seed() {
 	await db.delete(notificationTable);
 	await db.delete(buildTaskActivityTable);
 	await db.delete(revisionTable);
+	await db.delete(buildTable);
 	await db.delete(productTable);
 	await db.delete(templateTable);
 
@@ -643,7 +645,7 @@ describe("manufacturing routers", () => {
 			}
 
 			const grid = await plannerCaller.organization.build.assignmentGrid({
-				productId: product.id,
+				templateId: template.id,
 			});
 			expect(grid.builds).toHaveLength(4);
 			expect(grid.rows).toHaveLength(4);
@@ -675,7 +677,9 @@ describe("manufacturing routers", () => {
 				"XY-0003",
 				"XY-0004",
 			]);
-			expect(myTasks[0]!.build.product.name).toBe("Machine XY");
+			expect(myTasks[0]!.build.templateVersion?.template.name).toBe(
+				"Machine XY",
+			);
 			// Wiring depends on frame + cabinet, which are still todo.
 			expect(myTasks[0]!.openBlockers).toHaveLength(2);
 
@@ -1132,7 +1136,7 @@ describe("manufacturing routers", () => {
 				);
 			}
 			const grid = await c.organization.build.assignmentGrid({
-				productId: product.id,
+				templateId: template.id,
 			});
 			const frameRow = grid.rows.find((r) => r.title === "Mount frame")!;
 			const frameIds = Object.values(frameRow.cells)
@@ -1191,7 +1195,7 @@ describe("manufacturing routers", () => {
 			const blocked = plannerInbox.find((n) => n.type === "warning")!;
 			expect(blocked.message).toContain("Missing bolts");
 			expect(blocked.actionUrl).toBe(
-				`/dashboard/organization/builds/${builds[0]!.id}`,
+				`/dashboard/organization/projects/${builds[0]!.id}`,
 			);
 
 			// Author does not get notified about their own comment.
@@ -1322,6 +1326,298 @@ describe("manufacturing routers", () => {
 			expect(
 				plannerInbox.some((n) => n.title === "Task blocked: Mount frame"),
 			).toBe(true);
+		});
+	});
+
+	describe("project first: blank projects and templates from projects", () => {
+		it("creates a blank project, then saves it as a template and links it", async () => {
+			const c = callerAs(planner);
+
+			const project = await c.organization.build.create({
+				serialNumber: "PROTO-1",
+				plannedStartDate: "2026-10-01",
+			});
+			expect(project.productId).toBeNull();
+			expect(project.templateVersionId).toBeNull();
+
+			// Nothing to save yet.
+			await expect(
+				c.organization.build.saveAsTemplate({
+					buildId: project.id,
+					name: "Truck",
+				}),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+			const frame = await c.organization.build.createTask({
+				buildId: project.id,
+				title: "Weld frame",
+				phase: "Mechanics",
+				plannedDurationDays: 2,
+			});
+			const paint = await c.organization.build.createTask({
+				buildId: project.id,
+				title: "Paint frame",
+				phase: "Finish",
+				plannedDurationDays: 1,
+				requiresPhoto: true,
+				dependsOnIds: [frame.id],
+			});
+
+			const { template, version } = await c.organization.build.saveAsTemplate({
+				buildId: project.id,
+				name: "Truck",
+				description: "Standard truck build",
+			});
+			expect(version.versionNumber).toBe(1);
+			expect(version.status).toBe("published");
+
+			// Template content mirrors the project, including order.
+			const v1 = await c.organization.template.getVersion({
+				versionId: version.id,
+			});
+			expect(v1.tasks.map((t) => t.title)).toEqual([
+				"Weld frame",
+				"Paint frame",
+			]);
+			const tplPaint = v1.tasks.find((t) => t.title === "Paint frame")!;
+			expect(tplPaint.requiresPhoto).toBe(true);
+			expect(tplPaint.dependencies).toHaveLength(1);
+
+			// Project is now linked and its tasks point at the template tasks.
+			const detail = await c.organization.build.get({ id: project.id });
+			expect(detail.templateVersionId).toBe(version.id);
+			expect(detail.templateVersion?.template.name).toBe("Truck");
+			expect(detail.tasks.every((t) => t.sourceTemplateTaskId !== null)).toBe(
+				true,
+			);
+			expect(detail.availableUpgrades).toHaveLength(0);
+			expect(paint.id).toBeDefined();
+
+			// The template can now seed the next unit.
+			const next = await c.organization.build.create({
+				templateId: template.id,
+				serialNumber: "TRUCK-0002",
+				plannedStartDate: "2026-11-01",
+			});
+			const nextDetail = await c.organization.build.get({ id: next.id });
+			expect(nextDetail.tasks.map((t) => t.title)).toEqual([
+				"Weld frame",
+				"Paint frame",
+			]);
+
+			// Saving again is refused; the project belongs to a template now.
+			await expect(
+				c.organization.build.saveAsTemplate({
+					buildId: project.id,
+					name: "Truck 2",
+				}),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+			// Grid groups projects by template.
+			const grid = await c.organization.build.assignmentGrid({
+				templateId: template.id,
+			});
+			expect(grid.builds).toHaveLength(2);
+			expect(grid.rows).toHaveLength(2);
+		});
+
+		it("previews and pushes project changes into the template as a new version", async () => {
+			const c = callerAs(planner);
+			const { template, version: v1 } = await createPublishedTemplate(c);
+
+			const project = await c.organization.build.create({
+				templateId: template.id,
+				serialNumber: "XY-0007",
+				plannedStartDate: "2026-10-01",
+			});
+			let detail = await c.organization.build.get({ id: project.id });
+
+			// No differences yet.
+			let preview = await c.organization.build.templateDiff({
+				buildId: project.id,
+			});
+			expect(preview.diff.added).toHaveLength(0);
+			expect(preview.diff.updated).toHaveLength(0);
+			expect(preview.diff.removed).toHaveLength(0);
+			expect(preview.diff.unchanged).toBe(4);
+			await expect(
+				c.organization.build.updateTemplate({ buildId: project.id }),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+			// Refine on the real unit: reword, add a step, drop one.
+			const wiring = detail.tasks.find(
+				(t) => t.title === "Wire control cabinet",
+			)!;
+			const cabinet = detail.tasks.find((t) => t.title === "Assemble cabinet")!;
+			const test = detail.tasks.find((t) => t.title === "Function test")!;
+			await c.organization.build.updateTask({
+				id: wiring.id,
+				instructions: "Use 2.5mm² for the mains feed.",
+			});
+			await c.organization.build.createTask({
+				buildId: project.id,
+				title: "Label terminals",
+				phase: "Electrics",
+				dependsOnIds: [wiring.id],
+			});
+			await c.organization.build.deleteTask({ id: cabinet.id });
+
+			preview = await c.organization.build.templateDiff({
+				buildId: project.id,
+			});
+			expect(preview.baselineVersionNumber).toBe(1);
+			expect(preview.nextVersionNumber).toBe(2);
+			expect(preview.diff.added.map((t) => t.title)).toEqual([
+				"Label terminals",
+			]);
+			expect(preview.diff.removed.map((t) => t.title)).toEqual([
+				"Assemble cabinet",
+			]);
+			const updatedTitles = preview.diff.updated.map((t) => t.title).sort();
+			// Wiring: new instructions and one dependency fewer.
+			expect(updatedTitles).toContain("Wire control cabinet");
+			expect(
+				preview.diff.updated.find((t) => t.title === "Wire control cabinet")!
+					.fields,
+			).toEqual(expect.arrayContaining(["instructions", "order"]));
+
+			// A draft in the way blocks the push.
+			const draft = await c.organization.template.ensureDraft({
+				templateId: template.id,
+			});
+			await expect(
+				c.organization.build.updateTemplate({ buildId: project.id }),
+			).rejects.toMatchObject({ code: "BAD_REQUEST" });
+			await c.organization.template.discardDraft({ versionId: draft.id });
+
+			const pushed = await c.organization.build.updateTemplate({
+				buildId: project.id,
+				changeNote: "Learned on XY-0007",
+			});
+			expect(pushed.version.versionNumber).toBe(2);
+			expect(pushed.version.status).toBe("published");
+			expect(pushed.version.changeNote).toBe("Learned on XY-0007");
+
+			const v2 = await c.organization.template.getVersion({
+				versionId: pushed.version.id,
+			});
+			expect(v2.tasks.map((t) => t.title).sort()).toEqual(
+				[
+					"Function test",
+					"Label terminals",
+					"Mount frame",
+					"Wire control cabinet",
+				].sort(),
+			);
+			// Lineage survives the round trip so older projects can upgrade.
+			const v1Detail = await c.organization.template.getVersion({
+				versionId: v1.id,
+			});
+			const v1Wiring = v1Detail.tasks.find(
+				(t) => t.title === "Wire control cabinet",
+			)!;
+			const v2Wiring = v2.tasks.find(
+				(t) => t.title === "Wire control cabinet",
+			)!;
+			expect(v2Wiring.lineageId).toBe(v1Wiring.lineageId);
+			expect(v2Wiring.instructions).toBe("Use 2.5mm² for the mains feed.");
+			expect(test.id).toBeDefined();
+
+			// The project is re-pointed at v2 with no pending upgrade.
+			detail = await c.organization.build.get({ id: project.id });
+			expect(detail.templateVersionId).toBe(pushed.version.id);
+			expect(detail.availableUpgrades).toHaveLength(0);
+			expect(detail.tasks.every((t) => t.sourceTemplateTaskId !== null)).toBe(
+				true,
+			);
+
+			// An older project on v1 now sees the upgrade.
+			const older = await c.organization.build.create({
+				templateVersionId: v1.id,
+				serialNumber: "XY-0008",
+				plannedStartDate: "2026-10-01",
+			});
+			const olderDetail = await c.organization.build.get({ id: older.id });
+			expect(olderDetail.availableUpgrades.map((u) => u.versionNumber)).toEqual(
+				[2],
+			);
+		});
+
+		it("carries planner documents into the template and keeps photos out", async () => {
+			const c = callerAs(planner);
+			const project = await c.organization.build.create({
+				serialNumber: "DOC-1",
+				plannedStartDate: "2026-10-01",
+			});
+			const task = await c.organization.build.createTask({
+				buildId: project.id,
+				title: "Drill holes",
+			});
+
+			const { storageKey } = await c.organization.build.taskDocumentUploadUrl({
+				buildTaskId: task.id,
+				fileName: "drawing.pdf",
+				contentType: "application/pdf",
+				sizeBytes: 1024,
+			});
+			await c.organization.build.addTaskDocument({
+				buildTaskId: task.id,
+				storageKey,
+				fileName: "drawing.pdf",
+				contentType: "application/pdf",
+				sizeBytes: 1024,
+			});
+			// A worker photo on the same task.
+			const photo = await c.organization.work.attachmentUploadUrl({
+				buildTaskId: task.id,
+				fileName: "photo.jpg",
+				contentType: "image/jpeg",
+				sizeBytes: 2048,
+			});
+			await c.organization.work.addAttachment({
+				buildTaskId: task.id,
+				storageKey: photo.storageKey,
+				fileName: "photo.jpg",
+				contentType: "image/jpeg",
+				sizeBytes: 2048,
+			});
+
+			const taskDetail = await c.organization.work.getTask({ id: task.id });
+			expect(taskDetail.documents.map((d) => d.fileName)).toEqual([
+				"drawing.pdf",
+			]);
+			expect(taskDetail.uploads.map((d) => d.fileName)).toEqual(["photo.jpg"]);
+
+			const { version } = await c.organization.build.saveAsTemplate({
+				buildId: project.id,
+				name: "Drilling",
+			});
+			const v1 = await c.organization.template.getVersion({
+				versionId: version.id,
+			});
+			expect(v1.tasks[0]!.documents.map((d) => d.fileName)).toEqual([
+				"drawing.pdf",
+			]);
+
+			// The project's document is now linked to the template document.
+			const after = await c.organization.work.getTask({ id: task.id });
+			expect(after.documents[0]!.templateDocumentId).toBe(
+				v1.tasks[0]!.documents[0]!.id,
+			);
+		});
+
+		it("keeps serial numbers unique per organization", async () => {
+			const c = callerAs(planner);
+			await c.organization.build.create({
+				serialNumber: "S-1",
+				plannedStartDate: "2026-10-01",
+			});
+			await expect(
+				c.organization.build.create({
+					serialNumber: "S-1",
+					plannedStartDate: "2026-10-02",
+				}),
+			).rejects.toMatchObject({ code: "CONFLICT" });
 		});
 	});
 });

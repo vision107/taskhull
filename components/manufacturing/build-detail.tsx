@@ -3,12 +3,14 @@
 import NiceModal from "@ebay/nice-modal-react";
 import {
 	CameraIcon,
+	FileStackIcon,
 	ListChecksIcon,
 	MessageSquareIcon,
 	MoreHorizontalIcon,
 	PaperclipIcon,
 	PlusIcon,
 	Trash2Icon,
+	UploadIcon,
 	XIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -26,6 +28,7 @@ import {
 	formatDate,
 	formatEndDate,
 } from "@/components/manufacturing/builds-table";
+import { PromoteTemplateModal } from "@/components/manufacturing/promote-template-modal";
 import {
 	BuildStatusBadge,
 	TaskStatusBadge,
@@ -124,16 +127,16 @@ export function BuildDetail({
 	});
 	const updateBuildMutation = trpc.organization.build.update.useMutation({
 		onSuccess: () => {
-			toast.success("Build updated");
+			toast.success("Project updated");
 			invalidate();
 		},
 		onError: (error) => toast.error(error.message),
 	});
 	const deleteBuildMutation = trpc.organization.build.delete.useMutation({
 		onSuccess: () => {
-			toast.success("Build deleted");
+			toast.success("Project deleted");
 			void utils.organization.build.list.invalidate();
-			router.push("/dashboard/organization/builds");
+			router.push("/dashboard/organization/projects");
 		},
 		onError: (error) => toast.error(error.message),
 	});
@@ -159,11 +162,21 @@ export function BuildDetail({
 		else groups.push({ phase: task.phase ?? null, items: [task] });
 	}
 
+	const linkedTemplate = build.templateVersion?.template ?? null;
+	const openPromote = () => {
+		void NiceModal.show(PromoteTemplateModal, {
+			buildId,
+			serialNumber: build.serialNumber,
+			linkedTemplate,
+			taskCount: tasks.length,
+		});
+	};
+
 	const handleDelete = () => {
 		void NiceModal.show(ConfirmationModal, {
-			title: `Delete build ${build.serialNumber}?`,
+			title: `Delete project ${build.serialNumber}?`,
 			message:
-				"Only possible while no task has been started. All tasks, assignments and documents of this build are removed.",
+				"Only possible while no task has been started. All tasks, assignments and documents of this project are removed.",
 			confirmLabel: "Delete",
 			destructive: true,
 			onConfirm: async () => {
@@ -187,22 +200,15 @@ export function BuildDetail({
 						)}
 					</div>
 					<p className="mt-1 text-sm text-muted-foreground">
-						<Link
-							href={`/dashboard/organization/products/${build.product.id}`}
-							className="underline-offset-2 hover:underline"
-						>
-							{build.product.name}
-						</Link>
-						{build.templateVersion && (
-							<>
-								{" · "}
-								<Link
-									href={`/dashboard/organization/templates/${build.templateVersion.templateId}`}
-									className="underline-offset-2 hover:underline"
-								>
-									template v{build.templateVersion.versionNumber}
-								</Link>
-							</>
+						{build.templateVersion ? (
+							<Link
+								href={`/dashboard/organization/templates/${build.templateVersion.templateId}`}
+								className="underline-offset-2 hover:underline"
+							>
+								{`${build.templateVersion.template.name} v${build.templateVersion.versionNumber}`}
+							</Link>
+						) : (
+							"No template"
 						)}
 						{" · "}
 						{formatDate(build.plannedStartDate)} →{" "}
@@ -225,6 +231,16 @@ export function BuildDetail({
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
 							<DropdownMenuGroup>
+								<DropdownMenuLabel>Template</DropdownMenuLabel>
+								<DropdownMenuItem onClick={openPromote}>
+									{linkedTemplate ? <UploadIcon /> : <FileStackIcon />}
+									{linkedTemplate
+										? `Update ${linkedTemplate.name} from this project…`
+										: "Save as template…"}
+								</DropdownMenuItem>
+							</DropdownMenuGroup>
+							<DropdownMenuSeparator />
+							<DropdownMenuGroup>
 								<DropdownMenuLabel>Set status</DropdownMenuLabel>
 								{BuildStatuses.map((status) => (
 									<DropdownMenuItem
@@ -241,7 +257,7 @@ export function BuildDetail({
 							<DropdownMenuSeparator />
 							<DropdownMenuItem variant="destructive" onClick={handleDelete}>
 								<Trash2Icon />
-								Delete build
+								Delete project
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
@@ -275,7 +291,7 @@ export function BuildDetail({
 				<UnderlinedTabsContent value="tasks">
 					{tasks.length === 0 ? (
 						<div className="rounded-lg border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
-							<p>This build has no tasks.</p>
+							<p>This project has no tasks yet.</p>
 							{canPlan && (
 								<Button
 									variant="outline"

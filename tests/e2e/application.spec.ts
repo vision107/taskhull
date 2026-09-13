@@ -117,7 +117,7 @@ test("owner can navigate account and organization surfaces", async ({
 	await expect(
 		page.getByRole("tab", { name: "Pending Invitations" }),
 	).toHaveAttribute("data-active");
-	for (const path of ["templates", "products", "builds", "settings"]) {
+	for (const path of ["templates", "projects", "settings"]) {
 		await page.goto(`/dashboard/organization/${path}`);
 		await expect(page).not.toHaveURL(/auth\/sign-in/);
 	}

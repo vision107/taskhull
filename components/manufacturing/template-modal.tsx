@@ -108,7 +108,7 @@ export const TemplateModal = NiceModal.create<TemplateModalProps>(
 						<DialogDescription>
 							{isEditing
 								? "Rename or describe this template."
-								: "A template is the reusable task plan for a product. You add tasks in the next step."}
+								: "A template is the reusable task plan for one unit. You add tasks in the next step."}
 						</DialogDescription>
 					</DialogHeader>
 					<Form {...form}>

@@ -8,16 +8,26 @@ import {
 	GitBranchPlusIcon,
 	MoreHorizontalIcon,
 	PencilIcon,
+	PlusIcon,
 } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 
 import { ConfirmationModal } from "@/components/confirmation-modal";
+import { AssignmentGrid } from "@/components/manufacturing/assignment-grid";
+import { BuildModal } from "@/components/manufacturing/build-modal";
+import { BuildsTable } from "@/components/manufacturing/builds-table";
 import { VersionStatusBadge } from "@/components/manufacturing/status-badge";
 import { TemplateModal } from "@/components/manufacturing/template-modal";
 import { TemplateVersionEditor } from "@/components/manufacturing/template-version-editor";
 import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/ui/custom/page";
+import {
+	UnderlinedTabs,
+	UnderlinedTabsContent,
+	UnderlinedTabsList,
+	UnderlinedTabsTrigger,
+} from "@/components/ui/custom/underlined-tabs";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -25,6 +35,13 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+	Empty,
+	EmptyContent,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyTitle,
+} from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
@@ -47,6 +64,11 @@ export function TemplateDetail({
 	const [selectedVersionId, setSelectedVersionId] = React.useState<
 		string | null
 	>(null);
+	const [tab, setTab] = React.useState("plan");
+	const { data: projects } = trpc.organization.build.list.useQuery({
+		templateId,
+		includeArchived: true,
+	});
 
 	const versions = template?.versions ?? [];
 	const draft = versions.find((version) => version.status === "draft");
@@ -91,6 +113,12 @@ export function TemplateDetail({
 		);
 	}
 
+	const canCreateProject =
+		canPlan && !template.archivedAt && Boolean(latestPublished);
+	const handleNewProject = () => {
+		void NiceModal.show(BuildModal, { templateId });
+	};
+
 	const handleArchiveToggle = () => {
 		const archived = !template.archivedAt;
 		void NiceModal.show(ConfirmationModal, {
@@ -120,15 +148,21 @@ export function TemplateDetail({
 							{template.description}
 						</p>
 					)}
-					{template.products.length > 0 && (
-						<p className="mt-1 text-xs text-muted-foreground">
-							Used by{" "}
-							{template.products.map((product) => product.name).join(", ")}
-						</p>
-					)}
+					<p className="mt-1 text-xs text-muted-foreground">
+						{latestPublished
+							? `Latest published v${latestPublished.versionNumber}`
+							: "No published version yet"}
+						{projects && projects.length > 0
+							? ` · ${projects.length} ${projects.length === 1 ? "project" : "projects"}`
+							: ""}
+					</p>
 				</div>
 				{canPlan && (
 					<div className="flex items-center gap-2">
+						<Button onClick={handleNewProject} disabled={!canCreateProject}>
+							<PlusIcon />
+							New project
+						</Button>
 						{!draft && !template.archivedAt && (
 							<Button
 								variant="outline"
@@ -179,53 +213,101 @@ export function TemplateDetail({
 				)}
 			</div>
 
-			{/* Version strip */}
-			<div className="flex flex-wrap gap-2">
-				{versions.map((version) => {
-					const isActive = version.id === activeVersionId;
-					return (
-						<button
-							key={version.id}
-							type="button"
-							onClick={() => setSelectedVersionId(version.id)}
-							className={cn(
-								"flex flex-col items-start gap-1 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
-								isActive
-									? "border-foreground/40 bg-muted"
-									: "border-border hover:bg-muted/50",
-							)}
-						>
-							<span className="flex items-center gap-2 font-medium">
-								v{version.versionNumber}
-								<VersionStatusBadge status={version.status} />
-							</span>
-							<span className="text-xs text-muted-foreground">
-								{version.taskCount} {version.taskCount === 1 ? "task" : "tasks"}
-								{version.status === "published" && version.publishedAt && (
-									<> · {format(version.publishedAt, "MMM d, yyyy")}</>
-								)}
-								{version.buildCount > 0 && (
-									<>
-										{" "}
-										· {version.buildCount}{" "}
-										{version.buildCount === 1 ? "build" : "builds"}
-									</>
-								)}
-							</span>
-						</button>
-					);
-				})}
-			</div>
+			<UnderlinedTabs
+				value={tab}
+				onValueChange={(value) => setTab(String(value))}
+			>
+				<UnderlinedTabsList className="mb-4 sm:-ml-4">
+					<UnderlinedTabsTrigger value="plan">Task plan</UnderlinedTabsTrigger>
+					<UnderlinedTabsTrigger value="projects">
+						Projects{projects ? ` (${projects.length})` : ""}
+					</UnderlinedTabsTrigger>
+					<UnderlinedTabsTrigger value="assignments">
+						Assignments across projects
+					</UnderlinedTabsTrigger>
+				</UnderlinedTabsList>
 
-			{activeVersion && (
-				<TemplateVersionEditor
-					key={activeVersion.id}
-					templateId={templateId}
-					versionId={activeVersion.id}
-					canPlan={canPlan && !template.archivedAt}
-					hasOtherVersions={versions.length > 1}
-				/>
-			)}
+				<UnderlinedTabsContent value="plan" className="space-y-6">
+					{/* Version strip */}
+					<div className="flex flex-wrap gap-2">
+						{versions.map((version) => {
+							const isActive = version.id === activeVersionId;
+							return (
+								<button
+									key={version.id}
+									type="button"
+									onClick={() => setSelectedVersionId(version.id)}
+									className={cn(
+										"flex flex-col items-start gap-1 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
+										isActive
+											? "border-foreground/40 bg-muted"
+											: "border-border hover:bg-muted/50",
+									)}
+								>
+									<span className="flex items-center gap-2 font-medium">
+										v{version.versionNumber}
+										<VersionStatusBadge status={version.status} />
+									</span>
+									<span className="text-xs text-muted-foreground">
+										{version.taskCount}{" "}
+										{version.taskCount === 1 ? "task" : "tasks"}
+										{version.status === "published" && version.publishedAt && (
+											<> · {format(version.publishedAt, "MMM d, yyyy")}</>
+										)}
+										{version.buildCount > 0 && (
+											<>
+												{" "}
+												· {version.buildCount}{" "}
+												{version.buildCount === 1 ? "project" : "projects"}
+											</>
+										)}
+									</span>
+								</button>
+							);
+						})}
+					</div>
+
+					{activeVersion && (
+						<TemplateVersionEditor
+							key={activeVersion.id}
+							templateId={templateId}
+							versionId={activeVersion.id}
+							canPlan={canPlan && !template.archivedAt}
+							hasOtherVersions={versions.length > 1}
+						/>
+					)}
+				</UnderlinedTabsContent>
+
+				<UnderlinedTabsContent value="projects">
+					{!projects ? (
+						<Skeleton className="h-40 w-full" />
+					) : projects.length === 0 ? (
+						<Empty className="border py-12">
+							<EmptyHeader>
+								<EmptyTitle>No projects from this template</EmptyTitle>
+								<EmptyDescription>
+									Each unit you build is one project with its own serial number
+									and task list.
+								</EmptyDescription>
+							</EmptyHeader>
+							{canCreateProject && (
+								<EmptyContent>
+									<Button onClick={handleNewProject}>
+										<PlusIcon />
+										New project
+									</Button>
+								</EmptyContent>
+							)}
+						</Empty>
+					) : (
+						<BuildsTable builds={projects} showTemplate={false} />
+					)}
+				</UnderlinedTabsContent>
+
+				<UnderlinedTabsContent value="assignments">
+					<AssignmentGrid templateId={templateId} canPlan={canPlan} />
+				</UnderlinedTabsContent>
+			</UnderlinedTabs>
 		</div>
 	);
 }

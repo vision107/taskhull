@@ -57,6 +57,13 @@
       "when": 1789313922160,
       "tag": "20260913153842_user_locale",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789318903625,
+      "tag": "20260913170143_projects_first",
+      "breakpoints": true
     }
   ]
 }

@@ -2,6 +2,7 @@
 
 import NiceModal, { type NiceModalHocProps } from "@ebay/nice-modal-react";
 import { format, parseISO } from "date-fns";
+import { FilePlusIcon, FileStackIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
@@ -26,6 +27,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
@@ -36,28 +38,44 @@ import {
 import { useEnhancedModal } from "@/hooks/use-enhanced-modal";
 import { useZodForm } from "@/hooks/use-zod-form";
 import { toDateString } from "@/lib/manufacturing/scheduling";
+import { cn } from "@/lib/utils";
 import { createBuildSchema } from "@/schemas/manufacturing-schemas";
 import { trpc } from "@/trpc/client";
 
 export type BuildModalProps = NiceModalHocProps & {
-	/** Preselect a product (e.g. when opened from the product page). */
-	productId?: string;
+	/** Preselect a template (e.g. when opened from the template page). */
+	templateId?: string;
 };
 
+type StartFrom = "blank" | "template";
+
+/**
+ * "New project" dialog. A project starts blank — tasks are added on the
+ * project page — or from a template, in which case the template's latest
+ * published version is copied and scheduled from the start date.
+ */
 export const BuildModal = NiceModal.create<BuildModalProps>(
-	({ productId: initialProductId }) => {
+	({ templateId: initialTemplateId }) => {
 		const modal = useEnhancedModal();
 		const router = useRouter();
 		const utils = trpc.useUtils();
 
-		const { data: products } = trpc.organization.product.list.useQuery({
+		const { data: templates } = trpc.organization.template.list.useQuery({
 			includeArchived: false,
 		});
+		const usableTemplates = React.useMemo(
+			() => (templates ?? []).filter((t) => t.latestPublishedVersion),
+			[templates],
+		);
+
+		const [startFrom, setStartFrom] = React.useState<StartFrom>(
+			initialTemplateId ? "template" : "blank",
+		);
 
 		const form = useZodForm({
 			schema: createBuildSchema,
 			defaultValues: {
-				productId: initialProductId ?? "",
+				templateId: initialTemplateId,
 				templateVersionId: undefined,
 				serialNumber: "",
 				name: "",
@@ -66,49 +84,53 @@ export const BuildModal = NiceModal.create<BuildModalProps>(
 			},
 		});
 
-		const productId = form.watch("productId");
-		const { data: product } = trpc.organization.product.get.useQuery(
-			{ id: productId },
-			{ enabled: Boolean(productId) },
+		const templateId = form.watch("templateId");
+		const { data: template } = trpc.organization.template.get.useQuery(
+			{ id: templateId ?? "" },
+			{ enabled: startFrom === "template" && Boolean(templateId) },
 		);
 		const publishedVersions = React.useMemo(
 			() =>
-				(product?.template?.versions ?? []).filter(
+				(template?.versions ?? []).filter(
 					(version) => version.status === "published",
 				),
-			[product],
+			[template],
 		);
 		const latestPublished = publishedVersions[0];
 
-		// Default the version to the latest published one whenever the product changes.
+		// Default to the latest published version whenever the template changes.
 		React.useEffect(() => {
 			form.setValue("templateVersionId", latestPublished?.id);
 		}, [latestPublished?.id, form]);
 
 		const createMutation = trpc.organization.build.create.useMutation({
 			onSuccess: (created) => {
-				toast.success(`Build ${created.serialNumber} created`);
+				toast.success(`Project ${created.serialNumber} created`);
 				void utils.organization.build.list.invalidate();
 				void utils.organization.build.assignmentGrid.invalidate();
-				void utils.organization.product.get.invalidate({
-					id: created.productId,
-				});
-				void utils.organization.product.list.invalidate();
+				void utils.organization.template.get.invalidate();
+				void utils.organization.template.list.invalidate();
 				modal.dismissForNavigation();
-				router.push(`/dashboard/organization/builds/${created.id}`);
+				router.push(`/dashboard/organization/projects/${created.id}`);
 			},
 			onError: (error) => toast.error(error.message),
 		});
 
 		const onSubmit = form.handleSubmit((data) => {
+			const fromTemplate = startFrom === "template";
 			createMutation.mutate({
-				...data,
+				serialNumber: data.serialNumber,
+				plannedStartDate: data.plannedStartDate,
 				name: data.name || undefined,
 				description: data.description || undefined,
-			} as Parameters<typeof createMutation.mutate>[0]);
+				templateId: fromTemplate ? data.templateId || undefined : undefined,
+				templateVersionId: fromTemplate
+					? data.templateVersionId || undefined
+					: undefined,
+			});
 		});
 
-		const productItems = (products ?? []).map((item) => ({
+		const templateItems = usableTemplates.map((item) => ({
 			label: item.name,
 			value: item.id,
 		}));
@@ -118,9 +140,9 @@ export const BuildModal = NiceModal.create<BuildModalProps>(
 			}${version.changeNote ? ` – ${version.changeNote}` : ""}`,
 			value: version.id,
 		}));
-		const hasTemplate = Boolean(product?.template);
 		const canCreate =
-			Boolean(productId) && (!hasTemplate || publishedVersions.length > 0);
+			startFrom === "blank" ||
+			(Boolean(templateId) && publishedVersions.length > 0);
 
 		return (
 			<Dialog
@@ -130,92 +152,113 @@ export const BuildModal = NiceModal.create<BuildModalProps>(
 			>
 				<DialogContent className="sm:max-w-md">
 					<DialogHeader>
-						<DialogTitle>New build</DialogTitle>
+						<DialogTitle>New project</DialogTitle>
 						<DialogDescription>
-							One build is one unit. Its tasks are copied from the chosen
-							template version and scheduled from the start date.
+							One project is one unit you build. Start blank and add tasks as
+							you go, or copy the task plan from a template.
 						</DialogDescription>
 					</DialogHeader>
 					<Form {...form}>
 						<form onSubmit={onSubmit} className="space-y-4">
-							<FormField
-								control={form.control}
-								name="productId"
-								render={({ field }) => (
-									<FormItem asChild>
-										<Field>
-											<FormLabel>Product</FormLabel>
-											<Select
-												items={productItems}
-												value={field.value || null}
-												onValueChange={(value) => field.onChange(value ?? "")}
-												disabled={Boolean(initialProductId)}
-											>
-												<FormControl>
-													<SelectTrigger className="w-full">
-														<SelectValue placeholder="Select product" />
-													</SelectTrigger>
-												</FormControl>
-												<SelectContent>
-													{productItems.map((item) => (
-														<SelectItem key={item.value} value={item.value}>
-															{item.label}
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
-											<FormMessage />
-										</Field>
-									</FormItem>
-								)}
-							/>
+							<div className="space-y-2">
+								<Label>Start from</Label>
+								<div className="grid grid-cols-2 gap-2">
+									<StartOption
+										active={startFrom === "blank"}
+										onClick={() => setStartFrom("blank")}
+										icon={<FilePlusIcon className="size-4" />}
+										title="Blank"
+										hint="Add tasks yourself"
+									/>
+									<StartOption
+										active={startFrom === "template"}
+										onClick={() => setStartFrom("template")}
+										icon={<FileStackIcon className="size-4" />}
+										title="Template"
+										hint={
+											usableTemplates.length === 0
+												? "No published templates yet"
+												: `${usableTemplates.length} available`
+										}
+										disabled={usableTemplates.length === 0}
+									/>
+								</div>
+							</div>
 
-							{productId && hasTemplate && (
-								<FormField
-									control={form.control}
-									name="templateVersionId"
-									render={({ field }) => (
-										<FormItem asChild>
-											<Field>
-												<FormLabel>Template version</FormLabel>
-												{publishedVersions.length === 0 ? (
-													<p className="text-sm text-destructive">
-														{product?.template?.name} has no published version
-														yet. Publish one first.
-													</p>
-												) : (
+							{startFrom === "template" && (
+								<>
+									<FormField
+										control={form.control}
+										name="templateId"
+										render={({ field }) => (
+											<FormItem asChild>
+												<Field>
+													<FormLabel>Template</FormLabel>
 													<Select
-														items={versionItems}
-														value={field.value ?? null}
+														items={templateItems}
+														value={field.value || null}
 														onValueChange={(value) =>
 															field.onChange(value ?? undefined)
 														}
+														disabled={Boolean(initialTemplateId)}
 													>
 														<FormControl>
 															<SelectTrigger className="w-full">
-																<SelectValue placeholder="Select version" />
+																<SelectValue placeholder="Select template" />
 															</SelectTrigger>
 														</FormControl>
 														<SelectContent>
-															{versionItems.map((item) => (
+															{templateItems.map((item) => (
 																<SelectItem key={item.value} value={item.value}>
 																	{item.label}
 																</SelectItem>
 															))}
 														</SelectContent>
 													</Select>
-												)}
-												<FormMessage />
-											</Field>
-										</FormItem>
+													<FormMessage />
+												</Field>
+											</FormItem>
+										)}
+									/>
+
+									{templateId && publishedVersions.length > 1 && (
+										<FormField
+											control={form.control}
+											name="templateVersionId"
+											render={({ field }) => (
+												<FormItem asChild>
+													<Field>
+														<FormLabel>Version</FormLabel>
+														<Select
+															items={versionItems}
+															value={field.value ?? null}
+															onValueChange={(value) =>
+																field.onChange(value ?? undefined)
+															}
+														>
+															<FormControl>
+																<SelectTrigger className="w-full">
+																	<SelectValue placeholder="Select version" />
+																</SelectTrigger>
+															</FormControl>
+															<SelectContent>
+																{versionItems.map((item) => (
+																	<SelectItem
+																		key={item.value}
+																		value={item.value}
+																	>
+																		{item.label}
+																	</SelectItem>
+																))}
+															</SelectContent>
+														</Select>
+														<FormMessage />
+													</Field>
+												</FormItem>
+											)}
+										/>
 									)}
-								/>
-							)}
-							{productId && product && !hasTemplate && (
-								<p className="text-sm text-muted-foreground">
-									This product has no template. The build starts without tasks;
-									you can add them manually.
-								</p>
+								</>
 							)}
 
 							<div className="grid grid-cols-2 gap-4">
@@ -225,7 +268,7 @@ export const BuildModal = NiceModal.create<BuildModalProps>(
 									render={({ field }) => (
 										<FormItem asChild>
 											<Field>
-												<FormLabel>Serial number</FormLabel>
+												<FormLabel>Serial / name</FormLabel>
 												<FormControl>
 													<Input
 														placeholder="CX-2026-041"
@@ -300,7 +343,7 @@ export const BuildModal = NiceModal.create<BuildModalProps>(
 									disabled={!canCreate || createMutation.isPending}
 									loading={createMutation.isPending}
 								>
-									Create build
+									Create project
 								</Button>
 							</DialogFooter>
 						</form>
@@ -310,3 +353,40 @@ export const BuildModal = NiceModal.create<BuildModalProps>(
 		);
 	},
 );
+
+function StartOption({
+	active,
+	onClick,
+	icon,
+	title,
+	hint,
+	disabled,
+}: {
+	active: boolean;
+	onClick: () => void;
+	icon: React.ReactNode;
+	title: string;
+	hint: string;
+	disabled?: boolean;
+}): React.JSX.Element {
+	return (
+		<button
+			type="button"
+			onClick={onClick}
+			disabled={disabled}
+			aria-pressed={active}
+			className={cn(
+				"flex flex-col items-start gap-1 rounded-lg border px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+				active
+					? "border-foreground/40 bg-muted"
+					: "border-border hover:bg-muted/50",
+			)}
+		>
+			<span className="flex items-center gap-2 font-medium">
+				{icon}
+				{title}
+			</span>
+			<span className="text-xs text-muted-foreground">{hint}</span>
+		</button>
+	);
+}

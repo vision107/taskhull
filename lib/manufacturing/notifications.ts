@@ -146,7 +146,7 @@ export async function getAssigneeUserIds(
 export const workTaskUrl = (buildTaskId: string) =>
 	`/dashboard/work/tasks/${buildTaskId}`;
 export const plannerBuildUrl = (buildId: string) =>
-	`/dashboard/organization/builds/${buildId}`;
+	`/dashboard/organization/projects/${buildId}`;
 
 // ---------------------------------------------------------------------------
 // Domain events

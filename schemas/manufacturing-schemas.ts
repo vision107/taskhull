@@ -177,17 +177,27 @@ export const archiveProductSchema = z.object({
 
 export const listBuildsSchema = z.object({
 	productId: z.uuid().optional(),
+	/** Only projects created from (any version of) this template. */
+	templateId: z.uuid().optional(),
 	status: z.array(z.enum(BuildStatus)).optional(),
 	includeArchived: z.boolean().default(false),
 });
 
 export const getBuildSchema = idSchema;
 
+/**
+ * A project starts blank (no template) or from a template. Pass either
+ * `templateVersionId` (exact version) or `templateId` (latest published).
+ */
 export const createBuildSchema = z.object({
-	productId: z.uuid(),
-	/** Defaults to the product template's latest published version. */
+	productId: z.uuid().optional(),
+	templateId: z.uuid().optional(),
 	templateVersionId: z.uuid().optional(),
-	serialNumber: z.string().trim().min(1, "Serial number is required").max(80),
+	serialNumber: z
+		.string()
+		.trim()
+		.min(1, "Serial number or name is required")
+		.max(80),
 	name: z.string().trim().max(120).optional(),
 	description: z.string().trim().max(2000).optional(),
 	plannedStartDate: isoDate,
@@ -210,6 +220,21 @@ export const upgradeBuildSchema = z.object({
 	templateVersionId: z.uuid(),
 });
 export type UpgradeBuildInput = z.infer<typeof upgradeBuildSchema>;
+
+/** Turn a project's task list into a brand new template (published v1). */
+export const saveBuildAsTemplateSchema = z.object({
+	buildId: z.uuid(),
+	name: z.string().trim().min(1, "Name is required").max(120),
+	description: z.string().trim().max(2000).optional(),
+});
+
+/** Push a linked project's task list into its template as a new version. */
+export const updateTemplateFromBuildSchema = z.object({
+	buildId: z.uuid(),
+	changeNote: z.string().trim().max(2000).optional(),
+});
+
+export const templateDiffSchema = z.object({ buildId: z.uuid() });
 
 // Build tasks (planner side)
 
@@ -243,6 +268,27 @@ export const createBuildTaskSchema = z.object({
 
 export const deleteBuildTaskSchema = idSchema;
 
+// Planner documents on project tasks (drawings, PDFs); photos come from workers.
+
+export const buildTaskDocumentUploadUrlSchema = refineUpload(
+	z.object({
+		buildTaskId: z.uuid(),
+		...uploadFileFields,
+	}),
+	"document",
+);
+
+export const addBuildTaskDocumentSchema = refineUpload(
+	z.object({
+		buildTaskId: z.uuid(),
+		storageKey: z.string().min(1).max(500),
+		...uploadFileFields,
+	}),
+	"document",
+);
+
+export const removeBuildTaskDocumentSchema = idSchema;
+
 /**
  * Bulk assignment across builds: select any set of build tasks (typically the
  * same template task on several builds) and give them to one worker.
@@ -261,9 +307,9 @@ export const unassignBuildTasksSchema = z.object({
 	role: z.enum(BuildTaskAssignmentRole).optional(),
 });
 
-/** Matrix of template tasks × builds for a product, for the assignment grid. */
+/** Matrix of template tasks × projects of a template, for the assignment grid. */
 export const assignmentGridSchema = z.object({
-	productId: z.uuid(),
+	templateId: z.uuid(),
 	buildIds: z.array(z.uuid()).max(50).optional(),
 	includeCompleted: z.boolean().default(false),
 });

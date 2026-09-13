@@ -56,7 +56,7 @@ export function BuildUpgradeBanner({
 			title: `Upgrade to template v${newest.versionNumber}?`,
 			message:
 				"Tasks that still exist keep their status, assignees, comments and photos. New tasks are added unassigned, removed tasks are deleted only if nobody has touched them, and open tasks are rescheduled.",
-			confirmLabel: "Upgrade build",
+			confirmLabel: "Upgrade project",
 			onConfirm: async () => {
 				await upgradeMutation.mutateAsync({
 					buildId,
@@ -75,7 +75,7 @@ export function BuildUpgradeBanner({
 					{currentVersionNumber !== null && (
 						<span className="font-normal text-muted-foreground">
 							{" "}
-							(this build runs v{currentVersionNumber})
+							(this project runs v{currentVersionNumber})
 						</span>
 					)}
 				</p>
@@ -88,7 +88,7 @@ export function BuildUpgradeBanner({
 				onClick={handleUpgrade}
 				loading={upgradeMutation.isPending}
 			>
-				Upgrade build
+				Upgrade project
 			</Button>
 		</div>
 	);

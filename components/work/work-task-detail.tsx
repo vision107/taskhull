@@ -354,7 +354,10 @@ export function WorkTaskDetail({
 				</Link>
 				<div className="min-w-0 flex-1">
 					<p className="truncate text-xs text-muted-foreground">
-						{task.build.product.name} · {task.build.serialNumber}
+						{task.build.templateVersion?.template.name ??
+							task.build.name ??
+							"Project"}{" "}
+						· {task.build.serialNumber}
 						{task.phase ? ` · ${task.phase}` : ""}
 					</p>
 					<h1 className="truncate text-lg leading-tight font-semibold">

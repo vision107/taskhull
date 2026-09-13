@@ -58,8 +58,9 @@ export function TemplatesList({
 					</EmptyMedia>
 					<EmptyTitle>No templates yet</EmptyTitle>
 					<EmptyDescription>
-						A template holds the tasks needed to build one unit of a product.
-						Publish a version, then create builds from it.
+						A template is the reusable task plan for one unit. The easiest way
+						to get one: build a project, then save it as a template. Or start
+						one here and add tasks by hand.
 					</EmptyDescription>
 				</EmptyHeader>
 				{canPlan && (

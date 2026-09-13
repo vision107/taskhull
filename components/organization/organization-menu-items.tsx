@@ -2,7 +2,6 @@
 
 import {
 	ChevronRight,
-	BoxIcon,
 	ClipboardCheckIcon,
 	CreditCardIcon,
 	FactoryIcon,
@@ -68,19 +67,14 @@ export function OrganizationMenuItems(): React.JSX.Element {
 					exactMatch: true,
 				},
 				{
+					label: "Projects",
+					href: `${basePath}/projects`,
+					icon: FactoryIcon,
+				},
+				{
 					label: "Templates",
 					href: `${basePath}/templates`,
 					icon: FileStackIcon,
-				},
-				{
-					label: "Products",
-					href: `${basePath}/products`,
-					icon: BoxIcon,
-				},
-				{
-					label: "Builds",
-					href: `${basePath}/builds`,
-					icon: FactoryIcon,
 				},
 				{
 					label: "My tasks",

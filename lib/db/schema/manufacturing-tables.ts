@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import {
+	AttachmentKind,
 	BuildStatus,
 	BuildTaskAssignmentRole,
 	BuildTaskStatus,
@@ -227,8 +228,9 @@ export const productTable = pgTable(
 );
 
 /**
- * One manufactured unit of a product. Pinned to the template version it was
- * created from; later versions never change an existing build.
+ * One project = one manufactured unit (shown as "project" in the UI). Created
+ * blank or from a template version. When linked to a version, later versions
+ * never change the project until a planner upgrades it explicitly.
  */
 export const buildTable = pgTable(
 	"build",
@@ -237,9 +239,10 @@ export const buildTable = pgTable(
 		organizationId: uuid("organization_id")
 			.notNull()
 			.references(() => organizationTable.id, { onDelete: "cascade" }),
-		productId: uuid("product_id")
-			.notNull()
-			.references(() => productTable.id, { onDelete: "cascade" }),
+		/** Legacy grouping; projects are grouped by template now. */
+		productId: uuid("product_id").references(() => productTable.id, {
+			onDelete: "set null",
+		}),
 		templateVersionId: uuid("template_version_id").references(
 			() => templateVersionTable.id,
 			{ onDelete: "set null" },
@@ -265,8 +268,8 @@ export const buildTable = pgTable(
 		index("build_product_id_idx").on(table.productId),
 		index("build_template_version_id_idx").on(table.templateVersionId),
 		index("build_status_idx").on(table.status),
-		uniqueIndex("build_product_serial_idx").on(
-			table.productId,
+		uniqueIndex("build_org_serial_idx").on(
+			table.organizationId,
 			table.serialNumber,
 		),
 	],
@@ -416,8 +419,9 @@ export const buildTaskCommentTable = pgTable(
 );
 
 /**
- * Files on a build task. Either copied from the template task's documents at
- * build creation (`templateDocumentId` set) or uploaded by a worker (photos).
+ * Files on a build task. `kind` tells documents (drawings, PDFs — copied from
+ * the template or attached by a planner) from photos taken on the floor.
+ * `templateDocumentId` is set when the document came from a template version.
  */
 export const buildTaskAttachmentTable = pgTable(
 	"build_task_attachment",
@@ -426,6 +430,10 @@ export const buildTaskAttachmentTable = pgTable(
 		buildTaskId: uuid("build_task_id")
 			.notNull()
 			.references(() => buildTaskTable.id, { onDelete: "cascade" }),
+		kind: text("kind", { enum: enumToPgEnum(AttachmentKind) })
+			.$type<AttachmentKind>()
+			.notNull()
+			.default(AttachmentKind.photo),
 		templateDocumentId: uuid("template_document_id").references(
 			() => templateTaskDocumentTable.id,
 			{ onDelete: "set null" },

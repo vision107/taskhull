@@ -3,6 +3,7 @@ import { and, asc, desc, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
+	AttachmentKind,
 	BuildStatus,
 	BuildTaskStatus,
 	TemplateVersionStatus,
@@ -24,7 +25,10 @@ import {
 	scheduleTasks,
 	toDateString,
 } from "@/lib/manufacturing/scheduling";
-import { getLatestPublishedVersion } from "@/lib/manufacturing/template-versions";
+import {
+	getLatestPublishedVersion,
+	getOwnedTemplate,
+} from "@/lib/manufacturing/template-versions";
 
 export type Build = typeof buildTable.$inferSelect;
 export type BuildTask = typeof buildTaskTable.$inferSelect;
@@ -110,8 +114,12 @@ export async function getOwnedBuildTasks(
 interface CreateBuildParams {
 	organizationId: string;
 	userId: string;
-	productId: string;
+	/** Legacy grouping, optional. */
+	productId?: string;
+	/** Exact version to copy from. */
 	templateVersionId?: string;
+	/** Latest published version of this template (ignored when a version is given). */
+	templateId?: string;
 	serialNumber: string;
 	name?: string;
 	description?: string;
@@ -119,20 +127,20 @@ interface CreateBuildParams {
 }
 
 /**
- * Create a build for a product and copy the tasks of a published template
- * version onto it: tasks, checklist items, dependencies and documents. Tasks
- * are forward-scheduled from the planned start date.
+ * Create a project (build). When a template or version is given, its tasks,
+ * checklist items, dependencies and documents are copied onto the project and
+ * forward-scheduled from the planned start date. Without one the project
+ * starts blank and the planner adds tasks by hand.
  *
  * Nothing is assigned yet — planners assign afterwards, typically across many
- * builds at once.
+ * projects at once.
  */
 export async function createBuildFromVersion(
 	params: CreateBuildParams,
 ): Promise<Build> {
-	const product = await getOwnedProduct(
-		params.productId,
-		params.organizationId,
-	);
+	const product = params.productId
+		? await getOwnedProduct(params.productId, params.organizationId)
+		: null;
 
 	let version: typeof templateVersionTable.$inferSelect | undefined;
 
@@ -155,13 +163,15 @@ export async function createBuildFromVersion(
 				message: "Only published template versions can be used for builds.",
 			});
 		}
-	} else if (product.templateId) {
-		version = await getLatestPublishedVersion(product.templateId);
+	} else if (params.templateId ?? product?.templateId) {
+		const templateId = (params.templateId ?? product?.templateId) as string;
+		await getOwnedTemplate(templateId, params.organizationId);
+		version = await getLatestPublishedVersion(templateId);
 		if (!version) {
 			throw new TRPCError({
 				code: "BAD_REQUEST",
 				message:
-					"The product's template has no published version yet. Publish one first.",
+					"This template has no published version yet. Publish one first.",
 			});
 		}
 	}
@@ -196,7 +206,7 @@ export async function createBuildFromVersion(
 			.insert(buildTable)
 			.values({
 				organizationId: params.organizationId,
-				productId: product.id,
+				productId: product?.id ?? null,
 				templateVersionId: version?.id ?? null,
 				serialNumber: params.serialNumber,
 				name: params.name || null,
@@ -255,6 +265,7 @@ export async function createBuildFromVersion(
 				await tx.insert(buildTaskAttachmentTable).values(
 					templateTask.documents.map((doc) => ({
 						buildTaskId: buildTask.id,
+						kind: AttachmentKind.document,
 						templateDocumentId: doc.id,
 						uploadedById: doc.uploadedById,
 						storageKey: doc.storageKey,
@@ -617,6 +628,7 @@ export async function upgradeBuildToVersion(params: {
 					await tx.insert(buildTaskAttachmentTable).values(
 						newDocs.map((doc) => ({
 							buildTaskId: existing.id,
+							kind: AttachmentKind.document,
 							templateDocumentId: doc.id,
 							uploadedById: doc.uploadedById,
 							storageKey: doc.storageKey,
@@ -666,6 +678,7 @@ export async function upgradeBuildToVersion(params: {
 				await tx.insert(buildTaskAttachmentTable).values(
 					templateTask.documents.map((doc) => ({
 						buildTaskId: created.id,
+						kind: AttachmentKind.document,
 						templateDocumentId: doc.id,
 						uploadedById: doc.uploadedById,
 						storageKey: doc.storageKey,

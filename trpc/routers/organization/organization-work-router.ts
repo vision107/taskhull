@@ -1,10 +1,11 @@
 import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq, inArray, isNull, ne } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
 
 import { storageConfig } from "@/config/storage.config";
 import { db } from "@/lib/db";
 import { recordRevision } from "@/lib/db/revision";
 import {
+	AttachmentKind,
 	BuildStatus,
 	BuildTaskStatus,
 	ChecklistItemStatus,
@@ -142,7 +143,13 @@ export const organizationWorkRouter = createTRPCRouter({
 							name: true,
 							status: true,
 						},
-						with: { product: { columns: { id: true, name: true } } },
+						with: {
+							product: { columns: { id: true, name: true } },
+							templateVersion: {
+								columns: { id: true, versionNumber: true },
+								with: { template: { columns: { id: true, name: true } } },
+							},
+						},
 					},
 					checklistItems: { columns: { id: true, status: true } },
 					dependencies: {
@@ -197,7 +204,13 @@ export const organizationWorkRouter = createTRPCRouter({
 							status: true,
 							plannedStartDate: true,
 						},
-						with: { product: { columns: { id: true, name: true } } },
+						with: {
+							product: { columns: { id: true, name: true } },
+							templateVersion: {
+								columns: { id: true, versionNumber: true },
+								with: { template: { columns: { id: true, name: true } } },
+							},
+						},
 					},
 					assignments: {
 						with: { user: { columns: { id: true, name: true, image: true } } },
@@ -242,10 +255,10 @@ export const organizationWorkRouter = createTRPCRouter({
 				isAssigned,
 				canEdit: isAssigned || canPlan(ctx.membership.role),
 				documents: task.attachments.filter(
-					(attachment) => attachment.templateDocumentId !== null,
+					(attachment) => attachment.kind === AttachmentKind.document,
 				),
 				uploads: task.attachments.filter(
-					(attachment) => attachment.templateDocumentId === null,
+					(attachment) => attachment.kind === AttachmentKind.photo,
 				),
 				blockers: task.dependencies
 					.map((dep) => dep.dependsOn)
@@ -288,12 +301,12 @@ export const organizationWorkRouter = createTRPCRouter({
 				}
 
 				if (before.requiresPhoto) {
-					// Uploads by workers (template documents don't count).
+					// Photos by workers (documents don't count).
 					const uploads = await db.$count(
 						buildTaskAttachmentTable,
 						and(
 							eq(buildTaskAttachmentTable.buildTaskId, before.id),
-							isNull(buildTaskAttachmentTable.templateDocumentId),
+							eq(buildTaskAttachmentTable.kind, AttachmentKind.photo),
 						),
 					);
 					if (uploads === 0) {
@@ -542,6 +555,7 @@ export const organizationWorkRouter = createTRPCRouter({
 				.insert(buildTaskAttachmentTable)
 				.values({
 					buildTaskId: task.id,
+					kind: AttachmentKind.photo,
 					uploadedById: ctx.user.id,
 					storageKey: input.storageKey,
 					fileName: input.fileName,
@@ -580,10 +594,10 @@ export const organizationWorkRouter = createTRPCRouter({
 			}
 			await getOwnedBuildTask(attachment.buildTaskId, ctx.organization.id);
 
-			if (attachment.templateDocumentId) {
+			if (attachment.kind !== AttachmentKind.photo) {
 				throw new TRPCError({
 					code: "BAD_REQUEST",
-					message: "Template documents cannot be removed from a task.",
+					message: "Documents are managed by planners on the project page.",
 				});
 			}
 			if (

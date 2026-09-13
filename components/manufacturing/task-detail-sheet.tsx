@@ -13,6 +13,7 @@ import {
 	LockIcon,
 	SendIcon,
 	Trash2Icon,
+	UploadIcon,
 	XIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -57,6 +58,12 @@ import {
 	type ChecklistItemStatus,
 } from "@/lib/db/schema/enums";
 import { formatBytes } from "@/lib/manufacturing/format";
+import {
+	DOCUMENT_ACCEPT,
+	normalizeContentType,
+	UPLOAD_LIMITS,
+	uploadRejection,
+} from "@/lib/manufacturing/uploads";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 
@@ -175,6 +182,69 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 			onError: (error) => toast.error(error.message),
 		});
 
+		// Planner documents (drawings, PDFs) on this task.
+		const documentUrlMutation =
+			trpc.organization.build.taskDocumentUploadUrl.useMutation();
+		const addDocumentMutation =
+			trpc.organization.build.addTaskDocument.useMutation({
+				onSuccess: invalidate,
+				onError: (error) => toast.error(error.message),
+			});
+		const removeDocumentMutation =
+			trpc.organization.build.removeTaskDocument.useMutation({
+				onSuccess: invalidate,
+				onError: (error) => toast.error(error.message),
+			});
+		const [uploadingDocs, setUploadingDocs] = React.useState(false);
+		const docInputRef = React.useRef<HTMLInputElement>(null);
+		const handleDocumentFiles = async (files: FileList | null) => {
+			if (!files || files.length === 0) return;
+			setUploadingDocs(true);
+			try {
+				for (const file of Array.from(files)) {
+					const rejection = uploadRejection("document", {
+						fileName: file.name,
+						contentType: file.type,
+						sizeBytes: file.size,
+					});
+					if (rejection) {
+						toast.error(`${file.name}: ${rejection}`);
+						continue;
+					}
+					const contentType = normalizeContentType(file.type);
+					const { storageKey, signedUrl } =
+						await documentUrlMutation.mutateAsync({
+							buildTaskId: taskId,
+							fileName: file.name,
+							contentType,
+							sizeBytes: file.size,
+						});
+					const response = await fetch(signedUrl, {
+						method: "PUT",
+						body: file,
+						headers: { "Content-Type": contentType },
+					});
+					if (!response.ok) throw new Error(`Upload of ${file.name} failed`);
+					await addDocumentMutation.mutateAsync({
+						buildTaskId: taskId,
+						storageKey,
+						fileName: file.name,
+						contentType,
+						sizeBytes: file.size,
+					});
+				}
+			} catch (error) {
+				toast.error(
+					error instanceof Error
+						? error.message
+						: "Upload failed. Is storage configured?",
+				);
+			} finally {
+				setUploadingDocs(false);
+				if (docInputRef.current) docInputRef.current.value = "";
+			}
+		};
+
 		const download = async (attachmentId: string) => {
 			try {
 				const result =
@@ -224,11 +294,14 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 							<SheetHeader className="border-b pr-12">
 								<div className="flex items-center gap-2 text-xs text-muted-foreground">
 									<Link
-										href={`/dashboard/organization/builds/${task.build.id}`}
+										href={`/dashboard/organization/projects/${task.build.id}`}
 										onClick={modal.dismissForNavigation}
 										className="hover:underline"
 									>
-										{task.build.product.name} · #{task.build.serialNumber}
+										{task.build.templateVersion?.template.name ??
+											task.build.name ??
+											"Project"}{" "}
+										· #{task.build.serialNumber}
 									</Link>
 									{task.phase && (
 										<>
@@ -517,30 +590,84 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 								)}
 
 								{/* Documents */}
-								{task.documents.length > 0 && (
-									<Section title="Documents">
-										<ul className="divide-y">
-											{task.documents.map((doc) => (
-												<li key={doc.id}>
-													<button
+								{(task.documents.length > 0 || canPlan) && (
+									<Section
+										title="Documents"
+										aside={
+											canPlan ? (
+												<>
+													<input
+														ref={docInputRef}
+														type="file"
+														multiple
+														accept={DOCUMENT_ACCEPT}
+														className="hidden"
+														aria-label="Add documents"
+														onChange={(event) =>
+															void handleDocumentFiles(event.target.files)
+														}
+													/>
+													<Button
 														type="button"
-														onClick={() => download(doc.id)}
-														className="flex w-full items-center gap-3 px-1 py-2 text-left text-sm hover:bg-muted/60"
+														variant="ghost"
+														size="xs"
+														disabled={uploadingDocs}
+														loading={uploadingDocs}
+														onClick={() => docInputRef.current?.click()}
 													>
-														<FileIcon className="size-4 shrink-0 text-muted-foreground" />
-														<span className="min-w-0 flex-1">
-															<span className="block truncate">
-																{doc.fileName}
+														<UploadIcon />
+														Add
+													</Button>
+												</>
+											) : undefined
+										}
+									>
+										{task.documents.length === 0 ? (
+											<p className="text-xs text-muted-foreground">
+												Drawings, PDFs or images for the worker (max{" "}
+												{UPLOAD_LIMITS.document.label} each).
+											</p>
+										) : (
+											<ul className="divide-y">
+												{task.documents.map((doc) => (
+													<li key={doc.id} className="flex items-center">
+														<button
+															type="button"
+															onClick={() => download(doc.id)}
+															className="flex min-w-0 flex-1 items-center gap-3 px-1 py-2 text-left text-sm hover:bg-muted/60"
+														>
+															<FileIcon className="size-4 shrink-0 text-muted-foreground" />
+															<span className="min-w-0 flex-1">
+																<span className="block truncate">
+																	{doc.fileName}
+																</span>
+																<span className="block text-xs text-muted-foreground">
+																	{formatBytes(doc.sizeBytes ?? 0)}
+																	{doc.templateDocumentId
+																		? " · from template"
+																		: ""}
+																</span>
 															</span>
-															<span className="block text-xs text-muted-foreground">
-																{formatBytes(doc.sizeBytes ?? 0)}
-															</span>
-														</span>
-														<DownloadIcon className="size-4 text-muted-foreground" />
-													</button>
-												</li>
-											))}
-										</ul>
+															<DownloadIcon className="size-4 text-muted-foreground" />
+														</button>
+														{canPlan && (
+															<Button
+																type="button"
+																variant="ghost"
+																size="icon-xs"
+																aria-label="Remove document"
+																disabled={removeDocumentMutation.isPending}
+																onClick={() =>
+																	removeDocumentMutation.mutate({ id: doc.id })
+																}
+															>
+																<Trash2Icon />
+															</Button>
+														)}
+													</li>
+												))}
+											</ul>
+										)}
 									</Section>
 								)}
 

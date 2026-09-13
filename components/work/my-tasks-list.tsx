@@ -162,7 +162,10 @@ function TaskCard({ task }: { task: MyTask }): React.JSX.Element {
 					)}
 				</div>
 				<p className="mt-0.5 truncate text-sm text-muted-foreground">
-					{task.build.product.name} · {task.build.serialNumber}
+					{task.build.templateVersion?.template.name ??
+						task.build.name ??
+						"Project"}{" "}
+					· {task.build.serialNumber}
 					{task.phase ? ` · ${task.phase}` : ""}
 				</p>
 				<div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">

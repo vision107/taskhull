@@ -103,12 +103,12 @@ export function OrganizationOverview(): React.JSX.Element {
 
 			<section className="space-y-2">
 				<div className="flex items-center justify-between">
-					<h2 className="font-medium">Open builds</h2>
+					<h2 className="font-medium">Open projects</h2>
 					<Link
-						href="/dashboard/organization/builds"
+						href="/dashboard/organization/projects"
 						className={buttonVariants({ variant: "ghost", size: "sm" })}
 					>
-						All builds
+						All projects
 						<ArrowRightIcon />
 					</Link>
 				</div>
@@ -116,12 +116,12 @@ export function OrganizationOverview(): React.JSX.Element {
 					<Skeleton className="h-40 w-full" />
 				) : builds.length === 0 ? (
 					<p className="rounded-lg border border-dashed px-3 py-8 text-center text-sm text-muted-foreground">
-						No open builds.{" "}
+						No open projects.{" "}
 						<Link
-							href="/dashboard/organization/products"
+							href="/dashboard/organization/projects"
 							className="underline underline-offset-2"
 						>
-							Create one from a product.
+							Create one.
 						</Link>
 					</p>
 				) : (
@@ -152,7 +152,7 @@ export function OrganizationOverview(): React.JSX.Element {
 										</span>{" "}
 										on{" "}
 										<Link
-											href={`/dashboard/organization/builds/${comment.buildTask.buildId}`}
+											href={`/dashboard/organization/projects/${comment.buildTask.buildId}`}
 											className="underline-offset-2 hover:underline"
 										>
 											{comment.buildTask.build.serialNumber} ·{" "}
