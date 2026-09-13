@@ -2,7 +2,7 @@
 
 import { addDays, format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import type * as React from "react";
+import * as React from "react";
 import type { DateRange } from "react-day-picker";
 
 import { Button, type ButtonProps } from "@/components/ui/button";
@@ -39,8 +39,13 @@ function DatePicker({
 	variant,
 	...other
 }: DatePickerProps): React.JSX.Element {
+	const [open, setOpen] = React.useState(false);
+	const pick = (next?: Date) => {
+		onDateChange?.(next);
+		setOpen(false);
+	};
 	return (
-		<Popover>
+		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
 				<Button
 					variant={variant || "outline"}
@@ -68,9 +73,7 @@ function DatePicker({
 								type="button"
 								variant="ghost"
 								className="w-full justify-start"
-								onClick={() => {
-									onDateChange?.(addDays(new Date(), preset.value));
-								}}
+								onClick={() => pick(addDays(new Date(), preset.value))}
 							>
 								{preset.label}
 							</Button>
@@ -81,9 +84,7 @@ function DatePicker({
 					mode="single"
 					selected={date}
 					defaultMonth={date}
-					onSelect={(e) => {
-						onDateChange?.(e);
-					}}
+					onSelect={pick}
 				/>
 			</PopoverContent>
 		</Popover>

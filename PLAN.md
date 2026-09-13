@@ -306,6 +306,24 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
      create‑from‑template, draft copies, upgrades and save‑as /
      update‑template (diff field `parent`); the assignment grid labels
      subtask rows "Parent › Subtask" and sorts them behind the parent.
+  6. _Task pane edits in place (Asana layout)._ Clicking a task row opens the
+     sheet and everything on it is editable without an Edit dialog:
+     toolbar with **Mark complete** (disabled with a tooltip while a
+     dependency or subtask is open) + status menu + overflow (Delete); big
+     inline title; field rows Assignee · Due date · Start date · Duration
+     (days · hours) · Phase (datalist of the project's phases) · Depends on
+     (chips + checkbox popover) · Requires (photo/comment switches); an inline
+     Description textarea; Subtasks `n/m`, Checklist, Attachments (planner
+     documents and floor photos in one list); a **Comments | All activity**
+     toggle above the pinned reply box. Text fields save on blur/Enter and
+     revert on Escape, all through `build.updateTask`. Dates: the model stays
+     start + duration, but the pane leads with the **due date** like Asana
+     and shows the start date second so a planner picks whichever they
+     think in — changing the due date keeps the start and resizes the
+     duration (a due date before the start moves the task there as a
+     one‑day task), changing the start date keeps the duration and shifts
+     the task. `DatePicker` now closes on pick. `BuildTaskModal` remains only
+     for "Add with details".
 
 - **Phase 8b — My tasks in the web view** (proposal, not started)
   Today `/dashboard/work` is the phone layout stretched to a 32rem column;
