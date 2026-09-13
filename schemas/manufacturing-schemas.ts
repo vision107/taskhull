@@ -351,6 +351,14 @@ export const updateBuildTaskChecklistItemSchema = z.object({
 	status: z.enum(ChecklistItemStatus),
 });
 
+// Planner-side checklist editing on project tasks.
+export const addBuildTaskChecklistItemSchema = z.object({
+	buildTaskId: z.uuid(),
+	title: z.string().trim().min(1, "Give the item a name").max(200),
+});
+
+export const removeBuildTaskChecklistItemSchema = idSchema;
+
 export const buildTaskAttachmentUploadUrlSchema = refineUpload(
 	z.object({
 		buildTaskId: z.uuid(),

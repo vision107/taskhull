@@ -281,6 +281,12 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
   3. _Edit dialog layout._ Phase | Start and Duration (days) | Effort (hours)
      in a 2×2 grid; the date picker truncates its label (`dateFormat="PP"`)
      instead of spilling into the next field.
+  4. _Checklist on project tasks._ Checklist items used to come only from a
+     template, so hand‑made tasks could never get one. The task sheet now
+     always shows the Checklist section for planners with a
+     "type + Enter" row (`build.addChecklistItem`) and a remove button per
+     item (`build.removeChecklistItem`). Items typed on a project task travel
+     into the template on save‑as / update‑template like everything else.
 
 - **Phase 8b — My tasks in the web view** (proposal, not started)
   Today `/dashboard/work` is the phone layout stretched to a 32rem column;
@@ -349,3 +355,7 @@ them the opt‑in button is hidden and only in‑app notifications are sent.
   deleting one side never removes the object.
 - Pre‑existing starter flake: `tests/lib/proxy-session.test.ts` fails only
   when run together with the DB suite (`RUN_DB_TESTS=true`).
+- Dev server (Next 16 / Turbopack): server‑side tRPC changes are sometimes
+  not hot‑reloaded — a new procedure answers 404, a changed zod schema keeps
+  stripping the new field — while the client bundle updates fine. Restart
+  `npm run dev` when a mutation "does nothing" after a router/schema edit.

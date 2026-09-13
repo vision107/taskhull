@@ -15,6 +15,7 @@ import {
 	buildTable,
 	buildTaskAssignmentTable,
 	buildTaskAttachmentTable,
+	buildTaskChecklistItemTable,
 	buildTaskCommentTable,
 	buildTaskDependencyTable,
 	buildTaskTable,
@@ -48,6 +49,7 @@ import { getOwnedTemplate } from "@/lib/manufacturing/template-versions";
 import { normalizeContentType } from "@/lib/manufacturing/uploads";
 import { getSignedUploadUrl } from "@/lib/storage";
 import {
+	addBuildTaskChecklistItemSchema,
 	addBuildTaskDocumentSchema,
 	assignBuildTasksSchema,
 	assignmentGridSchema,
@@ -58,6 +60,7 @@ import {
 	deleteBuildTaskSchema,
 	getBuildSchema,
 	listBuildsSchema,
+	removeBuildTaskChecklistItemSchema,
 	removeBuildTaskDocumentSchema,
 	saveBuildAsTemplateSchema,
 	templateDiffSchema,
@@ -581,6 +584,76 @@ export const organizationBuildRouter = createTRPCRouter({
 			await db
 				.delete(buildTaskAttachmentTable)
 				.where(eq(buildTaskAttachmentTable.id, input.id));
+			return { success: true };
+		}),
+
+	// Checklist items on project tasks. Template items are copied on create;
+	// these let a planner add or drop items on one unit.
+	addChecklistItem: protectedOrganizationProcedure
+		.input(addBuildTaskChecklistItemSchema)
+		.mutation(async ({ ctx, input }) => {
+			assertCanPlan(ctx.membership.role);
+			const task = await getOwnedBuildTask(
+				input.buildTaskId,
+				ctx.organization.id,
+			);
+			const [sortRow] = await db
+				.select({ maxSort: sql<number>`coalesce(max(sort_order), -1)::int` })
+				.from(buildTaskChecklistItemTable)
+				.where(eq(buildTaskChecklistItemTable.buildTaskId, task.id));
+			const [item] = await db
+				.insert(buildTaskChecklistItemTable)
+				.values({
+					buildTaskId: task.id,
+					title: input.title,
+					sortOrder: (sortRow?.maxSort ?? -1) + 1,
+				})
+				.returning();
+			if (!item) {
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Failed to add checklist item.",
+				});
+			}
+			await logActivity({
+				organizationId: ctx.organization.id,
+				buildId: task.buildId,
+				buildTaskId: task.id,
+				actorId: ctx.user.id,
+				action: ActivityAction.taskUpdated,
+				metadata: { title: task.title, fields: ["checklist"] },
+			});
+			return item;
+		}),
+
+	removeChecklistItem: protectedOrganizationProcedure
+		.input(removeBuildTaskChecklistItemSchema)
+		.mutation(async ({ ctx, input }) => {
+			assertCanPlan(ctx.membership.role);
+			const item = await db.query.buildTaskChecklistItemTable.findFirst({
+				where: eq(buildTaskChecklistItemTable.id, input.id),
+			});
+			if (!item) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Checklist item not found.",
+				});
+			}
+			const task = await getOwnedBuildTask(
+				item.buildTaskId,
+				ctx.organization.id,
+			);
+			await db
+				.delete(buildTaskChecklistItemTable)
+				.where(eq(buildTaskChecklistItemTable.id, input.id));
+			await logActivity({
+				organizationId: ctx.organization.id,
+				buildId: task.buildId,
+				buildTaskId: task.id,
+				actorId: ctx.user.id,
+				action: ActivityAction.taskUpdated,
+				metadata: { title: task.title, fields: ["checklist"] },
+			});
 			return { success: true };
 		}),
 

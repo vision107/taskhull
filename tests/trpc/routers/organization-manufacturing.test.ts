@@ -1372,6 +1372,34 @@ describe("manufacturing routers", () => {
 			});
 			expect(grind.plannedDurationDays).toBe(1);
 			expect(grind.plannedHours).toBeNull();
+
+			// Planners build the checklist on the project task itself.
+			const item = await c.organization.build.addChecklistItem({
+				buildTaskId: grind.id,
+				title: "No burrs on edges",
+			});
+			const extra = await c.organization.build.addChecklistItem({
+				buildTaskId: grind.id,
+				title: "Remove this one",
+			});
+			await c.organization.build.removeChecklistItem({ id: extra.id });
+			const grindDetail = await c.organization.work.getTask({ id: grind.id });
+			expect(grindDetail.checklistItems.map((i) => i.title)).toEqual([
+				"No burrs on edges",
+			]);
+			expect(item.sortOrder).toBe(0);
+			// Workers may tick, not edit.
+			await expect(
+				callerAs(
+					worker,
+					ORG_ID,
+					MemberRole.member,
+				).organization.build.addChecklistItem({
+					buildTaskId: grind.id,
+					title: "nope",
+				}),
+			).rejects.toMatchObject({ code: "FORBIDDEN" });
+			callerAs(planner); // callerAs swaps the shared auth state; switch back
 			const ordered = await c.organization.build.get({ id: project.id });
 			expect(ordered.tasks.map((t) => t.title)).toEqual([
 				"Weld frame",
@@ -1399,6 +1427,12 @@ describe("manufacturing routers", () => {
 			const tplPaint = v1.tasks.find((t) => t.title === "Paint frame")!;
 			expect(tplPaint.requiresPhoto).toBe(true);
 			expect(tplPaint.dependencies).toHaveLength(1);
+			// … as does the checklist typed on the project task.
+			expect(
+				v1.tasks
+					.find((t) => t.title === "Grind welds")
+					?.checklistItems.map((i) => i.title),
+			).toEqual(["No burrs on edges"]);
 			// Effort in hours travels into the template …
 			expect(v1.tasks.find((t) => t.title === "Weld frame")?.plannedHours).toBe(
 				6.5,

@@ -28,6 +28,7 @@ import {
 	formatDate,
 	formatEndDate,
 } from "@/components/manufacturing/builds-table";
+import { QuickAddTask } from "@/components/manufacturing/quick-add-task";
 import {
 	TaskStatusBadge,
 	taskStatusLabels,
@@ -193,6 +194,16 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 			});
 		const removeDocumentMutation =
 			trpc.organization.build.removeTaskDocument.useMutation({
+				onSuccess: invalidate,
+				onError: (error) => toast.error(error.message),
+			});
+		const addChecklistItemMutation =
+			trpc.organization.build.addChecklistItem.useMutation({
+				onSuccess: invalidate,
+				onError: (error) => toast.error(error.message),
+			});
+		const removeChecklistItemMutation =
+			trpc.organization.build.removeChecklistItem.useMutation({
 				onSuccess: invalidate,
 				onError: (error) => toast.error(error.message),
 			});
@@ -536,10 +547,14 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 								)}
 
 								{/* Checklist */}
-								{task.checklistItems.length > 0 && (
+								{(task.checklistItems.length > 0 || canPlan) && (
 									<Section
 										title="Checklist"
-										aside={`${checklistDone}/${task.checklistItems.length}`}
+										aside={
+											task.checklistItems.length > 0
+												? `${checklistDone}/${task.checklistItems.length}`
+												: undefined
+										}
 									>
 										<ul className="space-y-1">
 											{task.checklistItems.map((item) => {
@@ -548,7 +563,7 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 													? "open"
 													: "done";
 												return (
-													<li key={item.id}>
+													<li key={item.id} className="flex items-start gap-1">
 														<button
 															type="button"
 															disabled={!canPlan || checklistMutation.isPending}
@@ -587,10 +602,38 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 																)}
 															</span>
 														</button>
+														{canPlan && (
+															<Button
+																variant="ghost"
+																size="icon-xs"
+																aria-label="Remove checklist item"
+																className="shrink-0 text-muted-foreground hover:text-destructive"
+																disabled={removeChecklistItemMutation.isPending}
+																onClick={() =>
+																	removeChecklistItemMutation.mutate({
+																		id: item.id,
+																	})
+																}
+															>
+																<XIcon />
+															</Button>
+														)}
 													</li>
 												);
 											})}
 										</ul>
+										{canPlan && (
+											<QuickAddTask
+												className="-mx-1 mt-1 rounded-md px-1"
+												placeholder="Add checklist item and press Enter"
+												onAdd={(title) =>
+													addChecklistItemMutation.mutateAsync({
+														buildTaskId: task.id,
+														title,
+													})
+												}
+											/>
+										)}
 									</Section>
 								)}
 
