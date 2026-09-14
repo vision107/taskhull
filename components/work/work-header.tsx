@@ -9,11 +9,13 @@ import {
 	LayoutDashboardIcon,
 	LogOutIcon,
 	RefreshCwIcon,
+	UserCogIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
+import { NotificationCenter } from "@/components/notifications/notification-center";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -95,6 +97,7 @@ export function WorkHeader({
 							{online ? t.header.toSync(pending.length) : t.header.offline}
 						</button>
 					)}
+					<NotificationCenter className="size-9" />
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<button
@@ -127,6 +130,12 @@ export function WorkHeader({
 									{t.header.plannerDashboard}
 								</DropdownMenuItem>
 							)}
+							<DropdownMenuItem
+								onClick={() => router.push("/dashboard/settings")}
+							>
+								<UserCogIcon />
+								{t.header.accountSettings}
+							</DropdownMenuItem>
 							{push.supported && push.enabled && (
 								<DropdownMenuItem
 									disabled={push.busy}

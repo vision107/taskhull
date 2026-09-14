@@ -19,6 +19,7 @@ import {
 	type WorkLocale,
 } from "@/lib/i18n/work";
 import { logger } from "@/lib/logger";
+import { mentionsToPlainText } from "@/lib/manufacturing/mentions";
 import { sendPushToUsers } from "@/lib/notifications/push";
 
 export type NotificationKind = "info" | "success" | "warning";
@@ -200,7 +201,9 @@ export async function notifyTasksAssigned(params: {
 
 /**
  * Someone commented: tell the other assignees (worker link) and the planners
- * (build link), minus the author.
+ * (build link), minus the author. People who were @mentioned in the comment
+ * get a "mentioned you" notification instead of the generic one — even when
+ * they are neither assigned nor planners.
  */
 export async function notifyTaskCommented(params: {
 	organizationId: string;
@@ -209,19 +212,49 @@ export async function notifyTaskCommented(params: {
 	task: TaskRef;
 	serialNumber: string;
 	body: string;
+	mentionedUserIds?: string[];
 }): Promise<void> {
 	const [assignees, planners] = await Promise.all([
 		getAssigneeUserIds(params.task.id),
 		getPlannerUserIds(params.organizationId),
 	]);
-	const excerpt =
-		params.body.length > 120 ? `${params.body.slice(0, 117)}…` : params.body;
+	const plain = mentionsToPlainText(params.body);
+	const excerpt = plain.length > 120 ? `${plain.slice(0, 117)}…` : plain;
 	const message = `${params.serialNumber} · ${excerpt}`;
 
 	const plannerSet = new Set(planners);
+	const mentioned = new Set(params.mentionedUserIds ?? []);
+	const mentionedPlanners: string[] = [];
+	const mentionedWorkers: string[] = [];
+	for (const userId of mentioned) {
+		(plannerSet.has(userId) ? mentionedPlanners : mentionedWorkers).push(
+			userId,
+		);
+	}
+
 	await Promise.all([
 		notifyUsers({
-			userIds: assignees.filter((id) => !plannerSet.has(id)),
+			userIds: mentionedWorkers,
+			actorId: params.actorId,
+			text: (t) => ({
+				title: t.notifications.mentioned(params.actorName, params.task.title),
+				message,
+			}),
+			actionUrl: workTaskUrl(params.task.id),
+		}),
+		notifyUsers({
+			userIds: mentionedPlanners,
+			actorId: params.actorId,
+			text: {
+				title: `${params.actorName} mentioned you on ${params.task.title}`,
+				message,
+			},
+			actionUrl: plannerBuildUrl(params.task.buildId),
+		}),
+		notifyUsers({
+			userIds: assignees.filter(
+				(id) => !plannerSet.has(id) && !mentioned.has(id),
+			),
 			actorId: params.actorId,
 			text: (t) => ({
 				title: t.notifications.commented(params.actorName, params.task.title),
@@ -230,7 +263,7 @@ export async function notifyTaskCommented(params: {
 			actionUrl: workTaskUrl(params.task.id),
 		}),
 		notifyUsers({
-			userIds: planners,
+			userIds: planners.filter((id) => !mentioned.has(id)),
 			actorId: params.actorId,
 			text: {
 				title: `${params.actorName} commented on ${params.task.title}`,

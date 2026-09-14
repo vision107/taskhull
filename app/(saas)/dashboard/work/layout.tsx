@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import type * as React from "react";
 
 import { OfflineProvider } from "@/components/work/offline-provider";
+import { WorkBottomNav } from "@/components/work/work-bottom-nav";
 import { WorkHeader } from "@/components/work/work-header";
 import { WorkLocaleProvider } from "@/components/work/work-locale-provider";
 import { WorkOrganizationPicker } from "@/components/work/work-org-picker";
@@ -54,11 +55,24 @@ export default async function WorkLayout({
 
 	const userLocale =
 		(session.user as { locale?: string | null }).locale ?? null;
+	const isPlanner = canPlan(membership?.role);
+	const hasBottomNav = isPlanner && organization !== null;
 
 	return (
 		<WorkLocaleProvider initialLocale={userLocale}>
 			<OfflineProvider>
-				<div className="flex min-h-dvh flex-col bg-muted/30">
+				<div
+					className="flex min-h-dvh flex-col bg-muted/30"
+					style={
+						{
+							// Height of the tab bar (incl. safe area) so fixed elements
+							// such as the task action bar can sit on top of it.
+							"--work-nav": hasBottomNav
+								? "calc(3.5rem + env(safe-area-inset-bottom))"
+								: "0px",
+						} as React.CSSProperties
+					}
+				>
 					<WorkHeader
 						organizationName={organization?.name ?? ""}
 						user={{
@@ -66,11 +80,12 @@ export default async function WorkLayout({
 							email: session.user.email,
 							image: session.user.image ?? null,
 						}}
-						canPlan={canPlan(membership?.role)}
+						canPlan={isPlanner}
 					/>
-					<main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+					<main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pt-3 pb-[max(calc(var(--work-nav)+1.5rem),env(safe-area-inset-bottom))]">
 						{organization ? children : <WorkOrganizationPicker />}
 					</main>
+					{hasBottomNav && <WorkBottomNav />}
 				</div>
 			</OfflineProvider>
 		</WorkLocaleProvider>

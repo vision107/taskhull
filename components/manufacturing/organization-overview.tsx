@@ -12,6 +12,7 @@ import Link from "next/link";
 import * as React from "react";
 
 import { BuildsTable } from "@/components/manufacturing/builds-table";
+import { CommentBody } from "@/components/manufacturing/comment-body";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -163,9 +164,7 @@ export function OrganizationOverview(): React.JSX.Element {
 											addSuffix: true,
 										})}
 									</p>
-									<p className="mt-0.5 text-sm whitespace-pre-wrap">
-										{comment.body}
-									</p>
+									<CommentBody body={comment.body} className="mt-0.5" />
 								</div>
 							</li>
 						))}
