@@ -818,7 +818,7 @@ export function WorkTaskDetail({
 
 			{/* Sticky action bar */}
 			{canEdit && (
-				<div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+				<div className="fixed inset-x-0 bottom-(--work-nav) z-20 border-t bg-background/95 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)-var(--work-nav)))] backdrop-blur">
 					<div className="mx-auto flex w-full max-w-lg gap-2 px-4 pt-3">
 						{status === "todo" && (
 							<>
