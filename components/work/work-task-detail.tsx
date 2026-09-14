@@ -52,7 +52,12 @@ import {
 	deletePhoto,
 	putPhoto,
 } from "@/lib/offline/photo-store";
-import { isNetworkError, removeWrite } from "@/lib/offline/queue";
+import {
+	isNetworkError,
+	pendingChecklistFor,
+	pendingStatusFor,
+	removeWrite,
+} from "@/lib/offline/queue";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 
@@ -75,10 +80,20 @@ export function WorkTaskDetail({
 		(item): item is Extract<typeof item, { kind: "uploadPhoto" }> =>
 			item.kind === "uploadPhoto" && item.taskId === taskId,
 	);
-	const pendingComments = offline.pending.filter(
-		(item): item is Extract<typeof item, { kind: "addComment" }> =>
-			item.kind === "addComment" && item.taskId === taskId,
-	);
+	// Comments waiting to sync, plus block reasons (the server turns those into
+	// comments as well), in the order they were written.
+	const pendingComments = offline.pending.flatMap((item) => {
+		if (item.taskId !== taskId) return [];
+		if (item.kind === "addComment") {
+			return [{ id: item.id, body: item.input.body }];
+		}
+		if (item.kind === "updateStatus" && item.input.reason) {
+			return [{ id: item.id, body: item.input.reason }];
+		}
+		return [];
+	});
+	const pendingStatus = pendingStatusFor(offline.pending, taskId);
+	const pendingChecklist = pendingChecklistFor(offline.pending, taskId);
 
 	const invalidate = () => {
 		void utils.organization.work.getTask.invalidate({ id: taskId });
@@ -86,9 +101,12 @@ export function WorkTaskDetail({
 	};
 
 	// -- offline fallbacks ----------------------------------------------------
-	// When there is no connection the change is stored locally, the cached
-	// task is patched so the screen reflects it, and the provider replays it
-	// once the phone is back online.
+	// When there is no connection the change is stored in the write queue and
+	// the provider replays it once the phone is back online. The screen reads
+	// the queued values on top of the server data (see `pendingStatus` and
+	// `pendingChecklist`), so a stale response — e.g. the service worker
+	// serving its last cached copy while the network is down — cannot make a
+	// queued change disappear from the screen.
 
 	const queueStatus = (next: BuildTaskStatus, reason?: string) => {
 		offline.enqueue({
@@ -96,9 +114,6 @@ export function WorkTaskDetail({
 			taskId,
 			input: { id: taskId, status: next, reason },
 		});
-		utils.organization.work.getTask.setData({ id: taskId }, (old) =>
-			old ? { ...old, status: next } : old,
-		);
 		toast(t.detail.savedOffline, {
 			description: t.detail.willSyncOnline,
 		});
@@ -110,16 +125,6 @@ export function WorkTaskDetail({
 			taskId,
 			input: { id: itemId, status: next },
 		});
-		utils.organization.work.getTask.setData({ id: taskId }, (old) =>
-			old
-				? {
-						...old,
-						checklistItems: old.checklistItems.map((item) =>
-							item.id === itemId ? { ...item, status: next } : item,
-						),
-					}
-				: old,
-		);
 	};
 
 	const queueComment = (body: string) => {
@@ -217,23 +222,39 @@ export function WorkTaskDetail({
 		);
 	}
 
-	const status = task.status as BuildTaskStatus;
+	// Queued (not yet synced) changes win over what the server last told us.
+	const status = pendingStatus ?? (task.status as BuildTaskStatus);
+	const checklistItems = task.checklistItems.map((item) => {
+		const queued = pendingChecklist.get(item.id);
+		return queued === undefined ? item : { ...item, status: queued };
+	});
 	const canEdit = task.canEdit;
 	const blocked = task.blockers.length > 0;
-	const openChecklist = task.checklistItems.filter(
+	const openChecklist = checklistItems.filter(
 		(item) => item.status === "open",
 	).length;
-	// A photo waiting in the offline queue counts: it is replayed before any
-	// queued "done" so the server-side check passes as well.
+	// A photo or comment waiting in the offline queue counts: it is replayed
+	// before any queued "done" so the server-side check passes as well.
 	const missingPhoto =
 		task.requiresPhoto &&
 		task.uploads.length === 0 &&
 		pendingPhotos.length === 0;
-	const missingComment = task.requiresComment && task.comments.length === 0;
+	const missingComment =
+		task.requiresComment &&
+		task.comments.length === 0 &&
+		pendingComments.length === 0;
 	const openSubtasks = task.subtasks.filter(
 		(subtask) => subtask.status !== "done",
 	).length;
+	// Mirrors the server-side checks for "done" that the worker can see here.
+	const canFinish = !blocked && openSubtasks === 0;
+	const finishHints = [
+		openSubtasks > 0 ? t.detail.finishSubtasksFirst : null,
+		missingPhoto ? t.detail.addPhoto : null,
+		missingComment ? t.detail.leaveComment : null,
+	].filter((part): part is string => Boolean(part));
 
+	const busy = statusMutation.isPending;
 	const setStatus = (next: BuildTaskStatus, reason?: string) => {
 		if (!offline.online) {
 			queueStatus(next, reason);
@@ -482,13 +503,13 @@ export function WorkTaskDetail({
 			)}
 
 			{/* Checklist */}
-			{task.checklistItems.length > 0 && (
+			{checklistItems.length > 0 && (
 				<Card
 					title={t.detail.checklist}
-					aside={`${task.checklistItems.length - openChecklist}/${task.checklistItems.length}`}
+					aside={`${checklistItems.length - openChecklist}/${checklistItems.length}`}
 				>
 					<ul className="-mx-2 divide-y">
-						{task.checklistItems.map((item) => {
+						{checklistItems.map((item) => {
 							const done = item.status !== "open";
 							return (
 								<li key={item.id}>
@@ -759,10 +780,7 @@ export function WorkTaskDetail({
 											{t.detail.waitingToSync}
 										</span>
 									</div>
-									<CommentBody
-										body={item.input.body}
-										currentUserId={currentUserId}
-									/>
+									<CommentBody body={item.body} currentUserId={currentUserId} />
 								</div>
 							</li>
 						))}
@@ -822,11 +840,14 @@ export function WorkTaskDetail({
 					<div className="mx-auto flex w-full max-w-lg gap-2 px-4 pt-3">
 						{status === "todo" && (
 							<>
+								{/* Short jobs are often finished before anyone presses
+								    start, so "done" is offered right away as well. */}
 								<Button
 									className="flex-1"
 									size="lg"
 									onClick={() => setStatus("in_progress")}
-									disabled={statusMutation.isPending}
+									disabled={busy}
+									loading={busy}
 								>
 									<PlayIcon />
 									{t.detail.start}
@@ -834,8 +855,17 @@ export function WorkTaskDetail({
 								<Button
 									variant="outline"
 									size="lg"
+									onClick={() => setStatus("done")}
+									disabled={busy || !canFinish}
+								>
+									<CheckIcon />
+									{t.detail.markDone}
+								</Button>
+								<Button
+									variant="outline"
+									size="lg"
 									onClick={askBlockReason}
-									disabled={statusMutation.isPending}
+									disabled={busy}
 								>
 									{t.detail.blocked}
 								</Button>
@@ -847,9 +877,8 @@ export function WorkTaskDetail({
 									className="flex-1"
 									size="lg"
 									onClick={() => setStatus("done")}
-									disabled={
-										statusMutation.isPending || blocked || openSubtasks > 0
-									}
+									disabled={busy || !canFinish}
+									loading={busy}
 								>
 									<CheckIcon />
 									{t.detail.markDone}
@@ -858,7 +887,7 @@ export function WorkTaskDetail({
 									variant="outline"
 									size="lg"
 									onClick={askBlockReason}
-									disabled={statusMutation.isPending}
+									disabled={busy}
 								>
 									{t.detail.blocked}
 								</Button>
@@ -869,7 +898,8 @@ export function WorkTaskDetail({
 								className="flex-1"
 								size="lg"
 								onClick={() => setStatus("in_progress")}
-								disabled={statusMutation.isPending}
+								disabled={busy}
+								loading={busy}
 							>
 								<PlayIcon />
 								{t.detail.resume}
@@ -881,7 +911,8 @@ export function WorkTaskDetail({
 									className="flex-1"
 									size="lg"
 									onClick={() => setStatus("done")}
-									disabled={statusMutation.isPending}
+									disabled={busy}
+									loading={busy}
 								>
 									<CheckIcon />
 									{t.detail.markDone}
@@ -890,7 +921,7 @@ export function WorkTaskDetail({
 									variant="outline"
 									size="lg"
 									onClick={() => setStatus("in_progress")}
-									disabled={statusMutation.isPending}
+									disabled={busy}
 								>
 									{t.detail.reopen}
 								</Button>
@@ -902,23 +933,18 @@ export function WorkTaskDetail({
 								className="flex-1"
 								size="lg"
 								onClick={() => setStatus("in_progress")}
-								disabled={statusMutation.isPending}
+								disabled={busy}
+								loading={busy}
 							>
 								<RotateCcwIcon />
 								{t.detail.reopen}
 							</Button>
 						)}
 					</div>
-					{status === "in_progress" &&
-						(missingPhoto || missingComment || openSubtasks > 0) && (
+					{(status === "todo" || status === "in_progress") &&
+						finishHints.length > 0 && (
 							<p className="mx-auto max-w-lg px-4 pt-2 text-center text-xs text-muted-foreground">
-								{t.detail.beforeFinishing(
-									[
-										openSubtasks > 0 ? t.detail.finishSubtasksFirst : null,
-										missingPhoto ? t.detail.addPhoto : null,
-										missingComment ? t.detail.leaveComment : null,
-									].filter((part): part is string => Boolean(part)),
-								)}
+								{t.detail.beforeFinishing(finishHints)}
 							</p>
 						)}
 				</div>

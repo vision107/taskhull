@@ -12,6 +12,8 @@ import {
 	clearQueue,
 	enqueueWrite,
 	isNetworkError,
+	pendingChecklistFor,
+	pendingStatusFor,
 	readQueue,
 	removeWrite,
 } from "@/lib/offline/queue";
@@ -64,7 +66,9 @@ describe.sequential("offline write queue", () => {
 		vi.unstubAllGlobals();
 	});
 
-	it("keeps only the latest status per task but every comment and photo", () => {
+	it("keeps every status step in order, plus every comment and photo", () => {
+		// The server enforces a state machine, so start -> blocked must replay
+		// as two calls rather than being collapsed into the last one.
 		enqueueWrite({
 			kind: "updateStatus",
 			taskId: "t1",
@@ -111,15 +115,94 @@ describe.sequential("offline write queue", () => {
 		const queue = readQueue();
 		expect(queue.map((item) => item.kind)).toEqual([
 			"updateStatus",
+			"updateStatus",
 			"addComment",
 			"addComment",
 			"uploadPhoto",
 			"uploadPhoto",
 		]);
-		const status = queue[0]!;
-		expect(status.kind === "updateStatus" && status.input.reason).toBe(
+		expect(
+			queue
+				.filter((item) => item.kind === "updateStatus")
+				.map((item) => item.kind === "updateStatus" && item.input.status),
+		).toEqual(["in_progress", "blocked"]);
+		const blocked = queue[1]!;
+		expect(blocked.kind === "updateStatus" && blocked.input.reason).toBe(
 			"no parts",
 		);
+	});
+
+	it("collapses checklist ticks per item to the latest one", () => {
+		enqueueWrite({
+			kind: "updateChecklistItem",
+			taskId: "t1",
+			input: { id: "c1", status: "done" },
+		});
+		enqueueWrite({
+			kind: "updateChecklistItem",
+			taskId: "t1",
+			input: { id: "c2", status: "done" },
+		});
+		enqueueWrite({
+			kind: "updateChecklistItem",
+			taskId: "t1",
+			input: { id: "c1", status: "open" },
+		});
+
+		const queue = readQueue();
+		expect(queue).toHaveLength(2);
+		expect(
+			queue.map(
+				(item) =>
+					item.kind === "updateChecklistItem" && [
+						item.input.id,
+						item.input.status,
+					],
+			),
+		).toEqual([
+			["c2", "done"],
+			["c1", "open"],
+		]);
+	});
+
+	it("derives the pending status and checklist ticks per task", () => {
+		expect(pendingStatusFor(readQueue(), "t1")).toBeUndefined();
+
+		enqueueWrite({
+			kind: "updateStatus",
+			taskId: "t1",
+			input: { id: "t1", status: "in_progress" },
+		});
+		enqueueWrite({
+			kind: "updateStatus",
+			taskId: "t1",
+			input: { id: "t1", status: "blocked", reason: "no parts" },
+		});
+		enqueueWrite({
+			kind: "updateStatus",
+			taskId: "t2",
+			input: { id: "t2", status: "done" },
+		});
+		enqueueWrite({
+			kind: "updateChecklistItem",
+			taskId: "t1",
+			input: { id: "c1", status: "done" },
+		});
+		enqueueWrite({
+			kind: "updateChecklistItem",
+			taskId: "t2",
+			input: { id: "c9", status: "done" },
+		});
+
+		const queue = readQueue();
+		// The last queued step is what the task will end up as.
+		expect(pendingStatusFor(queue, "t1")).toBe("blocked");
+		expect(pendingStatusFor(queue, "t2")).toBe("done");
+		expect(pendingStatusFor(queue, "t3")).toBeUndefined();
+		expect(Array.from(pendingChecklistFor(queue, "t1"))).toEqual([
+			["c1", "done"],
+		]);
+		expect(pendingChecklistFor(queue, "t3").size).toBe(0);
 	});
 
 	it("preserves order so a photo replays before the 'done' that needs it", () => {
