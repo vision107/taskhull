@@ -738,23 +738,45 @@ describe("manufacturing routers", () => {
 				}),
 			).rejects.toMatchObject({ code: "BAD_REQUEST" });
 
-			// Finish the blockers (todo -> done is not a direct transition).
-			for (const title of ["Mount frame", "Assemble cabinet"]) {
-				await expect(
-					workerCaller.organization.work.updateStatus({
-						id: byTitle[title]!.id,
-						status: "done",
-					}),
-				).rejects.toMatchObject({ code: "BAD_REQUEST" });
-				await workerCaller.organization.work.updateStatus({
-					id: byTitle[title]!.id,
-					status: "in_progress",
-				});
-				await workerCaller.organization.work.updateStatus({
-					id: byTitle[title]!.id,
+			// Finish the blockers. "Mount frame" goes straight from todo to done
+			// (short jobs are often finished before anyone presses start); the
+			// task still counts as started at that moment.
+			const frameDone = await workerCaller.organization.work.updateStatus({
+				id: byTitle["Mount frame"]!.id,
+				status: "done",
+			});
+			expect(frameDone.status).toBe("done");
+			expect(frameDone.actualStartedAt).not.toBeNull();
+			expect(frameDone.actualCompletedAt).not.toBeNull();
+			// "Assemble cabinet" takes the classic start -> done route.
+			await workerCaller.organization.work.updateStatus({
+				id: byTitle["Assemble cabinet"]!.id,
+				status: "in_progress",
+			});
+			await workerCaller.organization.work.updateStatus({
+				id: byTitle["Assemble cabinet"]!.id,
+				status: "done",
+			});
+			// Other shortcuts remain closed to workers: blocked -> done needs a
+			// resume first.
+			await workerCaller.organization.work.updateStatus({
+				id: byTitle["Wire control cabinet"]!.id,
+				status: "blocked",
+				reason: "Waiting for cable",
+			});
+			await expect(
+				workerCaller.organization.work.updateStatus({
+					id: byTitle["Wire control cabinet"]!.id,
 					status: "done",
-				});
-			}
+				}),
+			).rejects.toMatchObject({
+				code: "BAD_REQUEST",
+				message: "Cannot move a task from blocked to done.",
+			});
+			await workerCaller.organization.work.updateStatus({
+				id: byTitle["Wire control cabinet"]!.id,
+				status: "in_progress",
+			});
 
 			// Wiring requires a photo.
 			await expect(
@@ -824,7 +846,11 @@ describe("manufacturing routers", () => {
 			});
 			expect(taskDetail.uploads).toHaveLength(1);
 			expect(taskDetail.documents).toHaveLength(0);
-			expect(taskDetail.comments).toHaveLength(1);
+			// The block reason from earlier is a comment too.
+			expect(taskDetail.comments.map((c) => c.body)).toEqual([
+				"Waiting for cable",
+				"Used the new cable ties.",
+			]);
 			expect(taskDetail.isAssigned).toBe(true);
 
 			// Activity was recorded.
