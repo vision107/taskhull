@@ -102,9 +102,11 @@ describe("mentions", () => {
 			expect(activeMentionQuery("@anna later", 0)).toBeNull();
 		});
 
-		it("gives up after a line break or two spaces", () => {
+		it("gives up after a line break, two spaces or sentence punctuation", () => {
 			expect(activeMentionQuery("@anna\nnext", 10)).toBeNull();
 			expect(activeMentionQuery("@anna  ", 7)).toBeNull();
+			expect(activeMentionQuery("@anna, can you", 14)).toBeNull();
+			expect(activeMentionQuery("@anna? hello", 12)).toBeNull();
 		});
 
 		it("does not reopen for a completed mention", () => {
@@ -113,6 +115,15 @@ describe("mentions", () => {
 			expect(activeMentionQuery(text, text.length)).toEqual({
 				start: 0,
 				query: "Anna Müller can you",
+			});
+			// Picked name directly followed by punctuation (user deleted the space).
+			expect(
+				activeMentionQuery("@Anna Müller.", 13, ["Anna Müller"]),
+			).toBeNull();
+			// "@Anna" picked must not swallow a new "@Annabel" query.
+			expect(activeMentionQuery("@Annabel", 8, ["Anna"])).toEqual({
+				start: 0,
+				query: "Annabel",
 			});
 		});
 	});

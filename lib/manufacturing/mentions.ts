@@ -164,12 +164,20 @@ export function activeMentionQuery(
 	const prev = at > 0 ? before[at - 1]! : " ";
 	if (/[\p{L}\p{N}_@]/u.test(prev)) return null;
 	const query = before.slice(at + 1);
-	// A mention query is a single line and short; two spaces mean "gave up".
-	if (query.includes("\n") || query.length > 60 || /\s{2}$/.test(query)) {
+	// A mention query is a single line and short; two spaces or sentence
+	// punctuation mean the user moved on to the rest of the message.
+	if (
+		query.includes("\n") ||
+		query.length > 60 ||
+		/\s{2}$/.test(query) ||
+		/[,;:!?]/.test(query)
+	) {
 		return null;
 	}
 	const completed = pickedNames.some(
-		(name) => query === name || query.startsWith(`${name} `),
+		(name) =>
+			query.startsWith(name) &&
+			!/[\p{L}\p{N}_]/u.test(query.charAt(name.length)),
 	);
 	if (completed) return null;
 	return { start: at, query };
