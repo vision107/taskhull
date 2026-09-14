@@ -23,10 +23,14 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import { ActivityTimeline } from "@/components/manufacturing/activity-timeline";
+import { CommentBody } from "@/components/manufacturing/comment-body";
+import {
+	MentionTextarea,
+	useMentionDraft,
+} from "@/components/manufacturing/mention-textarea";
 import { TaskStatusBadge } from "@/components/manufacturing/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { BlockReasonSheet } from "@/components/work/block-reason-sheet";
 import { useOffline } from "@/components/work/offline-provider";
@@ -66,6 +70,7 @@ export function WorkTaskDetail({
 
 	const offline = useOffline();
 	const { t, dateLocale } = useWorkLocale();
+	const commentDraft = useMentionDraft();
 	const pendingPhotos = offline.pending.filter(
 		(item): item is Extract<typeof item, { kind: "uploadPhoto" }> =>
 			item.kind === "uploadPhoto" && item.taskId === taskId,
@@ -123,7 +128,7 @@ export function WorkTaskDetail({
 			taskId,
 			input: { buildTaskId: taskId, body },
 		});
-		setComment("");
+		commentDraft.reset();
 		toast(t.detail.commentSavedOffline);
 	};
 
@@ -176,7 +181,7 @@ export function WorkTaskDetail({
 		});
 	const commentMutation = trpc.organization.work.addComment.useMutation({
 		onSuccess: () => {
-			setComment("");
+			commentDraft.reset();
 			invalidate();
 		},
 		onError: (error, variables) => {
@@ -199,7 +204,6 @@ export function WorkTaskDetail({
 			onError: (error) => toast.error(error.message),
 		});
 
-	const [comment, setComment] = React.useState("");
 	const [uploading, setUploading] = React.useState(false);
 	const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -732,7 +736,7 @@ export function WorkTaskDetail({
 											</button>
 										)}
 									</div>
-									<p className="text-sm whitespace-pre-wrap">{item.body}</p>
+									<CommentBody body={item.body} currentUserId={currentUserId} />
 								</div>
 							</li>
 						))}
@@ -755,9 +759,10 @@ export function WorkTaskDetail({
 											{t.detail.waitingToSync}
 										</span>
 									</div>
-									<p className="text-sm whitespace-pre-wrap">
-										{item.input.body}
-									</p>
+									<CommentBody
+										body={item.input.body}
+										currentUserId={currentUserId}
+									/>
 								</div>
 							</li>
 						))}
@@ -767,7 +772,7 @@ export function WorkTaskDetail({
 					className="flex items-end gap-2"
 					onSubmit={(event) => {
 						event.preventDefault();
-						const body = comment.trim();
+						const body = commentDraft.body;
 						if (!body) return;
 						if (!offline.online) {
 							queueComment(body);
@@ -776,19 +781,24 @@ export function WorkTaskDetail({
 						commentMutation.mutate({ buildTaskId: task.id, body });
 					}}
 				>
-					<Textarea
-						value={comment}
-						onChange={(event) => setComment(event.target.value)}
+					<MentionTextarea
+						draft={commentDraft.draft}
+						onDraftChange={commentDraft.setDraft}
+						excludeUserId={currentUserId}
+						labels={{
+							noMatches: t.detail.mentionNoMatches,
+							loading: t.detail.mentionLoading,
+						}}
 						placeholder={t.detail.commentPlaceholder}
 						rows={2}
-						className="min-h-0 flex-1 resize-none"
+						className="min-h-0 resize-none"
 						aria-label={t.detail.newComment}
 					/>
 					<Button
 						type="submit"
 						size="icon"
 						aria-label={t.detail.sendComment}
-						disabled={!comment.trim() || commentMutation.isPending}
+						disabled={!commentDraft.body || commentMutation.isPending}
 						loading={commentMutation.isPending}
 					>
 						<SendIcon />

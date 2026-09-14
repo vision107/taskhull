@@ -20,6 +20,7 @@ import {
 	buildTaskCommentTable,
 	buildTaskTable,
 } from "@/lib/db/schema/manufacturing-tables";
+import { memberTable } from "@/lib/db/schema/tables";
 import { ActivityAction, logActivity } from "@/lib/manufacturing/activity";
 import {
 	getOpenBlockers,
@@ -27,6 +28,10 @@ import {
 	getOwnedBuildTask,
 	syncBuildStatus,
 } from "@/lib/manufacturing/builds";
+import {
+	extractMentionedUserIds,
+	sanitizeMentions,
+} from "@/lib/manufacturing/mentions";
 import {
 	notifyTaskCommented,
 	notifyTaskStatusChanged,
@@ -499,12 +504,28 @@ export const organizationWorkRouter = createTRPCRouter({
 			// Any org member may comment; being assigned is not required so that
 			// helpers and planners can leave notes.
 
+			// Only current members can be mentioned; anything else becomes text.
+			const requestedMentions = extractMentionedUserIds(input.body);
+			const mentionedUserIds =
+				requestedMentions.length === 0
+					? []
+					: (
+							await db.query.memberTable.findMany({
+								where: and(
+									eq(memberTable.organizationId, ctx.organization.id),
+									inArray(memberTable.userId, requestedMentions),
+								),
+								columns: { userId: true },
+							})
+						).map((row) => row.userId);
+			const body = sanitizeMentions(input.body, new Set(mentionedUserIds));
+
 			const [comment] = await db
 				.insert(buildTaskCommentTable)
 				.values({
 					buildTaskId: task.id,
 					authorId: ctx.user.id,
-					body: input.body,
+					body,
 				})
 				.returning();
 
@@ -514,7 +535,10 @@ export const organizationWorkRouter = createTRPCRouter({
 				buildTaskId: task.id,
 				actorId: ctx.user.id,
 				action: ActivityAction.taskCommented,
-				metadata: { commentId: comment?.id ?? null },
+				metadata: {
+					commentId: comment?.id ?? null,
+					...(mentionedUserIds.length > 0 ? { mentionedUserIds } : {}),
+				},
 			});
 
 			const build = await getOwnedBuild(task.buildId, ctx.organization.id);
@@ -524,7 +548,8 @@ export const organizationWorkRouter = createTRPCRouter({
 				actorName: ctx.user.name,
 				task: { id: task.id, title: task.title, buildId: task.buildId },
 				serialNumber: build.serialNumber,
-				body: input.body,
+				body,
+				mentionedUserIds,
 			});
 
 			return comment;

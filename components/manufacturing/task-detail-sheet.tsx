@@ -31,6 +31,11 @@ import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { ActivityTimeline } from "@/components/manufacturing/activity-timeline";
 import { AssigneePicker } from "@/components/manufacturing/assignee-picker";
+import { CommentBody } from "@/components/manufacturing/comment-body";
+import {
+	MentionTextarea,
+	useMentionDraft,
+} from "@/components/manufacturing/mention-textarea";
 import { QuickAddTask } from "@/components/manufacturing/quick-add-task";
 import {
 	TaskStatusBadge,
@@ -58,7 +63,6 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import {
 	Tooltip,
 	TooltipContent,
@@ -74,6 +78,7 @@ import {
 	type ChecklistItemStatus,
 } from "@/lib/db/schema/enums";
 import { formatBytes, formatHours } from "@/lib/manufacturing/format";
+import { mentionsToPlainText } from "@/lib/manufacturing/mentions";
 import {
 	DOCUMENT_ACCEPT,
 	normalizeContentType,
@@ -105,7 +110,7 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 		const modal = useEnhancedModal();
 		const { user } = useSession();
 		const utils = trpc.useUtils();
-		const [comment, setComment] = React.useState("");
+		const commentDraft = useMentionDraft();
 		const [feedTab, setFeedTab] = React.useState<"comments" | "activity">(
 			"comments",
 		);
@@ -147,7 +152,7 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 			});
 		const commentMutation = trpc.organization.work.addComment.useMutation({
 			onSuccess: () => {
-				setComment("");
+				commentDraft.reset();
 				invalidate();
 			},
 			onError,
@@ -472,7 +477,7 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 										<span className="font-medium">Blocked by worker.</span>{" "}
 										{lastWorkerComment ? (
 											<span className="text-muted-foreground">
-												“{lastWorkerComment.body}” —{" "}
+												“{mentionsToPlainText(lastWorkerComment.body)}” —{" "}
 												{lastWorkerComment.author?.name ?? "Former member"},{" "}
 												{formatDistanceToNow(lastWorkerComment.createdAt, {
 													addSuffix: true,
@@ -1235,9 +1240,10 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 																		</button>
 																	)}
 																</div>
-																<p className="text-sm whitespace-pre-wrap">
-																	{item.body}
-																</p>
+																<CommentBody
+																	body={item.body}
+																	currentUserId={user?.id}
+																/>
 															</div>
 														</li>
 													))}
@@ -1259,22 +1265,23 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 								className="flex items-end gap-2 border-t px-6 py-4"
 								onSubmit={(event) => {
 									event.preventDefault();
-									const body = comment.trim();
+									const body = commentDraft.body;
 									if (!body) return;
 									commentMutation.mutate({ buildTaskId: task.id, body });
 								}}
 							>
-								<Textarea
+								<MentionTextarea
 									ref={commentRef}
-									value={comment}
-									onChange={(event) => setComment(event.target.value)}
+									draft={commentDraft.draft}
+									onDraftChange={commentDraft.setDraft}
+									excludeUserId={user?.id}
 									placeholder={
 										owners.length > 0
-											? `Reply to ${owners.map((a) => a.user.name).join(", ")}…`
-											: "Add a comment…"
+											? `Reply to ${owners.map((a) => a.user.name).join(", ")}… @ to mention`
+											: "Add a comment… @ to mention someone"
 									}
 									rows={2}
-									className="min-h-0 flex-1 resize-none"
+									className="min-h-0 resize-none"
 									onKeyDown={(event) => {
 										if (
 											(event.metaKey || event.ctrlKey) &&
@@ -1288,7 +1295,7 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 									type="submit"
 									size="icon"
 									aria-label="Send comment"
-									disabled={!comment.trim() || commentMutation.isPending}
+									disabled={!commentDraft.body || commentMutation.isPending}
 								>
 									<SendIcon className="size-4" />
 								</Button>
