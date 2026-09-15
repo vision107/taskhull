@@ -91,23 +91,56 @@ export function enqueueWrite(
 
 	const queue = readQueue();
 
-	// Collapse repeated writes to the same target: only the latest status of a
-	// task or checklist item matters; comments are all kept.
+	// Checklist ticks are idempotent, so only the latest one per item matters.
+	// Status changes are NOT collapsed: the server enforces a state machine
+	// (e.g. blocked -> in_progress -> done), so every step must be replayed in
+	// the order the worker performed it.
 	const deduped =
-		queued.kind === "addComment" || queued.kind === "uploadPhoto"
-			? queue
-			: queue.filter(
+		queued.kind === "updateChecklistItem"
+			? queue.filter(
 					(item) =>
 						!(
-							(item.kind === "updateStatus" ||
-								item.kind === "updateChecklistItem") &&
-							item.kind === queued.kind &&
+							item.kind === "updateChecklistItem" &&
 							item.input.id === queued.input.id
 						),
-				);
+				)
+			: queue;
 
 	writeQueue([...deduped, queued]);
 	return queued;
+}
+
+/**
+ * The status a task will have once the queue is replayed, or `undefined` when
+ * nothing is queued for it. The UI overlays this on server data so a stale
+ * response (e.g. served by the service worker while the network is down)
+ * cannot make a queued change disappear from the screen.
+ */
+export function pendingStatusFor(
+	queue: readonly QueuedWrite[],
+	taskId: string,
+): BuildTaskStatus | undefined {
+	let status: BuildTaskStatus | undefined;
+	for (const item of queue) {
+		if (item.kind === "updateStatus" && item.taskId === taskId) {
+			status = item.input.status;
+		}
+	}
+	return status;
+}
+
+/** Queued checklist ticks for a task, keyed by checklist item id. */
+export function pendingChecklistFor(
+	queue: readonly QueuedWrite[],
+	taskId: string,
+): Map<string, ChecklistItemStatus> {
+	const result = new Map<string, ChecklistItemStatus>();
+	for (const item of queue) {
+		if (item.kind === "updateChecklistItem" && item.taskId === taskId) {
+			result.set(item.input.id, item.input.status);
+		}
+	}
+	return result;
 }
 
 export function removeWrite(id: string): void {

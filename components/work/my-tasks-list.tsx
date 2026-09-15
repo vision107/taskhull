@@ -17,8 +17,10 @@ import * as React from "react";
 import { TaskStatusBadge } from "@/components/manufacturing/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useOffline } from "@/components/work/offline-provider";
 import { useWorkLocale } from "@/components/work/work-locale-provider";
 import type { WorkDictionary } from "@/lib/i18n/work";
+import { pendingStatusFor } from "@/lib/offline/queue";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 import type { AppRouter } from "@/trpc/routers/app";
@@ -43,14 +45,19 @@ function dateLabel(
 
 export function MyTasksList(): React.JSX.Element {
 	const { t } = useWorkLocale();
+	const { pending } = useOffline();
 	const [showDone, setShowDone] = React.useState(false);
-	const { data, isLoading, refetch, isRefetching } =
-		trpc.organization.work.myTasks.useQuery(
-			{ includeDone: showDone },
-			{ refetchOnWindowFocus: true },
-		);
+	const {
+		data: fetched,
+		isLoading,
+		refetch,
+		isRefetching,
+	} = trpc.organization.work.myTasks.useQuery(
+		{ includeDone: showDone },
+		{ refetchOnWindowFocus: true },
+	);
 
-	if (isLoading || !data) {
+	if (isLoading || !fetched) {
 		return (
 			<div className="space-y-3">
 				<Skeleton className="h-20 w-full rounded-xl" />
@@ -59,6 +66,12 @@ export function MyTasksList(): React.JSX.Element {
 			</div>
 		);
 	}
+
+	// Status changes still waiting in the offline queue win over server data.
+	const data = fetched.map((task) => {
+		const queued = pendingStatusFor(pending, task.id);
+		return queued === undefined ? task : { ...task, status: queued };
+	});
 
 	const active = data.filter(
 		(task) => task.status !== "done" && task.openBlockers.length === 0,

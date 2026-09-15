@@ -85,8 +85,14 @@ async function assertCanWorkOn(
 	}
 }
 
+// A worker may finish a task straight from "todo": short jobs are often done
+// before anyone gets to press start. The done-checks below still apply.
 const ALLOWED_TRANSITIONS: Record<BuildTaskStatus, BuildTaskStatus[]> = {
-	[BuildTaskStatus.todo]: [BuildTaskStatus.inProgress, BuildTaskStatus.blocked],
+	[BuildTaskStatus.todo]: [
+		BuildTaskStatus.inProgress,
+		BuildTaskStatus.blocked,
+		BuildTaskStatus.done,
+	],
 	[BuildTaskStatus.inProgress]: [
 		BuildTaskStatus.todo,
 		BuildTaskStatus.blocked,
