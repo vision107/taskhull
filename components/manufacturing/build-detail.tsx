@@ -133,7 +133,7 @@ export function BuildDetail({
 
 	return (
 		<div className="flex min-h-full flex-col">
-			<div className="flex h-11 shrink-0 items-center gap-2 border-b border-subtle px-2 sm:px-3">
+			<div className="flex shrink-0 flex-col gap-1 border-b border-subtle px-2 py-2 sm:h-11 sm:flex-row sm:items-center sm:gap-2 sm:px-3 sm:py-0">
 				<div className="min-w-0 flex-1">
 					<div className="flex min-w-0 items-center gap-2">
 						<h1 className="truncate text-sm font-semibold">
