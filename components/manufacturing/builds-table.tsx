@@ -133,7 +133,9 @@ function ProjectRow({
 						{title}
 					</Link>
 					{subtitle && (
-						<p className="truncate text-xs text-fg-tertiary">{subtitle}</p>
+						<p className="truncate text-xs text-fg-tertiary @2xl:hidden">
+							{subtitle}
+						</p>
 					)}
 				</div>
 			</div>
