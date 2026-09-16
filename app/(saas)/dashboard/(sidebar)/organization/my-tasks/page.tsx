@@ -8,7 +8,7 @@ import {
 	PageHeader,
 	PagePrimaryBar,
 } from "@/components/ui/custom/page";
-import { MyTasksList } from "@/components/work/my-tasks-list";
+import { MyTasksView } from "@/components/work/my-tasks-view";
 import { getSession } from "@/lib/auth/server";
 import { getWorkDictionary, resolveWorkLocale } from "@/lib/i18n/work";
 import { getPlannerPageContext } from "@/lib/manufacturing/page-context";
@@ -41,10 +41,9 @@ export default async function MyTasksPage(): Promise<React.JSX.Element> {
 					/>
 				</PagePrimaryBar>
 			</PageHeader>
-			<PageBody>
-				<div className="mx-auto w-full max-w-3xl px-4 pt-4 pb-10 sm:px-6 sm:pt-6">
-					<MyTasksList />
-				</div>
+			{/* The view owns its scroll regions: list on the left, task peek on the right. */}
+			<PageBody disableScroll className="min-h-0">
+				<MyTasksView />
 			</PageBody>
 		</Page>
 	);
