@@ -22,7 +22,7 @@ export function ProjectView({
 
 	return (
 		<div className="flex h-full min-h-0">
-			<div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+			<div className="min-h-0 min-w-0 flex-1 [scrollbar-gutter:stable] overflow-y-auto">
 				<BuildDetail
 					buildId={buildId}
 					canPlan={canPlan}
