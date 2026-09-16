@@ -2,20 +2,31 @@
 
 import * as React from "react";
 
-import { MyTasksList } from "@/components/work/my-tasks-list";
+import { BuildDetail } from "@/components/manufacturing/build-detail";
 import { TaskPeek, useTaskPeek } from "@/components/work/task-peek";
 
 /**
- * My tasks with an Asana-style side peek: on wide screens a task opens next
- * to the list (`?task=`), on phones it navigates to the full page.
+ * Project page with the same list + side peek as My tasks. On `lg+` a row
+ * opens `?task=` next to the list; on a phone it goes to the full task page.
  */
-export function MyTasksView(): React.JSX.Element {
+export function ProjectView({
+	buildId,
+	canPlan,
+	currentUserId,
+}: {
+	buildId: string;
+	canPlan: boolean;
+	currentUserId: string;
+}): React.JSX.Element {
 	const peek = useTaskPeek();
 
 	return (
 		<div className="flex h-full min-h-0">
 			<div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-				<MyTasksList
+				<BuildDetail
+					buildId={buildId}
+					canPlan={canPlan}
+					currentUserId={currentUserId}
 					selectedTaskId={peek.showPeek ? peek.taskId : null}
 					onOpenTask={peek.open}
 				/>

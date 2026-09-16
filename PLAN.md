@@ -408,10 +408,15 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
      next to the list via `?task=`; phones go to the full page. Shared
      layout primitives live in `components/work/task-layout.tsx` and are
      used by the planner `TaskDetailSheet` too.
-  6. _Project rows._ ✅ Same dense treatment on `/dashboard/organization/projects`.
+  6. _Project list + project page._ ✅ Projects index uses the same dense
+     rows. Opening a project uses the My tasks design: phase sections,
+     completion circles, Name / Due / Assignees / Progress / Status columns,
+     and the same `?task=` side peek (shared `useTaskPeek`). Timeline and
+     Activity stay as toolbar tabs. Planner row actions (assign, status,
+     quick-add, subtasks) are unchanged.
   7. _Next._ Fold `TaskDetailSheet` and `WorkTaskDetail` into one `TaskView`
-     (planner fields stay inline-editable; worker actions as today). Dense
-     rows on the project Gantt / assignment grid.
+     so the peek is inline-editable for planners. Dense rows on the
+     assignment grid.
 
 ## Local setup
 
