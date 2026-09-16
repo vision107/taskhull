@@ -37,13 +37,13 @@ type MyTask =
  * the same rows collapse gracefully when the side peek takes half the screen.
  *
  *   narrow  → name (two lines) · due
- *   @2xl    → name · due · project · status
- *   @4xl    → name · due · project · progress · status
+ *   @xl     → name · due · project · status
+ *   @3xl    → name · due · project · progress · status
  */
 const gridColumns =
-	"grid grid-cols-[minmax(0,1fr)_5.5rem] @2xl:grid-cols-[minmax(0,1fr)_7rem_13rem_7.5rem] @4xl:grid-cols-[minmax(0,1fr)_7rem_14rem_9rem_7.5rem]";
+	"grid grid-cols-[minmax(0,1fr)_5.5rem] @xl:grid-cols-[minmax(0,1fr)_7rem_minmax(9rem,13rem)_7.5rem] @3xl:grid-cols-[minmax(0,1fr)_7rem_minmax(9rem,14rem)_9rem_7.5rem]";
 
-const cellBorder = "@2xl:border-l @2xl:border-subtle";
+const cellBorder = "@xl:border-l @xl:border-subtle";
 
 function dateLabel(
 	task: MyTask,
@@ -164,13 +164,13 @@ export function MyTasksList({
 			<div
 				className={cn(
 					gridColumns,
-					"sticky top-0 z-10 hidden h-8 shrink-0 items-center border-b border-subtle bg-surface-1 text-xs text-fg-tertiary @2xl:grid",
+					"sticky top-0 z-10 hidden h-8 shrink-0 items-center border-b border-subtle bg-surface-1 text-xs text-fg-tertiary @xl:grid",
 				)}
 			>
 				<div className="pl-3">{t.list.columns.name}</div>
 				<div className={cn(cellBorder, "px-2")}>{t.list.columns.due}</div>
 				<div className={cn(cellBorder, "px-2")}>{t.list.columns.project}</div>
-				<div className={cn(cellBorder, "hidden px-2 @4xl:block")}>
+				<div className={cn(cellBorder, "hidden px-2 @3xl:block")}>
 					{t.list.columns.progress}
 				</div>
 				<div className={cn(cellBorder, "px-2")}>{t.list.columns.status}</div>
@@ -291,13 +291,13 @@ function TaskRow({
 		<li
 			className={cn(
 				gridColumns,
-				"group/row relative min-h-13 items-center border-b border-subtle text-sm transition-colors @2xl:min-h-9",
+				"group/row relative min-h-13 items-center border-b border-subtle text-sm transition-colors @xl:min-h-9",
 				selected ? "bg-layer-1" : "hover:bg-layer-transparent-hover",
 				isDone && "text-fg-secondary",
 			)}
 		>
 			{/* Name */}
-			<div className="flex min-w-0 items-center gap-2 py-1.5 pr-2 pl-2 sm:pl-3 @2xl:py-0">
+			<div className="flex min-w-0 items-center gap-2 py-1.5 pr-2 pl-2 sm:pl-3 @xl:py-0">
 				<button
 					type="button"
 					aria-label={t.list.markDone(task.title)}
@@ -331,7 +331,7 @@ function TaskRow({
 						)}
 						{task.title}
 					</Link>
-					<p className="truncate text-xs text-fg-tertiary @2xl:hidden">
+					<p className="truncate text-xs text-fg-tertiary @xl:hidden">
 						{project} · {task.build.serialNumber}
 						{task.phase ? ` · ${task.phase}` : ""}
 					</p>
@@ -344,7 +344,7 @@ function TaskRow({
 				)}
 				{task.subtaskTotal > 0 && (
 					<span
-						className="hidden shrink-0 items-center gap-0.5 text-xs text-fg-tertiary tabular-nums @2xl:inline-flex"
+						className="hidden shrink-0 items-center gap-0.5 text-xs text-fg-tertiary tabular-nums @xl:inline-flex"
 						title={t.list.subtasks(task.subtaskTotal)}
 					>
 						<ListTreeIcon className="size-3.5" />
@@ -357,7 +357,7 @@ function TaskRow({
 			<div
 				className={cn(
 					cellBorder,
-					"flex h-full items-center justify-end px-2 text-xs whitespace-nowrap tabular-nums @2xl:justify-start @2xl:text-13",
+					"flex h-full items-center justify-end px-2 text-xs whitespace-nowrap tabular-nums @xl:justify-start @xl:text-13",
 					date.overdue ? "font-medium text-warning" : "text-fg-secondary",
 				)}
 			>
@@ -368,7 +368,7 @@ function TaskRow({
 			<div
 				className={cn(
 					cellBorder,
-					"hidden h-full min-w-0 items-center px-2 @2xl:flex",
+					"hidden h-full min-w-0 items-center px-2 @xl:flex",
 				)}
 			>
 				<span className="inline-flex max-w-full items-center gap-1.5 rounded bg-layer-1 px-1.5 py-px text-xs">
@@ -384,7 +384,7 @@ function TaskRow({
 			<div
 				className={cn(
 					cellBorder,
-					"hidden h-full items-center gap-2.5 px-2 text-xs text-fg-tertiary @4xl:flex",
+					"hidden h-full items-center gap-2.5 px-2 text-xs text-fg-tertiary @3xl:flex",
 				)}
 			>
 				{task.checklistTotal > 0 && (
@@ -407,7 +407,7 @@ function TaskRow({
 
 			{/* Status */}
 			<div
-				className={cn(cellBorder, "hidden h-full items-center px-2 @2xl:flex")}
+				className={cn(cellBorder, "hidden h-full items-center px-2 @xl:flex")}
 			>
 				<TaskStatusBadge status={status} labels={t.status} />
 			</div>

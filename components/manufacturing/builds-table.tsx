@@ -45,15 +45,15 @@ export function formatEndDate(value: string | null | undefined): string {
  * template's "used by" list.
  *
  *   narrow  → name (two lines) · status
- *   @2xl    → name · template · status · start · progress
- *   @4xl    → name · template · status · start · end · progress
+ *   @xl     → name · template · status · start · progress
+ *   @3xl    → name · template · status · start · end · progress
  */
 const gridColumns = (showTemplate: boolean) =>
 	showTemplate
-		? "grid grid-cols-[minmax(0,1fr)_auto] @2xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_7.5rem_6.5rem_10rem] @4xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_7.5rem_6.5rem_6.5rem_11rem]"
-		: "grid grid-cols-[minmax(0,1fr)_auto] @2xl:grid-cols-[minmax(0,1fr)_7.5rem_6.5rem_10rem] @4xl:grid-cols-[minmax(0,1fr)_7.5rem_6.5rem_6.5rem_11rem]";
+		? "grid grid-cols-[minmax(0,1fr)_auto] @xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_7.5rem_6.5rem_10rem] @3xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_7.5rem_6.5rem_6.5rem_11rem]"
+		: "grid grid-cols-[minmax(0,1fr)_auto] @xl:grid-cols-[minmax(0,1fr)_7.5rem_6.5rem_10rem] @3xl:grid-cols-[minmax(0,1fr)_7.5rem_6.5rem_6.5rem_11rem]";
 
-const cellBorder = "@2xl:border-l @2xl:border-subtle";
+const cellBorder = "@xl:border-l @xl:border-subtle";
 
 export function BuildsTable({
 	builds,
@@ -69,14 +69,14 @@ export function BuildsTable({
 			<div
 				className={cn(
 					columns,
-					"sticky top-0 z-10 hidden h-8 items-center border-b border-subtle bg-surface-1 text-xs text-fg-tertiary @2xl:grid",
+					"sticky top-0 z-10 hidden h-8 items-center border-b border-subtle bg-surface-1 text-xs text-fg-tertiary @xl:grid",
 				)}
 			>
 				<div className="px-3">Project</div>
 				{showTemplate && <div className={cn(cellBorder, "px-2")}>Template</div>}
 				<div className={cn(cellBorder, "px-2")}>Status</div>
 				<div className={cn(cellBorder, "px-2")}>Start</div>
-				<div className={cn(cellBorder, "hidden px-2 @4xl:block")}>End</div>
+				<div className={cn(cellBorder, "hidden px-2 @3xl:block")}>End</div>
 				<div className={cn(cellBorder, "px-2")}>Progress</div>
 			</div>
 			<ul>
@@ -120,10 +120,10 @@ function ProjectRow({
 		<li
 			className={cn(
 				columns,
-				"relative min-h-13 items-center border-b border-subtle text-sm transition-colors hover:bg-layer-transparent-hover @2xl:min-h-9",
+				"relative min-h-13 items-center border-b border-subtle text-sm transition-colors hover:bg-layer-transparent-hover @xl:min-h-9",
 			)}
 		>
-			<div className="flex min-w-0 items-center gap-2 py-1.5 pr-2 pl-3 @2xl:py-0">
+			<div className="flex min-w-0 items-center gap-2 py-1.5 pr-2 pl-3 @xl:py-0">
 				<span className="size-2 shrink-0 rounded-sm bg-primary/70" />
 				<div className="min-w-0 flex-1">
 					<Link
@@ -133,7 +133,7 @@ function ProjectRow({
 						{title}
 					</Link>
 					{subtitle && (
-						<p className="truncate text-xs text-fg-tertiary @2xl:hidden">
+						<p className="truncate text-xs text-fg-tertiary @xl:hidden">
 							{subtitle}
 						</p>
 					)}
@@ -144,7 +144,7 @@ function ProjectRow({
 				<div
 					className={cn(
 						cellBorder,
-						"hidden h-full min-w-0 items-center px-2 @2xl:flex",
+						"hidden h-full min-w-0 items-center px-2 @xl:flex",
 					)}
 				>
 					{build.templateVersion?.template ? (
@@ -166,7 +166,7 @@ function ProjectRow({
 			<div
 				className={cn(
 					cellBorder,
-					"flex h-full items-center justify-end px-2 @2xl:justify-start",
+					"flex h-full items-center justify-end px-2 @xl:justify-start",
 				)}
 			>
 				<BuildStatusBadge status={build.status} />
@@ -175,7 +175,7 @@ function ProjectRow({
 			<div
 				className={cn(
 					cellBorder,
-					"hidden h-full items-center px-2 text-13 text-fg-secondary tabular-nums @2xl:flex",
+					"hidden h-full items-center px-2 text-13 text-fg-secondary tabular-nums @xl:flex",
 				)}
 			>
 				{formatDate(build.plannedStartDate)}
@@ -184,7 +184,7 @@ function ProjectRow({
 			<div
 				className={cn(
 					cellBorder,
-					"hidden h-full items-center px-2 text-13 text-fg-secondary tabular-nums @4xl:flex",
+					"hidden h-full items-center px-2 text-13 text-fg-secondary tabular-nums @3xl:flex",
 				)}
 			>
 				{formatEndDate(build.plannedEndDate)}
@@ -193,7 +193,7 @@ function ProjectRow({
 			<div
 				className={cn(
 					cellBorder,
-					"hidden h-full items-center gap-2 px-2 @2xl:flex",
+					"hidden h-full items-center gap-2 px-2 @xl:flex",
 				)}
 			>
 				<div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-layer-1">
