@@ -6,19 +6,23 @@ import {
 	CameraIcon,
 	CheckCircle2Icon,
 	ChevronRightIcon,
+	CircleDotIcon,
+	CircleIcon,
+	EyeIcon,
 	ListChecksIcon,
 	ListTreeIcon,
 	LockIcon,
 	MessageSquareTextIcon,
+	OctagonAlertIcon,
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 
-import { TaskStatusBadge } from "@/components/manufacturing/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOffline } from "@/components/work/offline-provider";
 import { useWorkLocale } from "@/components/work/work-locale-provider";
+import type { BuildTaskStatus } from "@/lib/db/schema/enums";
 import type { WorkDictionary } from "@/lib/i18n/work";
 import { pendingStatusFor } from "@/lib/offline/queue";
 import { cn } from "@/lib/utils";
@@ -59,10 +63,13 @@ export function MyTasksList(): React.JSX.Element {
 
 	if (isLoading || !fetched) {
 		return (
-			<div className="space-y-3">
-				<Skeleton className="h-20 w-full rounded-xl" />
-				<Skeleton className="h-20 w-full rounded-xl" />
-				<Skeleton className="h-20 w-full rounded-xl" />
+			<div className="space-y-4">
+				<Skeleton className="h-7 w-32" />
+				<div className="space-y-px overflow-hidden rounded-lg border border-subtle">
+					<Skeleton className="h-14 w-full rounded-none" />
+					<Skeleton className="h-14 w-full rounded-none" />
+					<Skeleton className="h-14 w-full rounded-none" />
+				</div>
 			</div>
 		);
 	}
@@ -73,21 +80,25 @@ export function MyTasksList(): React.JSX.Element {
 		return queued === undefined ? task : { ...task, status: queued };
 	});
 
-	const active = data.filter(
-		(task) => task.status !== "done" && task.openBlockers.length === 0,
-	);
-	const waiting = data.filter(
-		(task) => task.status !== "done" && task.openBlockers.length > 0,
-	);
-	const done = data.filter((task) => task.status === "done");
+	const active: MyTask[] = [];
+	const waiting: MyTask[] = [];
+	const done: MyTask[] = [];
+	for (const task of data) {
+		if (task.status === "done") done.push(task);
+		else if (task.openBlockers.length > 0) waiting.push(task);
+		else active.push(task);
+	}
 
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
-				<h1 className="text-lg font-semibold">{t.list.title}</h1>
+				<h1 className="tracking-display text-xl font-semibold">
+					{t.list.title}
+				</h1>
 				<Button
 					variant="ghost"
 					size="sm"
+					className="text-fg-secondary"
 					onClick={() => refetch()}
 					loading={isRefetching}
 				>
@@ -96,17 +107,17 @@ export function MyTasksList(): React.JSX.Element {
 			</div>
 
 			{data.length === 0 && (
-				<div className="rounded-xl border bg-background px-4 py-10 text-center">
-					<CheckCircle2Icon className="mx-auto size-8 text-emerald-500" />
-					<p className="mt-2 font-medium">{t.list.emptyTitle}</p>
-					<p className="text-sm text-muted-foreground">{t.list.emptyHint}</p>
+				<div className="rounded-lg border border-dashed border-strong px-4 py-12 text-center">
+					<CheckCircle2Icon className="mx-auto size-8 text-success" />
+					<p className="mt-3 font-medium">{t.list.emptyTitle}</p>
+					<p className="text-sm text-fg-secondary">{t.list.emptyHint}</p>
 				</div>
 			)}
 
 			{active.length > 0 && (
 				<Section title={t.list.ready} count={active.length}>
 					{active.map((task) => (
-						<TaskCard key={task.id} task={task} />
+						<TaskRow key={task.id} task={task} />
 					))}
 				</Section>
 			)}
@@ -114,29 +125,29 @@ export function MyTasksList(): React.JSX.Element {
 			{waiting.length > 0 && (
 				<Section title={t.list.waiting} count={waiting.length}>
 					{waiting.map((task) => (
-						<TaskCard key={task.id} task={task} />
+						<TaskRow key={task.id} task={task} />
 					))}
 				</Section>
 			)}
 
-			<div className="pt-2">
+			{showDone && done.length > 0 && (
+				<Section title={t.list.finished} count={done.length}>
+					{done.map((task) => (
+						<TaskRow key={task.id} task={task} />
+					))}
+				</Section>
+			)}
+
+			<div className="flex justify-center pt-1">
 				<Button
-					variant="outline"
+					variant="ghost"
 					size="sm"
-					className="w-full"
+					className="text-fg-secondary"
 					onClick={() => setShowDone((value) => !value)}
 				>
 					{showDone ? t.list.hideDone : t.list.showDone}
 				</Button>
 			</div>
-
-			{showDone && done.length > 0 && (
-				<Section title={t.list.finished} count={done.length}>
-					{done.map((task) => (
-						<TaskCard key={task.id} task={task} />
-					))}
-				</Section>
-			)}
 		</div>
 	);
 }
@@ -148,87 +159,119 @@ function Section({
 }: React.PropsWithChildren<{ title: string; count: number }>) {
 	return (
 		<section className="space-y-2">
-			<h2 className="px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-				{title} · {count}
+			<h2 className="flex items-baseline gap-1.5 px-1 text-xs font-medium tracking-wide text-fg-tertiary uppercase">
+				{title}
+				<span className="text-fg-placeholder tabular-nums">{count}</span>
 			</h2>
-			<div className="space-y-2">{children}</div>
+			<ul className="divide-y divide-subtle overflow-hidden rounded-lg border border-subtle bg-surface-1">
+				{children}
+			</ul>
 		</section>
 	);
 }
 
-function TaskCard({ task }: { task: MyTask }): React.JSX.Element {
+const statusGlyph: Record<
+	BuildTaskStatus,
+	{ icon: React.ComponentType<{ className?: string }>; className: string }
+> = {
+	todo: { icon: CircleIcon, className: "text-fg-placeholder" },
+	in_progress: { icon: CircleDotIcon, className: "text-primary" },
+	blocked: { icon: OctagonAlertIcon, className: "text-warning" },
+	review: { icon: EyeIcon, className: "text-fg-secondary" },
+	done: { icon: CheckCircle2Icon, className: "text-success" },
+};
+
+function StatusGlyph({
+	status,
+	label,
+}: {
+	status: BuildTaskStatus;
+	label: string;
+}): React.JSX.Element {
+	const glyph = statusGlyph[status];
+	return (
+		<span title={label} className="flex shrink-0 items-center">
+			<glyph.icon className={cn("size-[18px]", glyph.className)} />
+			<span className="sr-only">{label}</span>
+		</span>
+	);
+}
+
+/**
+ * One task as a compact row: status glyph, title with context, and the
+ * details a worker needs to pick the next job (date, checklist, requirements).
+ * Same row on a phone and on a desktop; only the density changes.
+ */
+function TaskRow({ task }: { task: MyTask }): React.JSX.Element {
 	const { t, dateLocale } = useWorkLocale();
 	const date = dateLabel(task, t, dateLocale);
 	const blocked = task.openBlockers.length > 0;
+	const status = task.status as BuildTaskStatus;
+	const project =
+		task.build.templateVersion?.template.name ?? task.build.name ?? "Project";
+
 	return (
-		<Link
-			href={`/dashboard/work/tasks/${task.id}`}
-			className={cn(
-				"flex items-center gap-3 rounded-xl border bg-background p-4 shadow-xs transition-colors active:bg-muted/60",
-				task.status === "done" && "opacity-70",
-			)}
-		>
-			<div className="min-w-0 flex-1">
-				<div className="flex items-center gap-2">
-					<p className="truncate font-medium">
+		<li>
+			<Link
+				href={`/dashboard/organization/tasks/${task.id}`}
+				className={cn(
+					"group/row flex min-h-14 items-center gap-3 px-3 py-2.5 transition-colors hover:bg-layer-transparent-hover active:bg-layer-1 md:min-h-12 md:py-2",
+					status === "done" && "opacity-60",
+				)}
+			>
+				<StatusGlyph status={status} label={t.status[status]} />
+
+				<div className="min-w-0 flex-1">
+					<p className="truncate text-sm leading-5 font-medium">
 						{task.parent && (
-							<span className="text-muted-foreground">
-								{task.parent.title} ›{" "}
-							</span>
+							<span className="text-fg-tertiary">{task.parent.title} › </span>
 						)}
 						{task.title}
+						{blocked && (
+							<LockIcon className="ml-1.5 inline size-3.5 align-[-2px] text-fg-tertiary" />
+						)}
 					</p>
-					{blocked && (
-						<LockIcon className="size-3.5 shrink-0 text-muted-foreground" />
-					)}
+					<p className="truncate text-13 text-fg-tertiary">
+						{project} · {task.build.serialNumber}
+						{task.phase ? ` · ${task.phase}` : ""}
+					</p>
 				</div>
-				<p className="mt-0.5 truncate text-sm text-muted-foreground">
-					{task.build.templateVersion?.template.name ??
-						task.build.name ??
-						"Project"}{" "}
-					· {task.build.serialNumber}
-					{task.phase ? ` · ${task.phase}` : ""}
-				</p>
-				<div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+
+				<div className="flex shrink-0 items-center gap-3 text-xs text-fg-tertiary">
+					<div className="hidden items-center gap-3 sm:flex">
+						{task.checklistTotal > 0 && (
+							<span className="inline-flex items-center gap-1 tabular-nums">
+								<ListChecksIcon className="size-3.5" />
+								{task.checklistDone}/{task.checklistTotal}
+							</span>
+						)}
+						{task.subtaskTotal > 0 && (
+							<span className="inline-flex items-center gap-1 tabular-nums">
+								<ListTreeIcon className="size-3.5" />
+								{task.subtaskDone}/{task.subtaskTotal}
+							</span>
+						)}
+						{task.requiresPhoto && (
+							<CameraIcon className="size-3.5" aria-label={t.list.photo} />
+						)}
+						{task.requiresComment && (
+							<MessageSquareTextIcon
+								className="size-3.5"
+								aria-label={t.list.comment}
+							/>
+						)}
+					</div>
 					<span
 						className={cn(
-							date.overdue && "font-medium text-red-600 dark:text-red-400",
+							"whitespace-nowrap tabular-nums",
+							date.overdue && "font-medium text-warning",
 						)}
 					>
 						{date.text}
 					</span>
-					{task.checklistTotal > 0 && (
-						<span className="inline-flex items-center gap-1">
-							<ListChecksIcon className="size-3.5" />
-							{task.checklistDone}/{task.checklistTotal}
-						</span>
-					)}
-					{task.subtaskTotal > 0 && (
-						<span className="inline-flex items-center gap-1">
-							<ListTreeIcon className="size-3.5" />
-							{task.subtaskDone}/{task.subtaskTotal}
-						</span>
-					)}
-					{task.requiresPhoto && (
-						<span className="inline-flex items-center gap-1">
-							<CameraIcon className="size-3.5" />
-							{t.list.photo}
-						</span>
-					)}
-					{task.requiresComment && (
-						<span className="inline-flex items-center gap-1">
-							<MessageSquareTextIcon className="size-3.5" />
-							{t.list.comment}
-						</span>
-					)}
-					<TaskStatusBadge
-						status={task.status}
-						className="ml-auto"
-						labels={t.status}
-					/>
+					<ChevronRightIcon className="size-4 text-fg-placeholder md:hidden" />
 				</div>
-			</div>
-			<ChevronRightIcon className="size-5 shrink-0 text-muted-foreground" />
-		</Link>
+			</Link>
+		</li>
 	);
 }

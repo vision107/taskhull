@@ -63,6 +63,10 @@ const en = {
 		dashboard: "Dashboard",
 		projects: "Projects",
 		templates: "Templates",
+		inbox: "Inbox",
+		home: "Home",
+		settings: "Settings",
+		menu: "Menu",
 	},
 	orgPicker: {
 		noTeamTitle: "You're not part of a team yet",
@@ -93,6 +97,7 @@ const en = {
 		done: "Done",
 	} satisfies Record<BuildTaskStatus, string>,
 	detail: {
+		taskTitle: "Task",
 		back: "Back to my tasks",
 		unscheduled: "Unscheduled",
 		days: (n: number) => `${n}d`,
@@ -210,6 +215,10 @@ const de: WorkDictionary = {
 		dashboard: "Übersicht",
 		projects: "Projekte",
 		templates: "Vorlagen",
+		inbox: "Eingang",
+		home: "Start",
+		settings: "Einstellungen",
+		menu: "Menü",
 	},
 	orgPicker: {
 		noTeamTitle: "Du bist noch in keinem Team",
@@ -241,6 +250,7 @@ const de: WorkDictionary = {
 		done: "Erledigt",
 	},
 	detail: {
+		taskTitle: "Aufgabe",
 		back: "Zurück zu meinen Aufgaben",
 		unscheduled: "Nicht geplant",
 		days: (n) => `${n} T`,

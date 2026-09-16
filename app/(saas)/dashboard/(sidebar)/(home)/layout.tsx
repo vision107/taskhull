@@ -3,6 +3,7 @@ import type * as React from "react";
 
 import { SidebarLayout } from "@/components/sidebar-layout";
 import { UserMenuItems } from "@/components/user/user-menu-items";
+import { UserMobileNav } from "@/components/user/user-mobile-nav";
 
 export default async function AccountLayout({
 	children,
@@ -13,6 +14,7 @@ export default async function AccountLayout({
 			defaultOpen={cookieStore.get("sidebar_state")?.value !== "false"}
 			defaultWidth={cookieStore.get("sidebar_width")?.value}
 			menuItems={<UserMenuItems />}
+			mobileNav={<UserMobileNav />}
 		>
 			{children}
 		</SidebarLayout>

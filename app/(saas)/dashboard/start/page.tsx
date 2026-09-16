@@ -7,7 +7,7 @@ import { ActivateOrganization } from "@/components/organization/activate-organiz
 import { getSession } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { memberTable } from "@/lib/db/schema/tables";
-import { canPlan } from "@/lib/manufacturing/permissions";
+import { homeForRole } from "@/lib/manufacturing/permissions";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -17,8 +17,8 @@ export const metadata: Metadata = {
 };
 
 /**
- * Post sign-in landing. Sends workers straight to their task list and
- * planners to their organization's dashboard; only users with several
+ * Post sign-in landing. Everyone uses the same shell; planners land on the
+ * organization dashboard, workers on their task list. Only users with several
  * organizations (or none yet) see the organization picker.
  */
 export default async function StartPage(): Promise<React.JSX.Element> {
@@ -36,28 +36,21 @@ export default async function StartPage(): Promise<React.JSX.Element> {
 		redirect("/dashboard");
 	}
 
-	const planning = memberships.filter((m) => canPlan(m.role));
-
-	// Worker everywhere → phone task list (it picks the organization itself).
-	if (planning.length === 0) {
-		redirect("/dashboard/work");
-	}
-
 	const activeId = session.session.activeOrganizationId ?? null;
 	const activeMembership = activeId
 		? memberships.find((m) => m.organizationId === activeId)
 		: undefined;
 
-	if (activeMembership && canPlan(activeMembership.role)) {
-		redirect("/dashboard/organization");
+	if (activeMembership) {
+		redirect(homeForRole(activeMembership.role));
 	}
 
-	// Planner in exactly one organization: activate it and go there.
-	if (planning.length === 1 && planning[0]) {
+	// Exactly one organization: activate it and go straight in.
+	if (memberships.length === 1 && memberships[0]) {
 		return (
 			<ActivateOrganization
-				organizationId={planning[0].organizationId}
-				redirectTo="/dashboard/organization"
+				organizationId={memberships[0].organizationId}
+				redirectTo={homeForRole(memberships[0].role)}
 			/>
 		);
 	}

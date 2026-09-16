@@ -1180,7 +1180,9 @@ describe("manufacturing routers", () => {
 			expect(workerInbox).toHaveLength(1);
 			expect(workerInbox[0]!.title).toBe("3 tasks assigned to you");
 			expect(workerInbox[0]!.message).toBe("Mount frame on 3 builds");
-			expect(workerInbox[0]!.actionUrl).toBe("/dashboard/work");
+			expect(workerInbox[0]!.actionUrl).toBe(
+				"/dashboard/organization/my-tasks",
+			);
 
 			// Worker blocks one task and comments -> planner gets both.
 			await w.organization.work.updateStatus({
@@ -1293,7 +1295,7 @@ describe("manufacturing routers", () => {
 			const ready = inbox.find((n) => n.title.startsWith("Ready to start"))!;
 			expect(ready.title).toBe("Ready to start: Wire control cabinet");
 			expect(ready.actionUrl).toBe(
-				`/dashboard/work/tasks/${byTitle["Wire control cabinet"]!.id}`,
+				`/dashboard/organization/tasks/${byTitle["Wire control cabinet"]!.id}`,
 			);
 		});
 

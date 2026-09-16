@@ -214,7 +214,7 @@ export function WorkTaskDetail({
 
 	if (isLoading || !task) {
 		return (
-			<div className="space-y-3">
+			<div className="mx-auto w-full max-w-3xl space-y-3 px-4 pt-4 sm:px-6 sm:pt-6">
 				<Skeleton className="h-8 w-40" />
 				<Skeleton className="h-32 w-full rounded-xl" />
 				<Skeleton className="h-48 w-full rounded-xl" />
@@ -371,473 +371,496 @@ export function WorkTaskDetail({
 	};
 
 	return (
-		<div className="space-y-4 pb-28">
-			{/* Top bar */}
-			<div className="flex items-center gap-2">
-				<Link
-					href="/dashboard/work"
-					aria-label={t.detail.back}
-					className="inline-flex size-9 shrink-0 items-center justify-center rounded-md hover:bg-muted"
-				>
-					<ArrowLeftIcon className="size-5" />
-				</Link>
-				<div className="min-w-0 flex-1">
-					<p className="truncate text-xs text-muted-foreground">
-						{task.build.templateVersion?.template.name ??
-							task.build.name ??
-							"Project"}{" "}
-						· {task.build.serialNumber}
-						{task.phase ? ` · ${task.phase}` : ""}
-					</p>
-					{task.parent && (
+		<div className="flex h-full min-h-0 flex-col">
+			<div className="min-h-0 flex-1 overflow-y-auto">
+				<div className="mx-auto w-full max-w-3xl space-y-4 px-4 pt-4 pb-10 sm:px-6 sm:pt-6">
+					{/* Top bar */}
+					<div className="flex items-center gap-2">
 						<Link
-							href={`/dashboard/work/tasks/${task.parent.id}`}
-							className="inline-flex max-w-full items-center gap-1 truncate text-xs text-muted-foreground hover:underline"
+							href="/dashboard/organization/my-tasks"
+							aria-label={t.detail.back}
+							className="inline-flex size-9 shrink-0 items-center justify-center rounded-md hover:bg-muted"
 						>
-							<ListTreeIcon className="size-3 shrink-0" />
-							<span className="truncate">{task.parent.title}</span>
+							<ArrowLeftIcon className="size-5" />
 						</Link>
-					)}
-					<h1 className="truncate text-lg leading-tight font-semibold">
-						{task.title}
-					</h1>
-				</div>
-				<TaskStatusBadge status={status} labels={t.status} />
-			</div>
-
-			{/* Schedule + assignees */}
-			<div className="rounded-xl border bg-background p-4 text-sm">
-				<div className="flex flex-wrap items-center justify-between gap-2">
-					<span className="text-muted-foreground">
-						{task.startDate
-							? `${format(parseISO(task.startDate), "EEE, d. MMM", { locale: dateLocale })} · ${t.detail.days(task.plannedDurationDays)}`
-							: t.detail.unscheduled}
-						{task.plannedHours != null &&
-							` · ${t.detail.hours(task.plannedHours)}`}
-					</span>
-					<span className="flex items-center gap-1">
-						{task.assignments.map((assignment) => (
-							<UserAvatar
-								key={assignment.id}
-								name={assignment.user.name}
-								src={assignment.user.image}
-								className="size-6"
-								fallbackClassName="text-[10px]"
-							/>
-						))}
-					</span>
-				</div>
-				{blocked && (
-					<div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-						<LockIcon className="mt-0.5 size-4 shrink-0" />
-						<div>
-							<p className="font-medium">{t.detail.waitingOn}</p>
-							<ul className="mt-0.5 list-inside list-disc">
-								{task.blockers.map((blocker) => (
-									<li key={blocker.id}>{blocker.title}</li>
-								))}
-							</ul>
-						</div>
-					</div>
-				)}
-				{!task.isAssigned && canEdit && (
-					<p className="mt-3 text-xs text-muted-foreground">
-						{t.detail.viewingAsPlanner}
-					</p>
-				)}
-			</div>
-
-			{/* Subtasks: each is its own task; this one is confirmed by hand */}
-			{task.subtasks.length > 0 && (
-				<Card
-					title={t.detail.subtasks}
-					aside={`${task.subtasks.length - openSubtasks}/${task.subtasks.length}`}
-				>
-					<ul className="divide-y">
-						{task.subtasks.map((subtask) => (
-							<li key={subtask.id}>
+						<div className="min-w-0 flex-1">
+							<p className="truncate text-xs text-muted-foreground">
+								{task.build.templateVersion?.template.name ??
+									task.build.name ??
+									"Project"}{" "}
+								· {task.build.serialNumber}
+								{task.phase ? ` · ${task.phase}` : ""}
+							</p>
+							{task.parent && (
 								<Link
-									href={`/dashboard/work/tasks/${subtask.id}`}
-									className="flex items-center gap-2 py-2 text-sm active:bg-muted/60"
+									href={`/dashboard/organization/tasks/${task.parent.id}`}
+									className="inline-flex max-w-full items-center gap-1 truncate text-xs text-muted-foreground hover:underline"
 								>
-									<span
-										className={cn(
-											"min-w-0 flex-1 truncate",
-											subtask.status === "done" &&
-												"text-muted-foreground line-through",
-										)}
-									>
-										{subtask.title}
-									</span>
-									{subtask.assignments.length > 0 && (
-										<span className="flex shrink-0 -space-x-1.5">
-											{subtask.assignments.map((assignment) => (
-												<UserAvatar
-													key={assignment.id}
-													name={assignment.user.name}
-													src={assignment.user.image}
-													className="size-5 ring-1 ring-background"
-													fallbackClassName="text-[9px]"
-												/>
-											))}
-										</span>
-									)}
-									<TaskStatusBadge status={subtask.status} labels={t.status} />
+									<ListTreeIcon className="size-3 shrink-0" />
+									<span className="truncate">{task.parent.title}</span>
 								</Link>
-							</li>
-						))}
-					</ul>
-					{openSubtasks > 0 && status !== "done" && (
-						<p className="mt-2 text-xs text-muted-foreground">
-							{t.detail.subtasksOpen(openSubtasks)}
-						</p>
-					)}
-				</Card>
-			)}
+							)}
+							<h1 className="truncate text-lg leading-tight font-semibold">
+								{task.title}
+							</h1>
+						</div>
+						<TaskStatusBadge status={status} labels={t.status} />
+					</div>
 
-			{/* Instructions */}
-			{task.instructions && (
-				<Card title={t.detail.instructions}>
-					<p className="text-sm whitespace-pre-wrap">{task.instructions}</p>
-				</Card>
-			)}
+					{/* Schedule + assignees */}
+					<div className="rounded-xl border bg-background p-4 text-sm">
+						<div className="flex flex-wrap items-center justify-between gap-2">
+							<span className="text-muted-foreground">
+								{task.startDate
+									? `${format(parseISO(task.startDate), "EEE, d. MMM", { locale: dateLocale })} · ${t.detail.days(task.plannedDurationDays)}`
+									: t.detail.unscheduled}
+								{task.plannedHours != null &&
+									` · ${t.detail.hours(task.plannedHours)}`}
+							</span>
+							<span className="flex items-center gap-1">
+								{task.assignments.map((assignment) => (
+									<UserAvatar
+										key={assignment.id}
+										name={assignment.user.name}
+										src={assignment.user.image}
+										className="size-6"
+										fallbackClassName="text-[10px]"
+									/>
+								))}
+							</span>
+						</div>
+						{blocked && (
+							<div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+								<LockIcon className="mt-0.5 size-4 shrink-0" />
+								<div>
+									<p className="font-medium">{t.detail.waitingOn}</p>
+									<ul className="mt-0.5 list-inside list-disc">
+										{task.blockers.map((blocker) => (
+											<li key={blocker.id}>{blocker.title}</li>
+										))}
+									</ul>
+								</div>
+							</div>
+						)}
+						{!task.isAssigned && canEdit && (
+							<p className="mt-3 text-xs text-muted-foreground">
+								{t.detail.viewingAsPlanner}
+							</p>
+						)}
+					</div>
 
-			{/* Checklist */}
-			{checklistItems.length > 0 && (
-				<Card
-					title={t.detail.checklist}
-					aside={`${checklistItems.length - openChecklist}/${checklistItems.length}`}
-				>
-					<ul className="-mx-2 divide-y">
-						{checklistItems.map((item) => {
-							const done = item.status !== "open";
-							return (
-								<li key={item.id}>
-									<button
-										type="button"
-										disabled={!canEdit || checklistMutation.isPending}
-										onClick={() => {
-											const next = done ? "open" : "done";
-											if (!offline.online) {
-												queueChecklist(item.id, next);
-												return;
-											}
-											checklistMutation.mutate({ id: item.id, status: next });
-										}}
-										className="flex w-full items-start gap-3 px-2 py-3 text-left active:bg-muted/60 disabled:opacity-70"
-									>
-										<span
-											className={cn(
-												"mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border",
-												done
-													? "border-emerald-500 bg-emerald-500 text-white"
-													: "border-muted-foreground/40",
-											)}
+					{/* Subtasks: each is its own task; this one is confirmed by hand */}
+					{task.subtasks.length > 0 && (
+						<Card
+							title={t.detail.subtasks}
+							aside={`${task.subtasks.length - openSubtasks}/${task.subtasks.length}`}
+						>
+							<ul className="divide-y">
+								{task.subtasks.map((subtask) => (
+									<li key={subtask.id}>
+										<Link
+											href={`/dashboard/organization/tasks/${subtask.id}`}
+											className="flex items-center gap-2 py-2 text-sm active:bg-muted/60"
 										>
-											{done && <CheckIcon className="size-3.5" />}
-										</span>
-										<span className="min-w-0 flex-1">
 											<span
 												className={cn(
-													"block",
-													done && "text-muted-foreground line-through",
+													"min-w-0 flex-1 truncate",
+													subtask.status === "done" &&
+														"text-muted-foreground line-through",
 												)}
 											>
-												{item.title}
+												{subtask.title}
 											</span>
-											{done && item.completedBy && (
-												<span className="block text-xs text-muted-foreground">
-													{item.completedBy.name}
+											{subtask.assignments.length > 0 && (
+												<span className="flex shrink-0 -space-x-1.5">
+													{subtask.assignments.map((assignment) => (
+														<UserAvatar
+															key={assignment.id}
+															name={assignment.user.name}
+															src={assignment.user.image}
+															className="size-5 ring-1 ring-background"
+															fallbackClassName="text-[9px]"
+														/>
+													))}
 												</span>
 											)}
-										</span>
-									</button>
-								</li>
-							);
-						})}
-					</ul>
-				</Card>
-			)}
-
-			{/* Documents from the template */}
-			{task.documents.length > 0 && (
-				<Card title={t.detail.documents}>
-					<ul className="-mx-2 divide-y">
-						{task.documents.map((doc) => (
-							<li key={doc.id}>
-								<button
-									type="button"
-									onClick={() => download(doc.id)}
-									className="flex w-full items-center gap-3 px-2 py-3 text-left active:bg-muted/60"
-								>
-									<FileIcon className="size-5 shrink-0 text-muted-foreground" />
-									<span className="min-w-0 flex-1">
-										<span className="block truncate text-sm">
-											{doc.fileName}
-										</span>
-										{doc.sizeBytes != null && (
-											<span className="block text-xs text-muted-foreground">
-												{formatBytes(doc.sizeBytes)}
-											</span>
-										)}
-									</span>
-									<DownloadIcon className="size-4 shrink-0 text-muted-foreground" />
-								</button>
-							</li>
-						))}
-					</ul>
-				</Card>
-			)}
-
-			{/* Photos & uploads */}
-			<Card
-				title={t.detail.photos}
-				aside={
-					task.requiresPhoto ? (
-						<span
-							className={cn(
-								"text-xs",
-								missingPhoto
-									? "text-red-600 dark:text-red-400"
-									: "text-emerald-600",
+											<TaskStatusBadge
+												status={subtask.status}
+												labels={t.status}
+											/>
+										</Link>
+									</li>
+								))}
+							</ul>
+							{openSubtasks > 0 && status !== "done" && (
+								<p className="mt-2 text-xs text-muted-foreground">
+									{t.detail.subtasksOpen(openSubtasks)}
+								</p>
 							)}
-						>
-							{missingPhoto ? t.detail.required : t.detail.requiredDone}
-						</span>
-					) : undefined
-				}
-			>
-				{pendingPhotos.length > 0 && (
-					<ul className="-mx-2 mb-2 divide-y">
-						{pendingPhotos.map((item) => (
-							<li
-								key={item.id}
-								className="flex items-center gap-3 px-2 py-2 opacity-70"
-							>
-								<ImageIcon className="size-5 shrink-0 text-muted-foreground" />
-								<span className="min-w-0 flex-1">
-									<span className="block truncate text-sm">
-										{item.input.fileName}
-									</span>
-									<span className="block text-xs text-muted-foreground">
-										{formatBytes(item.input.sizeBytes)} ·{" "}
-										{t.detail.waitingToSync}
-									</span>
-								</span>
-								<Button
-									variant="ghost"
-									size="icon-xs"
-									aria-label={t.detail.discard(item.input.fileName)}
-									onClick={() => {
-										removeWrite(item.id);
-										void deletePhoto(item.input.photoId).catch(() => undefined);
-									}}
-								>
-									<XIcon />
-								</Button>
-							</li>
-						))}
-					</ul>
-				)}
-				{task.uploads.length > 0 && (
-					<ul className="-mx-2 mb-2 divide-y">
-						{task.uploads.map((upload) => (
-							<li key={upload.id} className="flex items-center gap-3 px-2 py-2">
-								<button
-									type="button"
-									onClick={() => download(upload.id)}
-									className="flex min-w-0 flex-1 items-center gap-3 text-left"
-								>
-									<ImageIcon className="size-5 shrink-0 text-muted-foreground" />
-									<span className="min-w-0 flex-1">
-										<span className="block truncate text-sm">
-											{upload.fileName}
-										</span>
-										<span className="block text-xs text-muted-foreground">
-											{upload.uploadedBy?.name ?? t.detail.unknownUser} ·{" "}
-											{formatDistanceToNow(upload.createdAt, {
-												addSuffix: true,
-												locale: dateLocale,
-											})}
-										</span>
-									</span>
-								</button>
-								{canEdit && (
-									<Button
-										variant="ghost"
-										size="icon-xs"
-										aria-label={t.detail.remove(upload.fileName)}
-										onClick={() =>
-											deleteAttachmentMutation.mutate({ id: upload.id })
-										}
-									>
-										<XIcon />
-									</Button>
-								)}
-							</li>
-						))}
-					</ul>
-				)}
-				{canEdit && (
-					<>
-						<input
-							ref={fileInputRef}
-							type="file"
-							accept={PHOTO_ACCEPT}
-							capture="environment"
-							multiple
-							className="hidden"
-							onChange={(event) => handleFiles(event.target.files)}
-						/>
-						<Button
-							variant="outline"
-							className="w-full"
-							onClick={() => fileInputRef.current?.click()}
-							loading={uploading}
-							disabled={uploading}
-						>
-							<CameraIcon />
-							{task.uploads.length === 0 && pendingPhotos.length === 0
-								? t.detail.takePhoto
-								: t.detail.addAnother}
-						</Button>
-					</>
-				)}
-			</Card>
+						</Card>
+					)}
 
-			{/* Comments */}
-			<Card
-				title={t.detail.comments}
-				aside={
-					task.requiresComment ? (
-						<span
-							className={cn(
-								"text-xs",
-								missingComment
-									? "text-red-600 dark:text-red-400"
-									: "text-emerald-600",
-							)}
+					{/* Instructions */}
+					{task.instructions && (
+						<Card title={t.detail.instructions}>
+							<p className="text-sm whitespace-pre-wrap">{task.instructions}</p>
+						</Card>
+					)}
+
+					{/* Checklist */}
+					{checklistItems.length > 0 && (
+						<Card
+							title={t.detail.checklist}
+							aside={`${checklistItems.length - openChecklist}/${checklistItems.length}`}
 						>
-							{missingComment ? t.detail.required : t.detail.requiredDone}
-						</span>
-					) : undefined
-				}
-			>
-				{task.comments.length > 0 && (
-					<ul className="mb-3 space-y-3">
-						{task.comments.map((item) => (
-							<li key={item.id} className="flex gap-3">
-								<UserAvatar
-									name={item.author?.name ?? "?"}
-									src={item.author?.image}
-									className="size-7"
-									fallbackClassName="text-xs"
-								/>
-								<div className="min-w-0 flex-1">
-									<div className="flex items-baseline gap-2">
-										<span className="text-sm font-medium">
-											{item.author?.name ?? t.detail.formerMember}
-										</span>
-										<span className="text-xs text-muted-foreground">
-											{formatDistanceToNow(item.createdAt, {
-												addSuffix: true,
-												locale: dateLocale,
-											})}
-										</span>
-										{item.authorId === currentUserId && (
+							<ul className="-mx-2 divide-y">
+								{checklistItems.map((item) => {
+									const done = item.status !== "open";
+									return (
+										<li key={item.id}>
 											<button
 												type="button"
-												className="ml-auto text-muted-foreground hover:text-destructive"
-												aria-label={t.detail.deleteComment}
+												disabled={!canEdit || checklistMutation.isPending}
+												onClick={() => {
+													const next = done ? "open" : "done";
+													if (!offline.online) {
+														queueChecklist(item.id, next);
+														return;
+													}
+													checklistMutation.mutate({
+														id: item.id,
+														status: next,
+													});
+												}}
+												className="flex w-full items-start gap-3 px-2 py-3 text-left active:bg-muted/60 disabled:opacity-70"
+											>
+												<span
+													className={cn(
+														"mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border",
+														done
+															? "border-emerald-500 bg-emerald-500 text-white"
+															: "border-muted-foreground/40",
+													)}
+												>
+													{done && <CheckIcon className="size-3.5" />}
+												</span>
+												<span className="min-w-0 flex-1">
+													<span
+														className={cn(
+															"block",
+															done && "text-muted-foreground line-through",
+														)}
+													>
+														{item.title}
+													</span>
+													{done && item.completedBy && (
+														<span className="block text-xs text-muted-foreground">
+															{item.completedBy.name}
+														</span>
+													)}
+												</span>
+											</button>
+										</li>
+									);
+								})}
+							</ul>
+						</Card>
+					)}
+
+					{/* Documents from the template */}
+					{task.documents.length > 0 && (
+						<Card title={t.detail.documents}>
+							<ul className="-mx-2 divide-y">
+								{task.documents.map((doc) => (
+									<li key={doc.id}>
+										<button
+											type="button"
+											onClick={() => download(doc.id)}
+											className="flex w-full items-center gap-3 px-2 py-3 text-left active:bg-muted/60"
+										>
+											<FileIcon className="size-5 shrink-0 text-muted-foreground" />
+											<span className="min-w-0 flex-1">
+												<span className="block truncate text-sm">
+													{doc.fileName}
+												</span>
+												{doc.sizeBytes != null && (
+													<span className="block text-xs text-muted-foreground">
+														{formatBytes(doc.sizeBytes)}
+													</span>
+												)}
+											</span>
+											<DownloadIcon className="size-4 shrink-0 text-muted-foreground" />
+										</button>
+									</li>
+								))}
+							</ul>
+						</Card>
+					)}
+
+					{/* Photos & uploads */}
+					<Card
+						title={t.detail.photos}
+						aside={
+							task.requiresPhoto ? (
+								<span
+									className={cn(
+										"text-xs",
+										missingPhoto
+											? "text-red-600 dark:text-red-400"
+											: "text-emerald-600",
+									)}
+								>
+									{missingPhoto ? t.detail.required : t.detail.requiredDone}
+								</span>
+							) : undefined
+						}
+					>
+						{pendingPhotos.length > 0 && (
+							<ul className="-mx-2 mb-2 divide-y">
+								{pendingPhotos.map((item) => (
+									<li
+										key={item.id}
+										className="flex items-center gap-3 px-2 py-2 opacity-70"
+									>
+										<ImageIcon className="size-5 shrink-0 text-muted-foreground" />
+										<span className="min-w-0 flex-1">
+											<span className="block truncate text-sm">
+												{item.input.fileName}
+											</span>
+											<span className="block text-xs text-muted-foreground">
+												{formatBytes(item.input.sizeBytes)} ·{" "}
+												{t.detail.waitingToSync}
+											</span>
+										</span>
+										<Button
+											variant="ghost"
+											size="icon-xs"
+											aria-label={t.detail.discard(item.input.fileName)}
+											onClick={() => {
+												removeWrite(item.id);
+												void deletePhoto(item.input.photoId).catch(
+													() => undefined,
+												);
+											}}
+										>
+											<XIcon />
+										</Button>
+									</li>
+								))}
+							</ul>
+						)}
+						{task.uploads.length > 0 && (
+							<ul className="-mx-2 mb-2 divide-y">
+								{task.uploads.map((upload) => (
+									<li
+										key={upload.id}
+										className="flex items-center gap-3 px-2 py-2"
+									>
+										<button
+											type="button"
+											onClick={() => download(upload.id)}
+											className="flex min-w-0 flex-1 items-center gap-3 text-left"
+										>
+											<ImageIcon className="size-5 shrink-0 text-muted-foreground" />
+											<span className="min-w-0 flex-1">
+												<span className="block truncate text-sm">
+													{upload.fileName}
+												</span>
+												<span className="block text-xs text-muted-foreground">
+													{upload.uploadedBy?.name ?? t.detail.unknownUser} ·{" "}
+													{formatDistanceToNow(upload.createdAt, {
+														addSuffix: true,
+														locale: dateLocale,
+													})}
+												</span>
+											</span>
+										</button>
+										{canEdit && (
+											<Button
+												variant="ghost"
+												size="icon-xs"
+												aria-label={t.detail.remove(upload.fileName)}
 												onClick={() =>
-													deleteCommentMutation.mutate({ id: item.id })
+													deleteAttachmentMutation.mutate({ id: upload.id })
 												}
 											>
-												<Trash2Icon className="size-3.5" />
-											</button>
+												<XIcon />
+											</Button>
 										)}
-									</div>
-									<CommentBody body={item.body} currentUserId={currentUserId} />
-								</div>
-							</li>
-						))}
-					</ul>
-				)}
-				{pendingComments.length > 0 && (
-					<ul className="mb-3 space-y-3">
-						{pendingComments.map((item) => (
-							<li key={item.id} className="flex gap-3 opacity-70">
-								<UserAvatar
-									name={user?.name ?? "?"}
-									src={user?.image ?? null}
-									className="size-7"
-									fallbackClassName="text-xs"
+									</li>
+								))}
+							</ul>
+						)}
+						{canEdit && (
+							<>
+								<input
+									ref={fileInputRef}
+									type="file"
+									accept={PHOTO_ACCEPT}
+									capture="environment"
+									multiple
+									className="hidden"
+									onChange={(event) => handleFiles(event.target.files)}
 								/>
-								<div className="min-w-0 flex-1">
-									<div className="flex items-baseline gap-2">
-										<span className="text-sm font-medium">{user?.name}</span>
-										<span className="text-xs text-muted-foreground">
-											{t.detail.waitingToSync}
-										</span>
-									</div>
-									<CommentBody body={item.body} currentUserId={currentUserId} />
-								</div>
-							</li>
-						))}
-					</ul>
-				)}
-				<form
-					className="flex items-end gap-2"
-					onSubmit={(event) => {
-						event.preventDefault();
-						const body = commentDraft.body;
-						if (!body) return;
-						if (!offline.online) {
-							queueComment(body);
-							return;
+								<Button
+									variant="outline"
+									className="w-full"
+									onClick={() => fileInputRef.current?.click()}
+									loading={uploading}
+									disabled={uploading}
+								>
+									<CameraIcon />
+									{task.uploads.length === 0 && pendingPhotos.length === 0
+										? t.detail.takePhoto
+										: t.detail.addAnother}
+								</Button>
+							</>
+						)}
+					</Card>
+
+					{/* Comments */}
+					<Card
+						title={t.detail.comments}
+						aside={
+							task.requiresComment ? (
+								<span
+									className={cn(
+										"text-xs",
+										missingComment
+											? "text-red-600 dark:text-red-400"
+											: "text-emerald-600",
+									)}
+								>
+									{missingComment ? t.detail.required : t.detail.requiredDone}
+								</span>
+							) : undefined
 						}
-						commentMutation.mutate({ buildTaskId: task.id, body });
-					}}
-				>
-					<MentionTextarea
-						draft={commentDraft.draft}
-						onDraftChange={commentDraft.setDraft}
-						excludeUserId={currentUserId}
-						labels={{
-							noMatches: t.detail.mentionNoMatches,
-							loading: t.detail.mentionLoading,
-						}}
-						placeholder={t.detail.commentPlaceholder}
-						rows={2}
-						className="min-h-0 resize-none"
-						aria-label={t.detail.newComment}
-					/>
-					<Button
-						type="submit"
-						size="icon"
-						aria-label={t.detail.sendComment}
-						disabled={!commentDraft.body || commentMutation.isPending}
-						loading={commentMutation.isPending}
 					>
-						<SendIcon />
-					</Button>
-				</form>
-			</Card>
+						{task.comments.length > 0 && (
+							<ul className="mb-3 space-y-3">
+								{task.comments.map((item) => (
+									<li key={item.id} className="flex gap-3">
+										<UserAvatar
+											name={item.author?.name ?? "?"}
+											src={item.author?.image}
+											className="size-7"
+											fallbackClassName="text-xs"
+										/>
+										<div className="min-w-0 flex-1">
+											<div className="flex items-baseline gap-2">
+												<span className="text-sm font-medium">
+													{item.author?.name ?? t.detail.formerMember}
+												</span>
+												<span className="text-xs text-muted-foreground">
+													{formatDistanceToNow(item.createdAt, {
+														addSuffix: true,
+														locale: dateLocale,
+													})}
+												</span>
+												{item.authorId === currentUserId && (
+													<button
+														type="button"
+														className="ml-auto text-muted-foreground hover:text-destructive"
+														aria-label={t.detail.deleteComment}
+														onClick={() =>
+															deleteCommentMutation.mutate({ id: item.id })
+														}
+													>
+														<Trash2Icon className="size-3.5" />
+													</button>
+												)}
+											</div>
+											<CommentBody
+												body={item.body}
+												currentUserId={currentUserId}
+											/>
+										</div>
+									</li>
+								))}
+							</ul>
+						)}
+						{pendingComments.length > 0 && (
+							<ul className="mb-3 space-y-3">
+								{pendingComments.map((item) => (
+									<li key={item.id} className="flex gap-3 opacity-70">
+										<UserAvatar
+											name={user?.name ?? "?"}
+											src={user?.image ?? null}
+											className="size-7"
+											fallbackClassName="text-xs"
+										/>
+										<div className="min-w-0 flex-1">
+											<div className="flex items-baseline gap-2">
+												<span className="text-sm font-medium">
+													{user?.name}
+												</span>
+												<span className="text-xs text-muted-foreground">
+													{t.detail.waitingToSync}
+												</span>
+											</div>
+											<CommentBody
+												body={item.body}
+												currentUserId={currentUserId}
+											/>
+										</div>
+									</li>
+								))}
+							</ul>
+						)}
+						<form
+							className="flex items-end gap-2"
+							onSubmit={(event) => {
+								event.preventDefault();
+								const body = commentDraft.body;
+								if (!body) return;
+								if (!offline.online) {
+									queueComment(body);
+									return;
+								}
+								commentMutation.mutate({ buildTaskId: task.id, body });
+							}}
+						>
+							<MentionTextarea
+								draft={commentDraft.draft}
+								onDraftChange={commentDraft.setDraft}
+								excludeUserId={currentUserId}
+								labels={{
+									noMatches: t.detail.mentionNoMatches,
+									loading: t.detail.mentionLoading,
+								}}
+								placeholder={t.detail.commentPlaceholder}
+								rows={2}
+								className="min-h-0 resize-none"
+								aria-label={t.detail.newComment}
+							/>
+							<Button
+								type="submit"
+								size="icon"
+								aria-label={t.detail.sendComment}
+								disabled={!commentDraft.body || commentMutation.isPending}
+								loading={commentMutation.isPending}
+							>
+								<SendIcon />
+							</Button>
+						</form>
+					</Card>
 
-			<details className="group rounded-xl border bg-background px-4 py-3">
-				<summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium">
-					{t.detail.history}
-					<ChevronDownIcon className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
-				</summary>
-				<div className="pt-3">
-					<ActivityTimeline buildTaskId={task.id} limit={30} compact />
+					<details className="group rounded-xl border bg-background px-4 py-3">
+						<summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium">
+							{t.detail.history}
+							<ChevronDownIcon className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
+						</summary>
+						<div className="pt-3">
+							<ActivityTimeline buildTaskId={task.id} limit={30} compact />
+						</div>
+					</details>
 				</div>
-			</details>
+			</div>
 
-			{/* Sticky action bar */}
+			{/* Action bar: part of the flex column, so it sits above the phone tab bar and never covers content. */}
 			{canEdit && (
-				<div className="fixed inset-x-0 bottom-(--work-nav) z-20 border-t bg-background/95 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)-var(--work-nav)))] backdrop-blur">
-					<div className="mx-auto flex w-full max-w-lg gap-2 px-4 pt-3">
+				<div className="shrink-0 border-t border-subtle bg-surface-1/95 pb-3 backdrop-blur md:pb-4">
+					<div className="mx-auto flex w-full max-w-3xl gap-2 px-4 pt-3 sm:px-6">
 						{status === "todo" && (
 							<>
 								{/* Short jobs are often finished before anyone presses
@@ -943,7 +966,7 @@ export function WorkTaskDetail({
 					</div>
 					{(status === "todo" || status === "in_progress") &&
 						finishHints.length > 0 && (
-							<p className="mx-auto max-w-lg px-4 pt-2 text-center text-xs text-muted-foreground">
+							<p className="mx-auto max-w-3xl px-4 pt-2 text-center text-xs text-muted-foreground sm:px-6">
 								{t.detail.beforeFinishing(finishHints)}
 							</p>
 						)}

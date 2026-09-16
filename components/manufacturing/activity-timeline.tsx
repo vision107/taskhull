@@ -278,7 +278,7 @@ export function ActivityTimeline({
 									<>
 										{" · "}
 										<Link
-											href={`/dashboard/work/tasks/${entry.buildTask.id}`}
+											href={`/dashboard/organization/tasks/${entry.buildTask.id}`}
 											className="underline-offset-2 hover:underline"
 										>
 											open task

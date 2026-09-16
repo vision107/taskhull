@@ -31,6 +31,7 @@ import {
 	SidebarMenuSubItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
+import { useWorkLocale } from "@/components/work/work-locale-provider";
 import { cn } from "@/lib/utils";
 
 type MenuItem = {
@@ -48,10 +49,15 @@ type MenuGroup = {
 	defaultOpen?: boolean;
 };
 
-export function OrganizationMenuItems(): React.JSX.Element {
+export function OrganizationMenuItems({
+	canPlan,
+}: {
+	canPlan: boolean;
+}): React.JSX.Element {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const { state } = useSidebar();
+	const { t } = useWorkLocale();
 	const [openGroup, setOpenGroup] = React.useState<string>("Acquisition");
 
 	const basePath = "/dashboard/organization";
@@ -61,26 +67,30 @@ export function OrganizationMenuItems(): React.JSX.Element {
 			label: "Application",
 			items: [
 				{
-					label: "Dashboard",
+					label: t.nav.dashboard,
 					href: basePath,
 					icon: LayoutDashboardIcon,
 					exactMatch: true,
 				},
 				{
-					label: "Projects",
+					label: t.nav.myTasks,
+					href: `${basePath}/my-tasks`,
+					icon: ClipboardCheckIcon,
+				},
+				{
+					label: t.nav.projects,
 					href: `${basePath}/projects`,
 					icon: FactoryIcon,
 				},
-				{
-					label: "Templates",
-					href: `${basePath}/templates`,
-					icon: FileStackIcon,
-				},
-				{
-					label: "My tasks",
-					href: "/dashboard/work",
-					icon: ClipboardCheckIcon,
-				},
+				...(canPlan
+					? [
+							{
+								label: t.nav.templates,
+								href: `${basePath}/templates`,
+								icon: FileStackIcon,
+							},
+						]
+					: []),
 			],
 			collapsible: false,
 		},
