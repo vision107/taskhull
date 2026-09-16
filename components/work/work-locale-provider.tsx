@@ -1,6 +1,7 @@
 "use client";
 
 import type { Locale as DateFnsLocale } from "date-fns";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import { useSession } from "@/hooks/use-session";
@@ -54,6 +55,7 @@ export function WorkLocaleProvider({
 		document.documentElement.lang = locale;
 	}, [locale]);
 
+	const router = useRouter();
 	const mutation = trpc.user.setLocale.useMutation();
 	const setLocale = React.useCallback(
 		async (next: WorkLocale) => {
@@ -61,11 +63,13 @@ export function WorkLocaleProvider({
 			try {
 				await mutation.mutateAsync({ locale: next });
 				await reloadSession();
+				// Server components (breadcrumbs, titles) read the saved locale.
+				router.refresh();
 			} catch {
 				// Keep the optimistic choice for this session; it just isn't saved.
 			}
 		},
-		[mutation, reloadSession],
+		[mutation, reloadSession, router],
 	);
 
 	const value = React.useMemo<WorkLocaleContextValue>(

@@ -38,8 +38,11 @@ Better Auth 1.7, so UI is rebuilt rather than copied.
   task or added ad hoc. Has assignees, checklist, comments, attachments, status.
 - **Product** — legacy grouping (table + router kept, no UI). Projects are
   grouped by template now.
-- **Planner** — org `owner`/`admin`; works in the web dashboard.
-- **Worker** — org `member`; works in the PWA under `/work`.
+- **Planner** — org `owner`/`admin`; may edit templates, projects and
+  assignments.
+- **Worker** — org `member`; works the tasks assigned to them. Since Phase 9
+  both use the same dashboard shell (sidebar ≥ `md`, tab bar below); the role
+  only decides what is editable. `/dashboard/work/*` redirects.
 
 ## Domain model
 
@@ -368,7 +371,39 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
   Order of work: 1 → 2 → 4 (this is the useful core), then 3, 6, 5, 7.
   Tests: extend `organization-manufacturing.test.ts` for the new `myTasks`
   filters and `teamTasks` permissions; a Playwright smoke for the two‑pane
-  route with `?task=`.
+  route with `?task=`. _Superseded in part by Phase 9: the phone layout is no
+  longer a separate PWA, so the two‑pane view lives on
+  `/dashboard/organization/my-tasks` and the phone navigates to
+  `/dashboard/organization/tasks/[id]`._
+
+- **Phase 9 — One shell for planners and workers** (in progress; lessons
+  from Plane / Kuayle / Asana, see the design notes in the PR)
+  1. _Tokens._ ✅ Semantic surface model in `app/globals.css`: `bg-canvas`,
+     `bg-surface-1`, `bg-layer-1`, `hover:bg-layer-transparent-hover`, text
+     tiers `text-fg-secondary/tertiary/placeholder`, border weights
+     `border-subtle/strong`, `warning`/`success` accents, `text-13` for dense
+     rows. Light and dark; shadcn tokens unchanged.
+  2. _Shell._ ✅ `app/(saas)/dashboard/(sidebar)/layout.tsx` owns
+     `WorkLocaleProvider`, `OfflineProvider` (service worker, write queue,
+     push) and the PWA metadata for every dashboard page. `SidebarLayout`
+     takes a `mobileNav` slot: `components/app-shell/bottom-nav.tsx` renders a
+     tab bar below `md` (My tasks · Projects · Templates|Dashboard · Inbox ·
+     Menu; Menu opens the sidebar sheet) and `sync-status-pill.tsx` floats
+     the offline / "n to sync" state. `--bottom-nav` exposes the bar height.
+     Language and push toggles moved into the user menu.
+  3. _Routes._ ✅ `/dashboard/organization/my-tasks` (list) and
+     `/dashboard/organization/tasks/[taskId]` (task view, shared by both
+     roles); `/dashboard/notifications` is a real inbox page. The worker
+     layout, header, tab bar and org picker are deleted; the organization
+     layout activates a single membership in place. `/dashboard/start` sends
+     members to My tasks and planners to the dashboard. Manifest, service
+     worker (`isAppPage`, cache `v2`), notification URLs and tests updated.
+  4. _My tasks rows._ ✅ Compact rows with a status glyph instead of cards;
+     same row on phone and desktop.
+  5. _Next._ One `TaskView` for both roles (fold `TaskDetailSheet` and
+     `WorkTaskDetail` into a shared component; planner fields inline‑editable
+     via popovers, worker actions as today), side‑peek `?task=` on `lg+`,
+     dense project rows, then the two‑pane My tasks from Phase 8b.
 
 ## Local setup
 
