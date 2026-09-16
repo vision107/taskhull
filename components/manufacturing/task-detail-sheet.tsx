@@ -569,10 +569,6 @@ export function TaskPlannerView({
 										</span>
 									)}
 								</div>
-								<SheetTitle className="sr-only">{task.title}</SheetTitle>
-								<SheetDescription className="sr-only">
-									Task details, comments and history.
-								</SheetDescription>
 								<InlineTitle
 									key={`${task.id}:${task.title}`}
 									value={task.title}
@@ -1313,6 +1309,10 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 				onOpenChangeComplete={modal.handleOpenChangeComplete}
 			>
 				<SheetContent className="gap-0 sm:max-w-xl">
+					<SheetTitle className="sr-only">Task</SheetTitle>
+					<SheetDescription className="sr-only">
+						Task details, comments and history.
+					</SheetDescription>
 					<TaskPlannerView
 						taskId={taskId}
 						canPlan={canPlan}
