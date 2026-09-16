@@ -35,6 +35,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { BlockReasonSheet } from "@/components/work/block-reason-sheet";
 import { useOffline } from "@/components/work/offline-provider";
+import {
+	TaskCheckCircle,
+	TaskFieldRow,
+	TaskSection,
+} from "@/components/work/task-layout";
 import { useWorkLocale } from "@/components/work/work-locale-provider";
 import { useSession } from "@/hooks/use-session";
 import type {
@@ -505,7 +510,7 @@ export function WorkTaskDetail({
 
 					{/* Field rows, label left / value right like Asana's task pane. */}
 					<dl className="mt-4 grid grid-cols-[minmax(6rem,8rem)_1fr] gap-x-4 gap-y-1 text-sm sm:grid-cols-[9rem_1fr]">
-						<FieldRow label={t.detail.assignees}>
+						<TaskFieldRow label={t.detail.assignees}>
 							{task.assignments.length === 0 ? (
 								<span className="text-fg-tertiary">{t.detail.unassigned}</span>
 							) : (
@@ -526,8 +531,8 @@ export function WorkTaskDetail({
 									))}
 								</span>
 							)}
-						</FieldRow>
-						<FieldRow label={t.detail.due}>
+						</TaskFieldRow>
+						<TaskFieldRow label={t.detail.due}>
 							{task.startDate ? (
 								<span className="inline-flex items-center gap-1.5">
 									<CalendarIcon className="size-4 text-fg-tertiary" />
@@ -546,8 +551,8 @@ export function WorkTaskDetail({
 									{t.detail.unscheduled}
 								</span>
 							)}
-						</FieldRow>
-						<FieldRow label={t.detail.project}>
+						</TaskFieldRow>
+						<TaskFieldRow label={t.detail.project}>
 							<Link
 								href={`/dashboard/organization/projects/${task.build.id}`}
 								className="inline-flex max-w-full items-center gap-1.5 rounded-md bg-layer-1 px-2 py-0.5 text-13 hover:bg-layer-1-hover"
@@ -558,14 +563,14 @@ export function WorkTaskDetail({
 									{task.build.serialNumber}
 								</span>
 							</Link>
-						</FieldRow>
+						</TaskFieldRow>
 						{task.phase && (
-							<FieldRow label={t.detail.phase}>{task.phase}</FieldRow>
+							<TaskFieldRow label={t.detail.phase}>{task.phase}</TaskFieldRow>
 						)}
 					</dl>
 
 					{/* Instructions */}
-					<Section title={t.detail.instructions}>
+					<TaskSection title={t.detail.instructions}>
 						{task.instructions ? (
 							<p className="text-sm leading-relaxed whitespace-pre-wrap">
 								{task.instructions}
@@ -575,11 +580,11 @@ export function WorkTaskDetail({
 								{t.detail.noInstructions}
 							</p>
 						)}
-					</Section>
+					</TaskSection>
 
 					{/* Checklist */}
 					{checklistItems.length > 0 && (
-						<Section
+						<TaskSection
 							title={t.detail.checklist}
 							count={`${checklistItems.length - openChecklist} / ${checklistItems.length}`}
 						>
@@ -604,7 +609,7 @@ export function WorkTaskDetail({
 												}}
 												className="flex w-full items-start gap-3 rounded-md px-2 py-2.5 text-left hover:bg-layer-transparent-hover disabled:opacity-70 disabled:hover:bg-transparent"
 											>
-												<CheckCircle done={done} className="mt-0.5" />
+												<TaskCheckCircle done={done} className="mt-0.5" />
 												<span className="min-w-0 flex-1">
 													<span
 														className={cn(
@@ -625,12 +630,12 @@ export function WorkTaskDetail({
 									);
 								})}
 							</ul>
-						</Section>
+						</TaskSection>
 					)}
 
 					{/* Subtasks: each is its own task; this one is confirmed by hand */}
 					{task.subtasks.length > 0 && (
-						<Section
+						<TaskSection
 							title={t.detail.subtasks}
 							count={`${task.subtasks.length - openSubtasks} / ${task.subtasks.length}`}
 						>
@@ -641,7 +646,7 @@ export function WorkTaskDetail({
 											href={`/dashboard/organization/tasks/${subtask.id}`}
 											className="flex items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-layer-transparent-hover"
 										>
-											<CheckCircle done={subtask.status === "done"} />
+											<TaskCheckCircle done={subtask.status === "done"} />
 											<span
 												className={cn(
 													"min-w-0 flex-1 truncate",
@@ -672,12 +677,12 @@ export function WorkTaskDetail({
 									</li>
 								))}
 							</ul>
-						</Section>
+						</TaskSection>
 					)}
 
 					{/* Attachments: template documents, photos, queued uploads. */}
 					{(attachmentCount > 0 || canEdit) && (
-						<Section
+						<TaskSection
 							title={t.detail.attachments}
 							count={attachmentCount > 0 ? String(attachmentCount) : undefined}
 							aside={
@@ -807,7 +812,7 @@ export function WorkTaskDetail({
 									</Button>
 								</>
 							)}
-						</Section>
+						</TaskSection>
 					)}
 
 					{/* Comments / activity */}
@@ -1071,46 +1076,6 @@ function TaskActions({
 	);
 }
 
-function FieldRow({
-	label,
-	children,
-}: React.PropsWithChildren<{ label: string }>): React.JSX.Element {
-	return (
-		<>
-			<dt className="flex h-8 items-center text-13 text-fg-secondary">
-				{label}
-			</dt>
-			<dd className="flex min-h-8 min-w-0 items-center">{children}</dd>
-		</>
-	);
-}
-
-function Section({
-	title,
-	count,
-	aside,
-	children,
-}: React.PropsWithChildren<{
-	title: string;
-	count?: string;
-	aside?: React.ReactNode;
-}>): React.JSX.Element {
-	return (
-		<section className="mt-8">
-			<div className="mb-2 flex items-center gap-2">
-				<h2 className="text-sm font-semibold">{title}</h2>
-				{count && (
-					<span className="rounded bg-layer-1 px-1.5 py-px text-xs text-fg-secondary tabular-nums">
-						{count}
-					</span>
-				)}
-				{aside && <span className="ml-auto">{aside}</span>}
-			</div>
-			{children}
-		</section>
-	);
-}
-
 function RequirementTag({
 	missing,
 	label,
@@ -1123,29 +1088,6 @@ function RequirementTag({
 			className={cn("text-xs", missing ? "text-destructive" : "text-success")}
 		>
 			{label}
-		</span>
-	);
-}
-
-/** Asana-style completion circle used for checklist items and subtasks. */
-export function CheckCircle({
-	done,
-	className,
-}: {
-	done: boolean;
-	className?: string;
-}): React.JSX.Element {
-	return (
-		<span
-			className={cn(
-				"flex size-[18px] shrink-0 items-center justify-center rounded-full border",
-				done
-					? "border-success bg-success text-white"
-					: "border-strong text-transparent hover:border-success hover:text-success",
-				className,
-			)}
-		>
-			<CheckIcon className="size-3" strokeWidth={2.5} />
 		</span>
 	);
 }

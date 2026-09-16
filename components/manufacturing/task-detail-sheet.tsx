@@ -70,6 +70,7 @@ import {
 } from "@/components/ui/tooltip";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { BlockReasonSheet } from "@/components/work/block-reason-sheet";
+import { TaskFieldRow, TaskSection } from "@/components/work/task-layout";
 import { useEnhancedModal } from "@/hooks/use-enhanced-modal";
 import { useSession } from "@/hooks/use-session";
 import {
@@ -547,8 +548,8 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 									</div>
 
 									{/* Fields */}
-									<dl className="space-y-1">
-										<FieldRow label="Assignee">
+									<dl className="grid grid-cols-[minmax(6rem,8rem)_1fr] gap-x-4 gap-y-1">
+										<TaskFieldRow label="Assignee">
 											<div className="flex flex-wrap items-center gap-1.5">
 												{owners.map((assignment) => (
 													<span
@@ -611,9 +612,9 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 													<Muted>Unassigned</Muted>
 												) : null}
 											</div>
-										</FieldRow>
+										</TaskFieldRow>
 
-										<FieldRow label="Due date">
+										<TaskFieldRow label="Due date">
 											{canPlan ? (
 												<DatePicker
 													variant="ghost"
@@ -632,9 +633,9 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 														: "–"}
 												</Value>
 											)}
-										</FieldRow>
+										</TaskFieldRow>
 
-										<FieldRow label="Start date">
+										<TaskFieldRow label="Start date">
 											{canPlan ? (
 												<DatePicker
 													variant="ghost"
@@ -657,9 +658,9 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 														: "–"}
 												</Value>
 											)}
-										</FieldRow>
+										</TaskFieldRow>
 
-										<FieldRow label="Duration">
+										<TaskFieldRow label="Duration">
 											<div className="flex items-center gap-3 text-sm">
 												<InlineNumber
 													key={`d:${task.id}:${task.plannedDurationDays}`}
@@ -693,9 +694,9 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 													onSave={(hours) => update({ plannedHours: hours })}
 												/>
 											</div>
-										</FieldRow>
+										</TaskFieldRow>
 
-										<FieldRow label="Phase">
+										<TaskFieldRow label="Phase">
 											<InlineText
 												key={`p:${task.id}:${task.phase ?? ""}`}
 												value={task.phase ?? ""}
@@ -715,9 +716,9 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 												}
 												onSave={(phase) => update({ phase: phase || null })}
 											/>
-										</FieldRow>
+										</TaskFieldRow>
 
-										<FieldRow label="Depends on">
+										<TaskFieldRow label="Depends on">
 											<div className="flex flex-wrap items-center gap-1.5">
 												{task.dependencies.map((dep) => {
 													const open =
@@ -824,9 +825,9 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 													<Muted>None</Muted>
 												) : null}
 											</div>
-										</FieldRow>
+										</TaskFieldRow>
 
-										<FieldRow label="Requires">
+										<TaskFieldRow label="Requires">
 											<div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
 												<span className="inline-flex items-center gap-2">
 													<Switch
@@ -854,11 +855,11 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 													Comment
 												</span>
 											</div>
-										</FieldRow>
+										</TaskFieldRow>
 									</dl>
 
 									{/* Description */}
-									<Section title="Description">
+									<TaskSection title="Description">
 										<InlineDescription
 											key={`i:${task.id}:${task.instructions ?? ""}`}
 											value={task.instructions ?? ""}
@@ -867,12 +868,12 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 												update({ instructions: instructions || null })
 											}
 										/>
-									</Section>
+									</TaskSection>
 
 									{/* Subtasks: independent tasks under this one */}
 									{(task.subtasks.length > 0 ||
 										(canPlan && !task.parentTaskId)) && (
-										<Section
+										<TaskSection
 											title="Subtasks"
 											count={
 												task.subtasks.length > 0
@@ -962,12 +963,12 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 													}
 												/>
 											)}
-										</Section>
+										</TaskSection>
 									)}
 
 									{/* Checklist */}
 									{(task.checklistItems.length > 0 || canPlan) && (
-										<Section
+										<TaskSection
 											title="Checklist"
 											count={
 												task.checklistItems.length > 0
@@ -1060,16 +1061,16 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 													}
 												/>
 											)}
-										</Section>
+										</TaskSection>
 									)}
 
 									{/* Attachments: planner documents + worker photos */}
 									{(task.documents.length > 0 ||
 										task.uploads.length > 0 ||
 										canPlan) && (
-										<Section
+										<TaskSection
 											title="Attachments"
-											action={
+											aside={
 												canPlan ? (
 													<>
 														<input
@@ -1174,7 +1175,7 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 													))}
 												</ul>
 											)}
-										</Section>
+										</TaskSection>
 									)}
 
 									{/* Feed: comments or everything */}
@@ -1311,44 +1312,6 @@ export const TaskDetailSheet = NiceModal.create<TaskDetailSheetProps>(
 // ---------------------------------------------------------------------------
 // Layout helpers
 // ---------------------------------------------------------------------------
-
-function FieldRow({
-	label,
-	children,
-}: React.PropsWithChildren<{ label: string }>) {
-	return (
-		<div className="flex min-h-8 items-center gap-3">
-			<dt className="w-24 shrink-0 text-sm text-muted-foreground">{label}</dt>
-			<dd className="min-w-0 flex-1">{children}</dd>
-		</div>
-	);
-}
-
-function Section({
-	title,
-	count,
-	action,
-	children,
-}: React.PropsWithChildren<{
-	title: string;
-	count?: string;
-	action?: React.ReactNode;
-}>) {
-	return (
-		<section>
-			<div className="mb-1.5 flex items-center gap-2">
-				<h3 className="text-sm font-semibold">{title}</h3>
-				{count && (
-					<span className="rounded bg-muted px-1.5 text-xs text-muted-foreground tabular-nums">
-						{count}
-					</span>
-				)}
-				{action}
-			</div>
-			{children}
-		</section>
-	);
-}
 
 function Muted({ children }: React.PropsWithChildren) {
 	return <p className="text-sm text-muted-foreground">{children}</p>;

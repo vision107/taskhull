@@ -398,12 +398,20 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
      layout activates a single membership in place. `/dashboard/start` sends
      members to My tasks and planners to the dashboard. Manifest, service
      worker (`isAppPage`, cache `v2`), notification URLs and tests updated.
-  4. _My tasks rows._ ✅ Compact rows with a status glyph instead of cards;
-     same row on phone and desktop.
-  5. _Next._ One `TaskView` for both roles (fold `TaskDetailSheet` and
-     `WorkTaskDetail` into a shared component; planner fields inline‑editable
-     via popovers, worker actions as today), side‑peek `?task=` on `lg+`,
-     dense project rows, then the two‑pane My tasks from Phase 8b.
+  4. _My tasks._ ✅ Full-width Asana-style list: collapsible sections, a
+     column header once the list is wide enough (name, due, project,
+     progress, status), completion circles that finish or reopen in place.
+     Columns are container queries so they collapse when the peek is open or
+     on a phone.
+  5. _Task view + peek._ ✅ `WorkTaskDetail` is a flat pane (top action bar,
+     field rows, Comments / All activity). On `lg+`, My tasks opens a task
+     next to the list via `?task=`; phones go to the full page. Shared
+     layout primitives live in `components/work/task-layout.tsx` and are
+     used by the planner `TaskDetailSheet` too.
+  6. _Project rows._ ✅ Same dense treatment on `/dashboard/organization/projects`.
+  7. _Next._ Fold `TaskDetailSheet` and `WorkTaskDetail` into one `TaskView`
+     (planner fields stay inline-editable; worker actions as today). Dense
+     rows on the project Gantt / assignment grid.
 
 ## Local setup
 

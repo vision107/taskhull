@@ -35,39 +35,61 @@ export function BuildsList({
 	};
 
 	if (isLoading) {
-		return <Skeleton className="h-48 w-full" />;
+		return (
+			<div className="flex min-h-full flex-col">
+				<div className="flex h-11 items-center justify-end gap-2 border-b border-subtle px-3">
+					<Skeleton className="h-7 w-28" />
+					<Skeleton className="h-7 w-24" />
+				</div>
+				<div className="space-y-px px-3 pt-3">
+					<Skeleton className="h-9 w-full" />
+					<Skeleton className="h-9 w-full" />
+					<Skeleton className="h-9 w-full" />
+				</div>
+			</div>
+		);
 	}
 
 	if (!data || data.length === 0) {
 		return (
-			<Empty className="border py-16">
-				<EmptyHeader>
-					<EmptyMedia variant="icon">
-						<FactoryIcon />
-					</EmptyMedia>
-					<EmptyTitle>No projects yet</EmptyTitle>
-					<EmptyDescription>
-						A project is one unit you build. Start blank and add tasks, or copy
-						the task plan from a template. When a project turns out well, save
-						it as a template for the next one.
-					</EmptyDescription>
-				</EmptyHeader>
+			<div className="flex min-h-full flex-col">
 				{canPlan && (
-					<EmptyContent>
-						<Button onClick={handleCreate}>
+					<div className="flex h-11 shrink-0 items-center justify-end border-b border-subtle px-3">
+						<Button size="sm" onClick={handleCreate}>
 							<PlusIcon />
 							New project
 						</Button>
-					</EmptyContent>
+					</div>
 				)}
-			</Empty>
+				<Empty className="flex-1 py-16">
+					<EmptyHeader>
+						<EmptyMedia variant="icon">
+							<FactoryIcon />
+						</EmptyMedia>
+						<EmptyTitle>No projects yet</EmptyTitle>
+						<EmptyDescription>
+							A project is one unit you build. Start blank and add tasks, or
+							copy the task plan from a template. When a project turns out well,
+							save it as a template for the next one.
+						</EmptyDescription>
+					</EmptyHeader>
+					{canPlan && (
+						<EmptyContent>
+							<Button onClick={handleCreate}>
+								<PlusIcon />
+								New project
+							</Button>
+						</EmptyContent>
+					)}
+				</Empty>
+			</div>
 		);
 	}
 
 	return (
-		<div className="space-y-4">
-			<div className="flex flex-wrap items-center justify-between gap-2">
-				<div className="flex items-center gap-2 text-sm text-muted-foreground">
+		<div className="flex min-h-full flex-col">
+			<div className="flex h-11 shrink-0 items-center justify-end gap-3 border-b border-subtle px-2 sm:px-3">
+				<div className="mr-auto flex items-center gap-2 text-sm text-fg-secondary">
 					<Switch
 						id="builds-show-archived"
 						checked={includeArchived}
@@ -79,13 +101,15 @@ export function BuildsList({
 					</Label>
 				</div>
 				{canPlan && (
-					<Button onClick={handleCreate}>
+					<Button size="sm" onClick={handleCreate}>
 						<PlusIcon />
 						New project
 					</Button>
 				)}
 			</div>
-			<BuildsTable builds={data} />
+			<div className="min-h-0 flex-1 overflow-y-auto">
+				<BuildsTable builds={data} />
+			</div>
 		</div>
 	);
 }
