@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function MyTasksPage(): Promise<React.JSX.Element> {
-	const { organization, session } = await getPlannerPageContext();
+	const { organization, session, canPlan } = await getPlannerPageContext();
 	const t = getWorkDictionary(
 		resolveWorkLocale(
 			(session.user as { locale?: string | null } | undefined)?.locale,
@@ -43,7 +43,7 @@ export default async function MyTasksPage(): Promise<React.JSX.Element> {
 			</PageHeader>
 			{/* The view owns its scroll regions: list on the left, task peek on the right. */}
 			<PageBody disableScroll className="min-h-0">
-				<MyTasksView />
+				<MyTasksView canPlan={canPlan} />
 			</PageBody>
 		</Page>
 	);

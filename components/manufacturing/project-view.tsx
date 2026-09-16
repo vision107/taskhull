@@ -32,7 +32,12 @@ export function ProjectView({
 				/>
 			</div>
 			{peek.showPeek && peek.taskId && (
-				<TaskPeek taskId={peek.taskId} onClose={peek.close} />
+				<TaskPeek
+					taskId={peek.taskId}
+					canPlan={canPlan}
+					onClose={peek.close}
+					onOpenTask={peek.setTaskId}
+				/>
 			)}
 		</div>
 	);

@@ -3,6 +3,7 @@
 import { useQueryState } from "nuqs";
 import * as React from "react";
 
+import { TaskPlannerView } from "@/components/manufacturing/task-detail-sheet";
 import { useWorkLocale } from "@/components/work/work-locale-provider";
 import { WorkTaskDetail } from "@/components/work/work-task-detail";
 
@@ -30,6 +31,7 @@ export function useTaskPeek(): {
 	showPeek: boolean;
 	open: (id: string) => boolean;
 	close: () => void;
+	setTaskId: (id: string | null) => void;
 } {
 	const [taskId, setTaskId] = useQueryState("task");
 	const canPeek = usePeekAvailable();
@@ -46,15 +48,22 @@ export function useTaskPeek(): {
 		close: () => {
 			void setTaskId(null);
 		},
+		setTaskId: (id: string | null) => {
+			void setTaskId(id);
+		},
 	};
 }
 
 export function TaskPeek({
 	taskId,
+	canPlan,
 	onClose,
+	onOpenTask,
 }: {
 	taskId: string;
+	canPlan?: boolean;
 	onClose: () => void;
+	onOpenTask?: (taskId: string) => void;
 }): React.JSX.Element {
 	const { t } = useWorkLocale();
 	return (
@@ -62,12 +71,23 @@ export function TaskPeek({
 			className="min-h-0 w-[min(44rem,50%)] shrink-0 border-l border-subtle bg-surface-1"
 			aria-label={t.detail.taskTitle}
 		>
-			<WorkTaskDetail
-				key={taskId}
-				taskId={taskId}
-				variant="peek"
-				onClose={onClose}
-			/>
+			{canPlan ? (
+				<TaskPlannerView
+					key={taskId}
+					taskId={taskId}
+					canPlan
+					variant="peek"
+					onClose={onClose}
+					onOpenTask={onOpenTask}
+				/>
+			) : (
+				<WorkTaskDetail
+					key={taskId}
+					taskId={taskId}
+					variant="peek"
+					onClose={onClose}
+				/>
+			)}
 		</aside>
 	);
 }

@@ -165,6 +165,14 @@ export function ProjectTasks({
 				<div className={cn(cellBorder, "px-2")}>Status</div>
 			</div>
 
+			{canPlan && (
+				<QuickAddTask
+					className="border-b border-subtle"
+					placeholder="Add a task and press Enter"
+					onAdd={quickAdd(groups[0]?.phase ?? null)}
+				/>
+			)}
+
 			{groups.map((group, groupIndex) => {
 				const phaseKey = `${group.phase ?? "none"}-${groupIndex}`;
 				const isCollapsed = collapsedPhases.has(phaseKey);

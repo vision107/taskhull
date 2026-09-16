@@ -8,8 +8,13 @@ import { TaskPeek, useTaskPeek } from "@/components/work/task-peek";
 /**
  * My tasks with an Asana-style side peek: on wide screens a task opens next
  * to the list (`?task=`), on phones it navigates to the full page.
+ * Planners get the editable task view in the peek.
  */
-export function MyTasksView(): React.JSX.Element {
+export function MyTasksView({
+	canPlan = false,
+}: {
+	canPlan?: boolean;
+}): React.JSX.Element {
 	const peek = useTaskPeek();
 
 	return (
@@ -21,7 +26,12 @@ export function MyTasksView(): React.JSX.Element {
 				/>
 			</div>
 			{peek.showPeek && peek.taskId && (
-				<TaskPeek taskId={peek.taskId} onClose={peek.close} />
+				<TaskPeek
+					taskId={peek.taskId}
+					canPlan={canPlan}
+					onClose={peek.close}
+					onOpenTask={peek.setTaskId}
+				/>
 			)}
 		</div>
 	);

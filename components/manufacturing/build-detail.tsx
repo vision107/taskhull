@@ -4,6 +4,7 @@ import NiceModal from "@ebay/nice-modal-react";
 import {
 	FileStackIcon,
 	MoreHorizontalIcon,
+	PlusIcon,
 	Trash2Icon,
 	UploadIcon,
 } from "lucide-react";
@@ -14,6 +15,7 @@ import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { ActivityTimeline } from "@/components/manufacturing/activity-timeline";
 import { BuildGantt } from "@/components/manufacturing/build-gantt";
+import { BuildTaskModal } from "@/components/manufacturing/build-task-modal";
 import { BuildUpgradeBanner } from "@/components/manufacturing/build-upgrade-banner";
 import {
 	formatDate,
@@ -158,6 +160,25 @@ export function BuildDetail({
 					</p>
 				</div>
 				<div className="flex shrink-0 items-center gap-0.5">
+					{canPlan && (
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() =>
+								void NiceModal.show(BuildTaskModal, {
+									buildId,
+									siblings: tasks.map((task) => ({
+										id: task.id,
+										title: task.title,
+										phase: task.phase,
+									})),
+								})
+							}
+						>
+							<PlusIcon />
+							Add task
+						</Button>
+					)}
 					{(["tasks", "timeline", "activity"] as const).map((value) => (
 						<Button
 							key={value}

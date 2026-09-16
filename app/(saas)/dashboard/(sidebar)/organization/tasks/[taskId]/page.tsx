@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type * as React from "react";
 
+import { TaskPlannerView } from "@/components/manufacturing/task-detail-sheet";
 import {
 	Page,
 	PageBody,
@@ -26,7 +27,7 @@ export default async function TaskPage({
 	params: Promise<{ taskId: string }>;
 }): Promise<React.JSX.Element> {
 	const { taskId } = await params;
-	const { organization, session } = await getPlannerPageContext();
+	const { organization, session, canPlan } = await getPlannerPageContext();
 	const t = getWorkDictionary(
 		resolveWorkLocale(
 			(session.user as { locale?: string | null } | undefined)?.locale,
@@ -51,7 +52,11 @@ export default async function TaskPage({
 			</PageHeader>
 			{/* The detail owns its scroll region so the action bar can sit below it. */}
 			<PageBody disableScroll className="min-h-0">
-				<WorkTaskDetail taskId={taskId} />
+				{canPlan ? (
+					<TaskPlannerView taskId={taskId} canPlan variant="page" />
+				) : (
+					<WorkTaskDetail taskId={taskId} />
+				)}
 			</PageBody>
 		</Page>
 	);
