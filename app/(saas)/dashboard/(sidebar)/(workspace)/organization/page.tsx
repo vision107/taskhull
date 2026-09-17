@@ -2,23 +2,27 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type * as React from "react";
 
-import { TemplatesList } from "@/components/manufacturing/templates-list";
+import { OrganizationOverview } from "@/components/manufacturing/organization-overview";
 import {
 	Page,
 	PageBody,
 	PageBreadcrumb,
-	PageContent,
 	PageHeader,
 	PagePrimaryBar,
+	PageTitle,
 } from "@/components/ui/custom/page";
 import { getOrganizationById, getSession } from "@/lib/auth/server";
-import { canPlan } from "@/lib/manufacturing/permissions";
 
 export const metadata: Metadata = {
-	title: "Templates",
+	title: "Dashboard",
 };
 
-export default async function TemplatesPage(): Promise<React.JSX.Element> {
+/**
+ * Organization dashboard page.
+ * The active organization is obtained from the session by the layout,
+ * and TRPC procedures use protectedOrganizationProcedure which validates it.
+ */
+export default async function DashboardPage(): Promise<React.JSX.Element> {
 	const session = await getSession();
 	if (!session?.session.activeOrganizationId) {
 		redirect("/dashboard");
@@ -31,27 +35,27 @@ export default async function TemplatesPage(): Promise<React.JSX.Element> {
 		redirect("/dashboard");
 	}
 
-	const membership = organization.members.find(
-		(member) => member.userId === session.user.id,
-	);
-
 	return (
 		<Page>
 			<PageHeader>
 				<PagePrimaryBar>
 					<PageBreadcrumb
 						segments={[
-							{ label: "Home", href: "/dashboard" },
 							{ label: organization.name, href: "/dashboard/organization" },
-							{ label: "Templates" },
+							{ label: "Dashboard" },
 						]}
 					/>
 				</PagePrimaryBar>
 			</PageHeader>
 			<PageBody>
-				<PageContent title="Templates">
-					<TemplatesList canPlan={canPlan(membership?.role)} />
-				</PageContent>
+				<div className="p-4 sm:px-6 sm:pt-6 sm:pb-24">
+					<div className="mx-auto w-full space-y-4">
+						<div>
+							<PageTitle>Dashboard</PageTitle>
+						</div>
+						<OrganizationOverview />
+					</div>
+				</div>
 			</PageBody>
 		</Page>
 	);

@@ -45,7 +45,6 @@ export default async function TemplateDetailPage({
 				<PagePrimaryBar>
 					<PageBreadcrumb
 						segments={[
-							{ label: "Home", href: "/dashboard" },
 							{ label: organization.name, href: "/dashboard/organization" },
 							{ label: "Templates", href: "/dashboard/organization/templates" },
 							{ label: "Template" },

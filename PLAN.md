@@ -179,6 +179,7 @@ subscribePush / unsubscribePush`, `lib/notifications/push.ts` (web‑push,
      organizations grid. `authConfig.redirectAfterSignIn` becomes
      `/dashboard/start`; `?redirectTo=` and invitation links keep priority
      (`getAuthRedirectPath`). Sidebar "Home" stays on `/dashboard`.
+     (Folded into `/dashboard` itself in Phase 9.)
   2. _Planner‑side task editing on the build page._ Router already has
      `build.createTask / updateTask / deleteTask`; add the UI:
      `components/manufacturing/build-task-modal.tsx` (NiceModal form: title,
@@ -369,6 +370,23 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
   Tests: extend `organization-manufacturing.test.ts` for the new `myTasks`
   filters and `teamTasks` permissions; a Playwright smoke for the two‑pane
   route with `?task=`.
+
+- **Phase 9 — No personal area** ✅ People reach the app through their
+  employer, so the starter's "Personal" account space (own sidebar with
+  Home / Profile / Security / Sessions, organizations grid as home page) only
+  made the sidebar change shape when switching. Removed:
+  - `/dashboard` is now the landing resolver (the former `/dashboard/start`):
+    active organization → planner dashboard or worker list, single
+    membership → activate it, worker everywhere → `/work`, otherwise a
+    sidebar‑less organization picker (also the empty state for users without
+    any organization, with sign‑out). `authConfig.redirectAfterSignIn` is
+    `/dashboard` again.
+  - One sidebar. `app/(saas)/dashboard/(sidebar)/(workspace)/layout.tsx`
+    (the former organization layout) now wraps both `/organization/*` and the
+    account settings at `/dashboard/settings`, so the navigation never
+    changes; account settings are reached from the user menu (⇧⌘P) and the
+    command menu. The switcher lists organizations (and the admin panel for
+    platform admins) only; breadcrumbs drop the "Home" crumb.
 
 ## Local setup
 

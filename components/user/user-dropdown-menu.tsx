@@ -1,7 +1,6 @@
 "use client";
 
 import NiceModal from "@ebay/nice-modal-react";
-import { useQueryClient } from "@tanstack/react-query";
 import {
 	ExternalLinkIcon,
 	LaptopIcon,
@@ -37,10 +36,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CommandMenu } from "@/components/user/command-menu";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { appConfig } from "@/config/app.config";
-import { authConfig } from "@/config/auth.config";
 import { useProgressRouter } from "@/hooks/use-progress-router";
 import { useSession } from "@/hooks/use-session";
-import { authClient } from "@/lib/auth/client";
+import { useSignOut } from "@/hooks/use-sign-out";
 import { capitalize, cn } from "@/lib/utils";
 
 function isDialogOpen(): boolean {
@@ -108,7 +106,6 @@ export function UserDropDownMenu(
 	const { user } = useSession();
 	const { setTheme, theme } = useTheme();
 	const router = useProgressRouter();
-	const queryClient = useQueryClient();
 	const { state: sidebarState } = useSidebar();
 	const [mounted, setMounted] = React.useState(false);
 
@@ -146,32 +143,7 @@ export function UserDropDownMenu(
 		void NiceModal.show(CommandMenu);
 	};
 
-	const handleSignOut = React.useCallback(async () => {
-		try {
-			await authClient.signOut();
-		} finally {
-			// Clear the query cache to prevent any user data from persisting
-			// This is critical for security when switching users
-			queryClient.clear();
-
-			// Preserve device-level preferences
-			const theme = localStorage.getItem("theme");
-			const cookieConsent = localStorage.getItem("cookie_consent");
-
-			localStorage.clear();
-			sessionStorage.clear();
-
-			// Restore device-level preferences
-			if (theme) localStorage.setItem("theme", theme);
-			if (cookieConsent) localStorage.setItem("cookie_consent", cookieConsent);
-
-			router.refresh();
-			window.location.href = new URL(
-				authConfig.redirectAfterLogout,
-				window.location.origin,
-			).toString();
-		}
-	}, [queryClient, router]);
+	const handleSignOut = useSignOut();
 
 	React.useEffect(() => {
 		const mac = isMac();

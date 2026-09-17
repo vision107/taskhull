@@ -3,7 +3,6 @@
 import NiceModal, { type NiceModalHocProps } from "@ebay/nice-modal-react";
 import {
 	CreditCardIcon,
-	HomeIcon,
 	LayoutDashboardIcon,
 	MonitorSmartphoneIcon,
 	SettingsIcon,
@@ -31,11 +30,6 @@ type NavItem = {
 };
 
 const userNavItems: NavItem[] = [
-	{
-		title: "Home",
-		href: "/dashboard",
-		icon: HomeIcon,
-	},
 	{
 		title: "Profile",
 		href: "/dashboard/settings?tab=profile",

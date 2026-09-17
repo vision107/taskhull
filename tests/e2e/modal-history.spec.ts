@@ -13,13 +13,14 @@ test("browser Back closes a modal without leaving the page", async ({
 	await page.getByLabel("Email").fill("owner@e2e.local");
 	await page.getByLabel("Password", { exact: true }).fill("E2e-password-123!");
 	await page.getByRole("button", { name: "Sign in", exact: true }).click();
-	await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
-
-	const trigger = page.getByRole("button", {
-		name: "Create an Organization",
+	await expect(page).toHaveURL(/\/dashboard\/organization$/, {
+		timeout: 30_000,
 	});
+	await page.goto("/dashboard/organization/projects");
+
+	const trigger = page.getByRole("button", { name: "New project" });
 	await trigger.click();
-	const dialog = page.getByRole("dialog", { name: "Create Organization" });
+	const dialog = page.getByRole("dialog", { name: "New project" });
 	await expect(dialog).toBeVisible();
 	await expect
 		.poll(() =>
@@ -51,7 +52,7 @@ test("browser Back closes a modal without leaving the page", async ({
 
 	await expect(dialog).toBeHidden();
 	await expect(trigger).toBeFocused();
-	await expect(page).toHaveURL(/\/dashboard$/);
+	await expect(page).toHaveURL(/\/dashboard\/organization\/projects$/);
 	await expect
 		.poll(() =>
 			page.evaluate(() => window.history.state?.niceModalHistoryToken ?? null),

@@ -29,7 +29,6 @@ export default async function ProjectDetailPage({
 				<PagePrimaryBar>
 					<PageBreadcrumb
 						segments={[
-							{ label: "Home", href: "/dashboard" },
 							{ label: organization.name, href: "/dashboard/organization" },
 							{ label: "Projects", href: "/dashboard/organization/projects" },
 							{ label: "Project" },
