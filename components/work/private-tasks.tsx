@@ -83,70 +83,102 @@ export function PrivateTasksSection({
 		onSuccess: invalidate,
 	});
 
-	const savedOffline = () =>
+	// -- offline fallbacks ----------------------------------------------------
+	// Same approach as the task detail: when the phone knows it is offline the
+	// write goes straight into the queue (a paused mutation would just hang);
+	// when a request fails mid-way with a network error it is queued as well.
+
+	const queueCreate = (title: string) => {
+		offline.enqueue({
+			kind: "createPrivateTask",
+			taskId: crypto.randomUUID(),
+			input: { title },
+		});
 		toast(t.privateList.noteSavedOffline, {
 			description: t.detail.willSyncOnline,
 		});
+	};
+
+	const queueToggle = (row: PrivateTaskRow, done: boolean) => {
+		offline.enqueue({
+			kind: "updatePrivateTask",
+			taskId: row.id,
+			input: { id: row.id, done },
+		});
+		toast(t.detail.savedOffline, { description: t.detail.willSyncOnline });
+	};
+
+	const queueDelete = (row: PrivateTaskRow) => {
+		offline.enqueue({
+			kind: "deletePrivateTask",
+			taskId: row.id,
+			input: { id: row.id },
+		});
+		toast(t.detail.savedOffline, { description: t.detail.willSyncOnline });
+	};
+
+	const showError = (error: unknown) =>
+		toast.error(error instanceof Error ? error.message : t.sync.rejected);
 
 	const add = async (title: string) => {
+		if (!offline.online) {
+			queueCreate(title);
+			return;
+		}
 		try {
 			await createMutation.mutateAsync({ title });
 		} catch (error) {
 			if (!isNetworkError(error)) {
-				toast.error(error instanceof Error ? error.message : t.sync.rejected);
+				showError(error);
 				throw error;
 			}
-			offline.enqueue({
-				kind: "createPrivateTask",
-				taskId: crypto.randomUUID(),
-				input: { title },
-			});
-			savedOffline();
+			queueCreate(title);
 		}
 	};
 
 	const toggle = async (row: PrivateTaskRow, done: boolean) => {
+		if (!offline.online) {
+			queueToggle(row, done);
+			return;
+		}
 		try {
 			await updateMutation.mutateAsync({ id: row.id, done });
 		} catch (error) {
 			if (!isNetworkError(error)) {
-				toast.error(error instanceof Error ? error.message : t.sync.rejected);
+				showError(error);
 				return;
 			}
-			offline.enqueue({
-				kind: "updatePrivateTask",
-				taskId: row.id,
-				input: { id: row.id, done },
-			});
-			savedOffline();
+			queueToggle(row, done);
 		}
 	};
 
 	const remove = async (row: PrivateTaskRow) => {
+		if (!offline.online) {
+			queueDelete(row);
+			return;
+		}
 		try {
 			await deleteMutation.mutateAsync({ id: row.id });
 			toast.success(t.privateList.deleted);
 		} catch (error) {
 			if (!isNetworkError(error)) {
-				toast.error(error instanceof Error ? error.message : t.sync.rejected);
+				showError(error);
 				throw error;
 			}
-			offline.enqueue({
-				kind: "deletePrivateTask",
-				taskId: row.id,
-				input: { id: row.id },
-			});
-			savedOffline();
+			queueDelete(row);
 		}
 	};
 
 	const save = async (row: PrivateTaskRow, values: PrivateTaskSheetValues) => {
+		if (!offline.online) {
+			toast.error(t.privateList.offlineEdit);
+			throw new Error(t.privateList.offlineEdit);
+		}
 		try {
 			await updateMutation.mutateAsync({ id: row.id, ...values });
 		} catch (error) {
 			if (isNetworkError(error)) toast.error(t.privateList.offlineEdit);
-			else
-				toast.error(error instanceof Error ? error.message : t.sync.rejected);
+			else showError(error);
 			throw error;
 		}
 	};
