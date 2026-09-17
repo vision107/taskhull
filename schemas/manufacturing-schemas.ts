@@ -332,7 +332,14 @@ export const assignmentGridSchema = z.object({
 export const listMyTasksSchema = z.object({
 	status: z.array(z.enum(BuildTaskStatus)).optional(),
 	includeDone: z.boolean().default(false),
+	projectId: z.uuid().optional(),
+	phase: z.string().trim().min(1).max(120).optional(),
+	/** Inclusive ISO date compared to the task's due date (last working day). */
+	dueAfter: isoDate.optional(),
+	dueBefore: isoDate.optional(),
 });
+
+export const listTeamTasksSchema = listMyTasksSchema;
 
 export const BLOCK_REASON_MAX = 2000;
 

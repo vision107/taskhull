@@ -690,6 +690,122 @@ describe("manufacturing routers", () => {
 			expect(plannerTasks).toHaveLength(0);
 		});
 
+		it("filters myTasks by project, phase and due date and returns planned hours", async () => {
+			const plannerCaller = callerAs(planner);
+			const template = await plannerCaller.organization.template.create({
+				name: "Hours",
+			});
+			const detail = await plannerCaller.organization.template.get({
+				id: template.id,
+			});
+			const draft = detail.versions.find((v) => v.status === "draft")!;
+			await plannerCaller.organization.template.createTask({
+				versionId: draft.id,
+				title: "Paint",
+				phase: "Finish",
+				durationDays: 1,
+				plannedHours: 3,
+			});
+			await plannerCaller.organization.template.createTask({
+				versionId: draft.id,
+				title: "Pack",
+				phase: "Ship",
+				durationDays: 1,
+				plannedHours: 1,
+			});
+			await plannerCaller.organization.template.publish({
+				versionId: draft.id,
+			});
+
+			const first = await plannerCaller.organization.build.create({
+				templateId: template.id,
+				serialNumber: "H-1",
+				plannedStartDate: "2026-03-19",
+			});
+			const second = await plannerCaller.organization.build.create({
+				templateId: template.id,
+				serialNumber: "H-2",
+				plannedStartDate: "2026-04-01",
+			});
+			const firstTasks = await plannerCaller.organization.build.get({
+				id: first.id,
+			});
+			const secondTasks = await plannerCaller.organization.build.get({
+				id: second.id,
+			});
+			await plannerCaller.organization.build.assign({
+				buildTaskIds: [...firstTasks.tasks, ...secondTasks.tasks].map(
+					(task) => task.id,
+				),
+				userId: WORKER_ID,
+			});
+
+			const workerCaller = callerAs(worker, ORG_ID, MemberRole.member);
+			const byProject = await workerCaller.organization.work.myTasks({
+				projectId: first.id,
+			});
+			expect(byProject.map((task) => task.build.serialNumber)).toEqual([
+				"H-1",
+				"H-1",
+			]);
+			expect(byProject[0]!.plannedHours).toBe(3);
+
+			const byPhase = await workerCaller.organization.work.myTasks({
+				phase: "Ship",
+			});
+			expect(byPhase.map((task) => task.title)).toEqual(["Pack", "Pack"]);
+
+			const dueToday = await workerCaller.organization.work.myTasks({
+				dueAfter: "2026-03-19",
+				dueBefore: "2026-03-19",
+			});
+			expect(dueToday.map((task) => task.build.serialNumber)).toEqual([
+				"H-1",
+				"H-1",
+			]);
+		});
+
+		it("lets planners list team tasks and refuses workers", async () => {
+			const plannerCaller = callerAs(planner);
+			const { template } = await createPublishedTemplate(plannerCaller);
+			const build = await plannerCaller.organization.build.create({
+				templateId: template.id,
+				serialNumber: "TEAM-1",
+				plannedStartDate: "2026-10-01",
+			});
+			const detail = await plannerCaller.organization.build.get({
+				id: build.id,
+			});
+			const frame = detail.tasks.find((task) => task.title === "Mount frame")!;
+			const cabinet = detail.tasks.find(
+				(task) => task.title === "Assemble cabinet",
+			)!;
+			await plannerCaller.organization.build.assign({
+				buildTaskIds: [frame.id],
+				userId: WORKER_ID,
+			});
+			await plannerCaller.organization.build.assign({
+				buildTaskIds: [cabinet.id],
+				userId: PLANNER_ID,
+			});
+
+			const team = await plannerCaller.organization.work.teamTasks({});
+			expect(team.map((task) => task.title).sort()).toEqual([
+				"Assemble cabinet",
+				"Mount frame",
+			]);
+			expect(
+				team.find((task) => task.title === "Mount frame")?.assignees,
+			).toEqual([
+				expect.objectContaining({ userId: WORKER_ID, name: "Worker" }),
+			]);
+
+			const workerCaller = callerAs(worker, ORG_ID, MemberRole.member);
+			await expect(
+				workerCaller.organization.work.teamTasks({}),
+			).rejects.toMatchObject({ code: "FORBIDDEN" });
+		});
+
 		it("enforces blockers, photo/comment requirements and status transitions", async () => {
 			const plannerCaller = callerAs(planner);
 			const { template } = await createPublishedTemplate(plannerCaller);

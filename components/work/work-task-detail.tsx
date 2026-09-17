@@ -119,6 +119,7 @@ export function WorkTaskDetail({
 	const invalidate = () => {
 		void utils.organization.work.getTask.invalidate({ id: taskId });
 		void utils.organization.work.myTasks.invalidate();
+		void utils.organization.work.teamTasks.invalidate();
 	};
 
 	// -- offline fallbacks ----------------------------------------------------
@@ -937,6 +938,7 @@ export function WorkTaskDetail({
 									rows={2}
 									className="min-h-0 resize-none"
 									aria-label={t.detail.newComment}
+									data-task-comment=""
 								/>
 								<Button
 									type="submit"

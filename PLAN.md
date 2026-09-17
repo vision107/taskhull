@@ -328,56 +328,30 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
      the task. `DatePicker` now closes on pick. `BuildTaskModal` remains only
      for "Add with details".
 
-- **Phase 8b — My tasks in the web view** (proposal, not started)
-  Today `/dashboard/work` is the phone layout stretched to a 32rem column;
-  on a desktop it wastes the screen and every task is a round trip. Goals:
-  a planner or a worker at a workstation PC should be able to work a day's
-  list without leaving the page, and the phone PWA must not change.
-  1. _Two‑pane layout ≥ `lg`._ Same route. Left: the task list (as now, but
-     denser rows). Right: the task detail (`WorkTaskDetail`) for the selected
-     task, driven by `?task=<id>` so links from notifications/e‑mails still
-     open the right task and the phone keeps navigating to
-     `/work/tasks/[id]`. Below `lg` nothing changes. The work layout widens
-     `max-w-lg` → `max-w-6xl` only when the two‑pane mode is active.
-  2. _Grouping and filters._ Segmented control **Ready · Waiting · Done** plus
-     chips for project (serial), phase and "due": _Overdue_, _Today_, _This
-     week_, _Later_. State in the URL (`?status=&project=&phase=&due=`) so a
-     filtered view can be bookmarked. Server: `work.myTasks` gains optional
-     `projectId`, `phase`, `dueBefore/After` and returns `plannedHours` and
-     `endDate` so the list can show "due Thu · 4h left".
-  3. _Sort and density._ Sort by start date (default), project, phase or
-     effort. A compact table mode on desktop (one line per task: status dot,
-     title, project, phase, dates, effort, blockers) with the same row
-     component underneath so phone and desktop stay in sync.
-  4. _Act from the list._ Status change directly on the row (To do → In
-     progress → Done; Blocked opens the reason sheet), checklist ticks in the
-     right pane, comment box in the right pane. Everything reuses the
-     existing `work.*` mutations and the offline queue, so nothing is
-     duplicated.
-  5. _Keyboard._ `j`/`k` move selection, `Enter` opens, `s` cycles status,
-     `c` focuses the comment box, `/` focuses the filter. Cheap to add once
-     selection lives in the URL.
-  6. _Today at a glance._ Header line: "5 ready · 2 waiting · 14h planned
-     today" computed client‑side from the list. Overdue tasks get the amber
-     date colour already used on the phone.
-  7. _For planners only._ A "Team" toggle on the same page that switches
-     `work.myTasks` → a new `work.teamTasks` (planner‑only, same shape, plus
-     assignee) so a planner can see everyone's list grouped by worker and
-     re‑assign from the row (`build.assign/unassign`). This is the first step
-     towards a workload view; the assignment grid stays per template.
+- **Phase 8b — My tasks in the web view** ✅ Built on the Phase 9 routes
+  (`/dashboard/organization/my-tasks` + `?task=` peek; phone still goes to
+  `/dashboard/organization/tasks/[id]`).
+  1. _Two‑pane layout ≥ `lg`._ ✅ Phase 9 peek.
+  2. _Grouping and filters._ ✅ Segmented **Ready · Waiting · Done** plus
+     chips for project, phase and due (Overdue / Today / This week / Later).
+     URL state `?status=&project=&phase=&due=&q=&sort=&view=`. Server:
+     `work.myTasks` accepts `projectId`, `phase`, `dueAfter` / `dueBefore`
+     and returns `plannedHours`.
+  3. _Sort._ ✅ Start date (default), project, phase or effort. Density is
+     the Phase 9 column layout (no separate table mode).
+  4. _Act from the list._ ✅ Completion circle, status badge cycles
+     to‑do → in progress → done, `b` / blocked opens the reason sheet.
+     Checklist and comments stay in the peek.
+  5. _Keyboard._ ✅ `j`/`k` move selection, `Enter` opens, `s` cycles
+     status, `c` focuses the comment box, `/` focuses search.
+  6. _Today at a glance._ ✅ "5 ready · 2 waiting · 14h planned today".
+  7. _Team toggle._ ✅ Planners switch `view=team` → `work.teamTasks`
+     (forbidden for members), grouped by worker, re‑assign from the row.
   8. _Not in this phase:_ drag‑and‑drop re‑scheduling, time tracking against
      `plannedHours`, a calendar view.
 
-  Order of work: 1 → 2 → 4 (this is the useful core), then 3, 6, 5, 7.
-  Tests: extend `organization-manufacturing.test.ts` for the new `myTasks`
-  filters and `teamTasks` permissions; a Playwright smoke for the two‑pane
-  route with `?task=`. _Superseded in part by Phase 9: the phone layout is no
-  longer a separate PWA, so the two‑pane view lives on
-  `/dashboard/organization/my-tasks` and the phone navigates to
-  `/dashboard/organization/tasks/[id]`._
-
-- **Phase 9 — One shell for planners and workers** (in progress; lessons
-  from Plane / Kuayle / Asana, see the design notes in the PR)
+- **Phase 9 — One shell for planners and workers** ✅ (lessons from Plane /
+  Kuayle / Asana, see the design notes in the PR)
   1. _Tokens._ ✅ Semantic surface model in `app/globals.css`: `bg-canvas`,
      `bg-surface-1`, `bg-layer-1`, `hover:bg-layer-transparent-hover`, text
      tiers `text-fg-secondary/tertiary/placeholder`, border weights
@@ -414,9 +388,10 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
      and the same `?task=` side peek (shared `useTaskPeek`). Timeline and
      Activity stay as toolbar tabs. Planner row actions (assign, status,
      quick-add, subtasks) are unchanged.
-  7. _Next._ Fold `TaskDetailSheet` and `WorkTaskDetail` into one `TaskView`
-     so the peek is inline-editable for planners. Dense rows on the
-     assignment grid.
+  7. _One task view + dense grid._ ✅ `TaskView` is the peek/page entry
+     (`canPlan` chooses the editable planner pane or the worker pane).
+     Assignment grid rows match the My tasks density (`text-13`, tighter
+     cells, `size-5` avatars).
 
 ## Local setup
 

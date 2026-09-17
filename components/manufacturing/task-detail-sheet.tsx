@@ -156,6 +156,7 @@ export function TaskPlannerView({
 		void utils.organization.work.getTask.invalidate({ id: taskId });
 		void utils.organization.work.activity.invalidate();
 		void utils.organization.work.myTasks.invalidate();
+		void utils.organization.work.teamTasks.invalidate();
 		if (task) {
 			void utils.organization.build.get.invalidate({ id: task.buildId });
 		}
@@ -1280,6 +1281,7 @@ export function TaskPlannerView({
 					>
 						<MentionTextarea
 							ref={commentRef}
+							data-task-comment=""
 							draft={commentDraft.draft}
 							onDraftChange={commentDraft.setDraft}
 							excludeUserId={user?.id}

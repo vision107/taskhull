@@ -82,3 +82,62 @@ export function formatTaskDueLabel(
 		overdue: isPast(due) && task.status !== "done",
 	};
 }
+
+export function dueIso(
+	task: {
+		endDate?: string | Date | null;
+		startDate?: string | Date | null;
+	},
+): string | null {
+	const due =
+		dueDateFromEnd(task.endDate, task.startDate) ??
+		(task.startDate ? parseDate(task.startDate) : null);
+	return due ? toIsoDate(due) : null;
+}
+
+export const DueChips = ["overdue", "today", "week", "later"] as const;
+export type DueChip = (typeof DueChips)[number];
+
+/**
+ * "This week" is today through six days out so the chip does not depend on
+ * locale week-start. Today is also its own chip (a subset of the week).
+ */
+export function matchesDueChip(
+	task: {
+		endDate?: string | Date | null;
+		startDate?: string | Date | null;
+		status: string;
+	},
+	chip: DueChip,
+	today: Date = new Date(),
+): boolean {
+	const iso = dueIso(task);
+	if (!iso) return false;
+	const todayIso = toIsoDate(today);
+	const weekEnd = toIsoDate(addDays(parseDate(todayIso), 6));
+	switch (chip) {
+		case "overdue":
+			return iso < todayIso && task.status !== "done";
+		case "today":
+			return iso === todayIso;
+		case "week":
+			return iso >= todayIso && iso <= weekEnd;
+		case "later":
+			return iso > weekEnd;
+	}
+}
+
+export function matchesDueRange(
+	task: {
+		endDate?: string | Date | null;
+		startDate?: string | Date | null;
+	},
+	range: { dueAfter?: string; dueBefore?: string },
+): boolean {
+	if (!range.dueAfter && !range.dueBefore) return true;
+	const iso = dueIso(task);
+	if (!iso) return false;
+	if (range.dueAfter && iso < range.dueAfter) return false;
+	if (range.dueBefore && iso > range.dueBefore) return false;
+	return true;
+}

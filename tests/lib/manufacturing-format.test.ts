@@ -1,7 +1,13 @@
 import { format } from "date-fns";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { dueDateFromEnd, formatTaskDueLabel } from "@/lib/manufacturing/format";
+import {
+	dueDateFromEnd,
+	dueIso,
+	formatTaskDueLabel,
+	matchesDueChip,
+	matchesDueRange,
+} from "@/lib/manufacturing/format";
 
 const labels = { today: "Today", unscheduled: "Unscheduled" };
 
@@ -88,5 +94,55 @@ describe("formatTaskDueLabel", () => {
 			text: "Unscheduled",
 			overdue: false,
 		});
+	});
+});
+
+describe("due chips", () => {
+	const today = new Date(2026, 2, 19);
+
+	it("classifies overdue, today, this week and later", () => {
+		expect(
+			matchesDueChip(
+				{ endDate: "2026-03-18", startDate: "2026-03-17", status: "todo" },
+				"overdue",
+				today,
+			),
+		).toBe(true);
+		expect(
+			matchesDueChip(
+				{ endDate: "2026-03-20", startDate: "2026-03-18", status: "todo" },
+				"today",
+				today,
+			),
+		).toBe(true);
+		expect(
+			matchesDueChip(
+				{ endDate: "2026-03-23", startDate: "2026-03-22", status: "todo" },
+				"week",
+				today,
+			),
+		).toBe(true);
+		expect(
+			matchesDueChip(
+				{ endDate: "2026-04-02", startDate: "2026-04-01", status: "todo" },
+				"later",
+				today,
+			),
+		).toBe(true);
+	});
+
+	it("does not treat a finished past task as overdue", () => {
+		expect(
+			matchesDueChip({ endDate: "2026-03-10", status: "done" }, "overdue", today),
+		).toBe(false);
+	});
+
+	it("filters an inclusive due range by the displayed due date", () => {
+		const task = { endDate: "2026-03-20", startDate: "2026-03-18" };
+		expect(dueIso(task)).toBe("2026-03-19");
+		expect(matchesDueRange(task, { dueAfter: "2026-03-19", dueBefore: "2026-03-19" })).toBe(
+			true,
+		);
+		expect(matchesDueRange(task, { dueBefore: "2026-03-18" })).toBe(false);
 	});
 });

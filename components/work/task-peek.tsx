@@ -4,9 +4,8 @@ import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import * as React from "react";
 
-import { TaskPlannerView } from "@/components/manufacturing/task-detail-sheet";
+import { TaskView } from "@/components/work/task-view";
 import { useWorkLocale } from "@/components/work/work-locale-provider";
-import { WorkTaskDetail } from "@/components/work/work-task-detail";
 
 /** Matches Tailwind's `lg` breakpoint: enough room for list + task side by side. */
 const PEEK_MEDIA_QUERY = "(min-width: 64rem)";
@@ -72,24 +71,14 @@ export function TaskPeek({
 			className="min-h-0 w-[min(44rem,50%)] shrink-0 border-l border-subtle bg-surface-1"
 			aria-label={t.detail.taskTitle}
 		>
-			{canPlan ? (
-				<TaskPlannerView
-					key={taskId}
-					taskId={taskId}
-					canPlan
-					variant="peek"
-					onClose={onClose}
-					onOpenTask={onOpenTask}
-				/>
-			) : (
-				<WorkTaskDetail
-					key={taskId}
-					taskId={taskId}
-					variant="peek"
-					onClose={onClose}
-					onOpenTask={onOpenTask}
-				/>
-			)}
+			<TaskView
+				key={taskId}
+				taskId={taskId}
+				canPlan={canPlan}
+				variant="peek"
+				onClose={onClose}
+				onOpenTask={onOpenTask}
+			/>
 		</aside>
 	);
 }
@@ -107,17 +96,13 @@ export function TaskPageView({
 		router.push(`/dashboard/organization/tasks/${id}`);
 	};
 
-	if (canPlan) {
-		return (
-			<TaskPlannerView
-				key={taskId}
-				taskId={taskId}
-				canPlan
-				variant="page"
-				onOpenTask={openTask}
-			/>
-		);
-	}
-
-	return <WorkTaskDetail key={taskId} taskId={taskId} onOpenTask={openTask} />;
+	return (
+		<TaskView
+			key={taskId}
+			taskId={taskId}
+			canPlan={canPlan}
+			variant="page"
+			onOpenTask={openTask}
+		/>
+	);
 }
