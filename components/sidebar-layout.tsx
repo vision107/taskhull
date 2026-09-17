@@ -2,6 +2,7 @@
 
 import type * as React from "react";
 
+import { SyncStatusPill } from "@/components/app-shell/sync-status-pill";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import { OrganizationSwitcher } from "@/components/organization/organization-switcher";
 import {
@@ -14,26 +15,37 @@ import {
 	SidebarRail,
 } from "@/components/ui/sidebar";
 import { UserDropDownMenu } from "@/components/user/user-dropdown-menu";
+import { cn } from "@/lib/utils";
 
 export type SidebarLayoutProps = React.PropsWithChildren<{
 	menuItems: React.ReactNode;
+	/** Phone tab bar rendered below `md`; the sidebar becomes a sheet there. */
+	mobileNav?: React.ReactNode;
 	defaultOpen?: boolean;
 	defaultWidth?: string;
 }>;
 
 /**
- * Sidebar layout component.
- * The active organization is now obtained from Better Auth's session via useActiveOrganization hook,
- * so it no longer needs to be passed as a prop.
+ * Application shell. One layout for every screen size: a resizable sidebar
+ * from `md` up, a bottom tab bar below. `--bottom-nav` exposes the height of
+ * the tab bar so sticky elements (task action bar, sync pill) can clear it.
  */
 export function SidebarLayout({
 	menuItems,
+	mobileNav,
 	defaultOpen,
 	defaultWidth,
 	children,
 }: SidebarLayoutProps): React.JSX.Element {
 	return (
-		<div className="flex h-screen w-screen flex-col overflow-hidden">
+		<div
+			className={cn(
+				"group/shell flex h-dvh w-screen flex-col overflow-hidden bg-canvas",
+				mobileNav
+					? "has-bottom-nav [--bottom-nav:calc(3.5rem+env(safe-area-inset-bottom))] md:[--bottom-nav:0px]"
+					: "[--bottom-nav:0px]",
+			)}
+		>
 			<SidebarProvider defaultOpen={defaultOpen} defaultWidth={defaultWidth}>
 				<Sidebar collapsible="icon">
 					<SidebarHeader className="h-14 justify-center">
@@ -55,9 +67,14 @@ export function SidebarLayout({
 					</SidebarFooter>
 					<SidebarRail />
 				</Sidebar>
-				<SidebarInset id="skip" className="size-full overflow-hidden">
+				<SidebarInset
+					id="skip"
+					className="size-full overflow-hidden bg-surface-1 pb-(--bottom-nav)"
+				>
 					{children}
 				</SidebarInset>
+				{mobileNav}
+				<SyncStatusPill />
 			</SidebarProvider>
 		</div>
 	);

@@ -27,7 +27,7 @@ import { getSafeRedirectPath } from "@/lib/auth/redirect";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 
-type Notification = {
+export type Notification = {
 	id: string;
 	title: string;
 	message: string;
@@ -51,7 +51,7 @@ function formatNotificationTime(createdAt: Date) {
 	return format(createdAt, "MMM d");
 }
 
-function getNotificationActionUrl(actionUrl: string | null) {
+export function getNotificationActionUrl(actionUrl: string | null) {
 	return actionUrl && getSafeRedirectPath(actionUrl, "") === actionUrl
 		? actionUrl
 		: null;
@@ -69,7 +69,7 @@ type NotificationListProps = {
 	onSelect: (notification: Notification) => void;
 };
 
-function NotificationList({
+export function NotificationList({
 	notifications,
 	emptyMessage,
 	onSelect,
@@ -180,7 +180,7 @@ function NotificationList({
 	);
 }
 
-function NotificationListSkeleton() {
+export function NotificationListSkeleton() {
 	const [visible, setVisible] = React.useState(false);
 
 	React.useEffect(() => {
@@ -219,7 +219,7 @@ function NotificationListSkeleton() {
 	);
 }
 
-function NotificationListError({
+export function NotificationListError({
 	retrying,
 	onRetry,
 }: {
@@ -514,6 +514,15 @@ export function NotificationCenter({
 						)}
 					</TabsContent>
 				</Tabs>
+				<div className="border-t border-border px-4 py-2">
+					<Link
+						href="/dashboard/notifications"
+						onClick={() => handleOpenChange(false)}
+						className="block text-center text-sm font-medium text-muted-foreground hover:text-foreground"
+					>
+						View all
+					</Link>
+				</div>
 			</PopoverContent>
 		</Popover>
 	);

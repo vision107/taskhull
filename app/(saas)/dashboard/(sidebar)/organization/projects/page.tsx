@@ -6,7 +6,6 @@ import {
 	Page,
 	PageBody,
 	PageBreadcrumb,
-	PageContent,
 	PageHeader,
 	PagePrimaryBar,
 } from "@/components/ui/custom/page";
@@ -32,10 +31,8 @@ export default async function ProjectsPage(): Promise<React.JSX.Element> {
 					/>
 				</PagePrimaryBar>
 			</PageHeader>
-			<PageBody>
-				<PageContent title="Projects">
-					<BuildsList canPlan={canPlan} />
-				</PageContent>
+			<PageBody disableScroll className="min-h-0">
+				<BuildsList canPlan={canPlan} />
 			</PageBody>
 		</Page>
 	);

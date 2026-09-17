@@ -58,6 +58,37 @@
 	--sidebar-border: var(--border);
 	--sidebar-ring: var(--ring);
 
+	/*
+	 * App surface model (light). One canvas behind everything, sibling
+	 * surfaces for content areas, layers for anything stacked on a surface.
+	 * Hover always pairs with its own layer.
+	 */
+	--canvas: var(--color-neutral-50);
+	--surface-1: var(--color-white);
+	--surface-2: var(--color-neutral-50);
+	--layer-1: var(--color-neutral-100);
+	--layer-1-hover: var(--color-neutral-200);
+	--layer-transparent-hover: color-mix(
+		in srgb,
+		var(--color-neutral-950),
+		transparent 96%
+	);
+
+	/* Text roles: foreground is primary, these are the quieter tiers. */
+	--fg-secondary: var(--color-neutral-600);
+	--fg-tertiary: var(--color-neutral-500);
+	--fg-placeholder: var(--color-neutral-400);
+
+	/* Border weights. `--border` stays the default. */
+	--subtle: var(--color-neutral-200);
+	--strong: var(--color-neutral-300);
+
+	/* Status accents used sparingly: waiting/overdue and blocked. */
+	--warning: var(--color-amber-600);
+	--warning-soft: var(--color-amber-50);
+	--success: var(--color-emerald-600);
+	--success-soft: var(--color-emerald-50);
+
 	/* Marketing tokens - light mode (Neutral Theme) */
 	--marketing-bg: var(--color-neutral-50);
 	--marketing-bg-elevated: var(--color-white);
@@ -130,6 +161,30 @@
 	--sidebar-accent-foreground: var(--color-white);
 	--sidebar-border: var(--border);
 	--sidebar-ring: var(--ring);
+
+	/* App surface model (dark) */
+	--canvas: var(--color-neutral-950);
+	--surface-1: var(--color-neutral-900);
+	--surface-2: var(--color-neutral-950);
+	--layer-1: var(--color-neutral-800);
+	--layer-1-hover: var(--color-neutral-700);
+	--layer-transparent-hover: color-mix(
+		in srgb,
+		var(--color-white),
+		transparent 94%
+	);
+
+	--fg-secondary: var(--color-neutral-400);
+	--fg-tertiary: var(--color-neutral-500);
+	--fg-placeholder: var(--color-neutral-600);
+
+	--subtle: var(--color-neutral-800);
+	--strong: var(--color-neutral-700);
+
+	--warning: var(--color-amber-400);
+	--warning-soft: color-mix(in srgb, var(--color-amber-500), transparent 88%);
+	--success: var(--color-emerald-400);
+	--success-soft: color-mix(in srgb, var(--color-emerald-500), transparent 88%);
 
 	/* Marketing tokens - dark mode (Neutral Theme) */
 	--marketing-bg: var(--color-neutral-950);
@@ -218,6 +273,29 @@
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-ring: var(--sidebar-ring);
+
+	/* Surface model utilities: bg-canvas, bg-surface-1, bg-layer-1, hover:bg-layer-1-hover */
+	--color-canvas: var(--canvas);
+	--color-surface-1: var(--surface-1);
+	--color-surface-2: var(--surface-2);
+	--color-layer-1: var(--layer-1);
+	--color-layer-1-hover: var(--layer-1-hover);
+	--color-layer-transparent-hover: var(--layer-transparent-hover);
+	/* Text tiers: text-fg-secondary, text-fg-tertiary, text-fg-placeholder */
+	--color-fg-secondary: var(--fg-secondary);
+	--color-fg-tertiary: var(--fg-tertiary);
+	--color-fg-placeholder: var(--fg-placeholder);
+	/* Border weights: border-subtle, border-strong */
+	--color-subtle: var(--subtle);
+	--color-strong: var(--strong);
+	--color-warning: var(--warning);
+	--color-warning-soft: var(--warning-soft);
+	--color-success: var(--success);
+	--color-success-soft: var(--success-soft);
+
+	/* Dense list typography: text-13 */
+	--text-13: 0.8125rem;
+	--text-13--line-height: 1.25rem;
 
 	--animation-accordion-down: accordion-down 0.2s ease-out;
 	--animation-accordion-up: accordion-up 0.2s ease-out;
