@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import type * as React from "react";
 
-import { TaskPlannerView } from "@/components/manufacturing/task-detail-sheet";
 import {
 	Page,
 	PageBody,
@@ -9,7 +8,7 @@ import {
 	PageHeader,
 	PagePrimaryBar,
 } from "@/components/ui/custom/page";
-import { WorkTaskDetail } from "@/components/work/work-task-detail";
+import { TaskPageView } from "@/components/work/task-peek";
 import { getWorkDictionary, resolveWorkLocale } from "@/lib/i18n/work";
 import { getPlannerPageContext } from "@/lib/manufacturing/page-context";
 
@@ -52,11 +51,7 @@ export default async function TaskPage({
 			</PageHeader>
 			{/* The detail owns its scroll region so the action bar can sit below it. */}
 			<PageBody disableScroll className="min-h-0">
-				{canPlan ? (
-					<TaskPlannerView taskId={taskId} canPlan variant="page" />
-				) : (
-					<WorkTaskDetail taskId={taskId} />
-				)}
+				<TaskPageView taskId={taskId} canPlan={canPlan} />
 			</PageBody>
 		</Page>
 	);

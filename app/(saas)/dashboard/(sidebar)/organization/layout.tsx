@@ -42,10 +42,7 @@ export default async function OrganizationLayout({
 		});
 		if (memberships.length === 1 && memberships[0]) {
 			return (
-				<ActivateOrganization
-					organizationId={memberships[0].organizationId}
-					redirectTo="/dashboard/start"
-				/>
+				<ActivateOrganization organizationId={memberships[0].organizationId} />
 			);
 		}
 		redirect("/dashboard");

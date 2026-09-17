@@ -514,6 +514,15 @@ export function NotificationCenter({
 						)}
 					</TabsContent>
 				</Tabs>
+				<div className="border-t border-border px-4 py-2">
+					<Link
+						href="/dashboard/notifications"
+						onClick={() => handleOpenChange(false)}
+						className="block text-center text-sm font-medium text-muted-foreground hover:text-foreground"
+					>
+						View all
+					</Link>
+				</div>
 			</PopoverContent>
 		</Popover>
 	);

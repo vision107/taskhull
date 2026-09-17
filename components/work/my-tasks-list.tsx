@@ -1,7 +1,7 @@
 "use client";
 
 import type { inferRouterOutputs } from "@trpc/server";
-import { format, isPast, isToday, type Locale, parseISO } from "date-fns";
+import type { Locale } from "date-fns";
 import {
 	CameraIcon,
 	CheckCircle2Icon,
@@ -24,6 +24,7 @@ import { useOffline } from "@/components/work/offline-provider";
 import { useWorkLocale } from "@/components/work/work-locale-provider";
 import type { BuildTaskStatus } from "@/lib/db/schema/enums";
 import type { WorkDictionary } from "@/lib/i18n/work";
+import { formatTaskDueLabel } from "@/lib/manufacturing/format";
 import { isNetworkError, pendingStatusFor } from "@/lib/offline/queue";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
@@ -50,14 +51,11 @@ function dateLabel(
 	t: WorkDictionary,
 	dateLocale: Locale,
 ): { text: string; overdue: boolean } {
-	if (!task.startDate) return { text: t.list.unscheduled, overdue: false };
-	const start = parseISO(task.startDate);
-	if (isToday(start)) return { text: t.list.today, overdue: false };
-	const overdue = isPast(start) && task.status !== "done";
-	return {
-		text: format(start, "d. MMM", { locale: dateLocale }),
-		overdue,
-	};
+	return formatTaskDueLabel(task, {
+		today: t.list.today,
+		unscheduled: t.list.unscheduled,
+		locale: dateLocale,
+	});
 }
 
 export interface MyTasksListProps {

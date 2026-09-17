@@ -40,6 +40,7 @@ type MenuItem = {
 	icon: React.ComponentType<{ className?: string }>;
 	external?: boolean;
 	exactMatch?: boolean;
+	activePrefixes?: string[];
 };
 
 type MenuGroup = {
@@ -76,6 +77,7 @@ export function OrganizationMenuItems({
 					label: t.nav.myTasks,
 					href: `${basePath}/my-tasks`,
 					icon: ClipboardCheckIcon,
+					activePrefixes: [`${basePath}/tasks`],
 				},
 				{
 					label: t.nav.projects,
@@ -124,6 +126,9 @@ export function OrganizationMenuItems({
 			}
 			if (item.exactMatch) {
 				return pathname === item.href;
+			}
+			if (item.activePrefixes?.some((prefix) => pathname.startsWith(prefix))) {
+				return true;
 			}
 			// Check if the href contains query params
 			if (item.href.includes("?")) {

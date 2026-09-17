@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import * as React from "react";
 
@@ -86,8 +87,37 @@ export function TaskPeek({
 					taskId={taskId}
 					variant="peek"
 					onClose={onClose}
+					onOpenTask={onOpenTask}
 				/>
 			)}
 		</aside>
 	);
+}
+
+/** Full-page task route: related tasks stay on this URL instead of opening a sheet. */
+export function TaskPageView({
+	taskId,
+	canPlan,
+}: {
+	taskId: string;
+	canPlan: boolean;
+}): React.JSX.Element {
+	const router = useRouter();
+	const openTask = (id: string) => {
+		router.push(`/dashboard/organization/tasks/${id}`);
+	};
+
+	if (canPlan) {
+		return (
+			<TaskPlannerView
+				key={taskId}
+				taskId={taskId}
+				canPlan
+				variant="page"
+				onOpenTask={openTask}
+			/>
+		);
+	}
+
+	return <WorkTaskDetail key={taskId} taskId={taskId} onOpenTask={openTask} />;
 }

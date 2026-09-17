@@ -16,6 +16,8 @@ export interface BottomNavItem {
 	icon: LucideIcon;
 	/** Defaults to a `startsWith` match on the pathname. */
 	exact?: boolean;
+	/** Extra prefixes that should also mark this item active. */
+	activePrefixes?: string[];
 }
 
 /** Height of the bar without the safe-area inset; keep in sync with `--bottom-nav`. */
@@ -35,8 +37,14 @@ export function BottomNav({
 	const { toggleSidebar, openMobile } = useSidebar();
 	const t = useWorkT();
 
-	const isActive = (item: BottomNavItem) =>
-		item.exact ? pathname === item.href : pathname.startsWith(item.href);
+	const isActive = (item: BottomNavItem) => {
+		if (item.exact) return pathname === item.href;
+		if (pathname.startsWith(item.href)) return true;
+		return (
+			item.activePrefixes?.some((prefix) => pathname.startsWith(prefix)) ??
+			false
+		);
+	};
 
 	return (
 		<nav

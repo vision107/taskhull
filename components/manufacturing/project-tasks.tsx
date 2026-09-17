@@ -2,7 +2,7 @@
 
 import NiceModal from "@ebay/nice-modal-react";
 import type { inferRouterOutputs } from "@trpc/server";
-import { format, isPast, isToday, parseISO } from "date-fns";
+import type { Locale } from "date-fns";
 import {
 	CameraIcon,
 	CheckIcon,
@@ -38,7 +38,11 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { UserAvatar } from "@/components/user/user-avatar";
+import { BlockReasonSheet } from "@/components/work/block-reason-sheet";
+import { useWorkLocale } from "@/components/work/work-locale-provider";
 import { BuildTaskStatus, BuildTaskStatuses } from "@/lib/db/schema/enums";
+import type { WorkDictionary } from "@/lib/i18n/work";
+import { formatTaskDueLabel } from "@/lib/manufacturing/format";
 import { isNetworkError } from "@/lib/offline/queue";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
@@ -60,12 +64,16 @@ const gridColumns =
 
 const cellBorder = "@xl:border-l @xl:border-subtle";
 
-function dueLabel(task: ProjectTask): { text: string; overdue: boolean } {
-	if (!task.startDate) return { text: "Unscheduled", overdue: false };
-	const start = parseISO(task.startDate);
-	if (isToday(start)) return { text: "Today", overdue: false };
-	const overdue = isPast(start) && task.status !== "done";
-	return { text: format(start, "d. MMM"), overdue };
+function dueLabel(
+	task: ProjectTask,
+	t: WorkDictionary,
+	dateLocale: Locale,
+): { text: string; overdue: boolean } {
+	return formatTaskDueLabel(task, {
+		today: t.list.today,
+		unscheduled: t.list.unscheduled,
+		locale: dateLocale,
+	});
 }
 
 export function ProjectTasks({
@@ -328,7 +336,8 @@ function TaskRow({
 	onAddSubtask?: () => void;
 }): React.JSX.Element {
 	const utils = trpc.useUtils();
-	const date = dueLabel(task);
+	const { t, dateLocale } = useWorkLocale();
+	const date = dueLabel(task, t, dateLocale);
 	const status = task.status as BuildTaskStatus;
 	const isDone = status === "done";
 	const href = `/dashboard/organization/tasks/${task.id}`;
@@ -578,9 +587,21 @@ function TaskRow({
 								<DropdownMenuItem
 									key={next}
 									disabled={next === status || statusMutation.isPending}
-									onClick={() =>
-										statusMutation.mutate({ id: task.id, status: next })
-									}
+									onClick={() => {
+										if (next === BuildTaskStatus.blocked) {
+											void NiceModal.show(BlockReasonSheet, {
+												taskTitle: task.title,
+												onSubmit: (reason) =>
+													statusMutation.mutateAsync({
+														id: task.id,
+														status: next,
+														reason,
+													}),
+											});
+											return;
+										}
+										statusMutation.mutate({ id: task.id, status: next });
+									}}
 								>
 									{taskStatusLabels[next]}
 								</DropdownMenuItem>

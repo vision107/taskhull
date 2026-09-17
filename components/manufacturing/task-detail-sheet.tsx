@@ -2,7 +2,6 @@
 
 import NiceModal from "@ebay/nice-modal-react";
 import {
-	addDays,
 	differenceInCalendarDays,
 	format,
 	formatDistanceToNow,
@@ -71,6 +70,7 @@ import {
 } from "@/components/ui/tooltip";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { BlockReasonSheet } from "@/components/work/block-reason-sheet";
+import { RelatedTaskLink } from "@/components/work/related-task-link";
 import { TaskFieldRow, TaskSection } from "@/components/work/task-layout";
 import { useEnhancedModal } from "@/hooks/use-enhanced-modal";
 import { useSession } from "@/hooks/use-session";
@@ -79,7 +79,11 @@ import {
 	BuildTaskStatuses,
 	type ChecklistItemStatus,
 } from "@/lib/db/schema/enums";
-import { formatBytes, formatHours } from "@/lib/manufacturing/format";
+import {
+	dueDateFromEnd,
+	formatBytes,
+	formatHours,
+} from "@/lib/manufacturing/format";
 import { mentionsToPlainText } from "@/lib/manufacturing/mentions";
 import {
 	DOCUMENT_ACCEPT,
@@ -105,9 +109,11 @@ export type TaskPlannerViewProps = TaskDetailSheetProps & {
 
 const ISO = "yyyy-MM-dd";
 
-/** Scheduled end dates are exclusive; the due date is the last working day. */
-function dueFromEnd(endDate: string | null): Date | undefined {
-	return endDate ? addDays(parseISO(endDate), -1) : undefined;
+function dueFromEnd(
+	endDate: string | null,
+	startDate?: string | null,
+): Date | undefined {
+	return dueDateFromEnd(endDate, startDate) ?? undefined;
 }
 
 /**
@@ -553,14 +559,14 @@ export function TaskPlannerView({
 									{task.parent && (
 										<>
 											<ChevronRightIcon className="size-3 shrink-0" />
-											<button
-												type="button"
+											<RelatedTaskLink
+												taskId={task.parent.id}
+												onOpenTask={openTask}
 												className="inline-flex min-w-0 items-center gap-1 truncate hover:underline"
-												onClick={() => openTask(task.parent!.id)}
 											>
 												<ListTreeIcon className="size-3 shrink-0" />
 												<span className="truncate">{task.parent.title}</span>
-											</button>
+											</RelatedTaskLink>
 										</>
 									)}
 									{task.sourceTemplateTaskId === null && (
@@ -653,14 +659,17 @@ export function TaskPlannerView({
 											className="-ml-2 font-normal"
 											dateFormat="EEE, d MMM"
 											placeholder="No due date"
-											date={dueFromEnd(task.endDate)}
+											date={dueFromEnd(task.endDate, task.startDate)}
 											onDateChange={onDueChange}
 											disabled={updateMutation.isPending}
 										/>
 									) : (
 										<Value>
 											{task.endDate
-												? format(dueFromEnd(task.endDate)!, "EEE, d MMM")
+												? format(
+														dueFromEnd(task.endDate, task.startDate)!,
+														"EEE, d MMM",
+													)
 												: "–"}
 										</Value>
 									)}
@@ -751,14 +760,14 @@ export function TaskPlannerView({
 											const open =
 												dep.dependsOn.status !== BuildTaskStatus.done;
 											return (
-												<button
+												<RelatedTaskLink
 													key={dep.dependsOnBuildTaskId}
-													type="button"
+													taskId={dep.dependsOnBuildTaskId}
+													onOpenTask={openTask}
 													className={cn(
 														"inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-sm hover:bg-muted/60",
 														open && "border-amber-500/50",
 													)}
-													onClick={() => openTask(dep.dependsOnBuildTaskId)}
 												>
 													{open && (
 														<LockIcon className="size-3 shrink-0 text-amber-600" />
@@ -766,7 +775,7 @@ export function TaskPlannerView({
 													<span className="truncate">
 														{dep.dependsOn.title}
 													</span>
-												</button>
+												</RelatedTaskLink>
 											);
 										})}
 										{canPlan ? (
@@ -906,10 +915,10 @@ export function TaskPlannerView({
 												const subDone = subtask.status === BuildTaskStatus.done;
 												return (
 													<li key={subtask.id}>
-														<button
-															type="button"
+														<RelatedTaskLink
+															taskId={subtask.id}
+															onOpenTask={openTask}
 															className="flex w-full items-center gap-2 py-1.5 text-left text-sm hover:bg-muted/40"
-															onClick={() => openTask(subtask.id)}
 														>
 															<span
 																className={cn(
@@ -933,7 +942,10 @@ export function TaskPlannerView({
 															{subtask.endDate && (
 																<span className="shrink-0 text-xs text-muted-foreground">
 																	{format(
-																		dueFromEnd(subtask.endDate)!,
+																		dueFromEnd(
+																			subtask.endDate,
+																			subtask.startDate,
+																		)!,
 																		"d MMM",
 																	)}
 																</span>
@@ -952,7 +964,7 @@ export function TaskPlannerView({
 																</span>
 															)}
 															<TaskStatusBadge status={subtask.status} />
-														</button>
+														</RelatedTaskLink>
 													</li>
 												);
 											})}

@@ -33,6 +33,7 @@ export function OrganizationMobileNav({
 			label: t.nav.myTasks,
 			href: `${basePath}/my-tasks`,
 			icon: ClipboardCheckIcon,
+			activePrefixes: [`${basePath}/tasks`],
 		},
 		{ label: t.nav.projects, href: `${basePath}/projects`, icon: FactoryIcon },
 		canPlan

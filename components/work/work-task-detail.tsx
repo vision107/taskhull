@@ -35,6 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { BlockReasonSheet } from "@/components/work/block-reason-sheet";
 import { useOffline } from "@/components/work/offline-provider";
+import { RelatedTaskLink } from "@/components/work/related-task-link";
 import {
 	TaskCheckCircle,
 	TaskFieldRow,
@@ -76,12 +77,15 @@ export interface WorkTaskDetailProps {
 	 */
 	variant?: "page" | "peek";
 	onClose?: () => void;
+	/** Open a related task in this same surface (peek/page) instead of a hard navigation. */
+	onOpenTask?: (taskId: string) => void;
 }
 
 export function WorkTaskDetail({
 	taskId,
 	variant = "page",
 	onClose,
+	onOpenTask,
 }: WorkTaskDetailProps): React.JSX.Element {
 	const utils = trpc.useUtils();
 	const { user } = useSession();
@@ -490,13 +494,14 @@ export function WorkTaskDetail({
 			<div className="min-h-0 flex-1 overflow-y-auto">
 				<div className="mx-auto w-full max-w-4xl px-4 pt-5 pb-10 sm:px-6">
 					{task.parent && (
-						<Link
-							href={`/dashboard/organization/tasks/${task.parent.id}`}
+						<RelatedTaskLink
+							taskId={task.parent.id}
+							onOpenTask={onOpenTask}
 							className="mb-1 inline-flex max-w-full items-center gap-1 text-13 text-fg-tertiary hover:text-foreground"
 						>
 							<ListTreeIcon className="size-3.5 shrink-0" />
 							<span className="truncate">{task.parent.title}</span>
-						</Link>
+						</RelatedTaskLink>
 					)}
 					<h1
 						className={cn(
@@ -642,9 +647,10 @@ export function WorkTaskDetail({
 							<ul className="-mx-2 divide-y divide-subtle">
 								{task.subtasks.map((subtask) => (
 									<li key={subtask.id}>
-										<Link
-											href={`/dashboard/organization/tasks/${subtask.id}`}
-											className="flex items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-layer-transparent-hover"
+										<RelatedTaskLink
+											taskId={subtask.id}
+											onOpenTask={onOpenTask}
+											className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm hover:bg-layer-transparent-hover"
 										>
 											<TaskCheckCircle done={subtask.status === "done"} />
 											<span
@@ -673,7 +679,7 @@ export function WorkTaskDetail({
 												status={subtask.status}
 												labels={t.status}
 											/>
-										</Link>
+										</RelatedTaskLink>
 									</li>
 								))}
 							</ul>
