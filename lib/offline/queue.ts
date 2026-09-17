@@ -44,6 +44,29 @@ export type QueuedWrite =
 				sizeBytes: number;
 			};
 			createdAt: number;
+	  }
+	// Private to-dos. `taskId` carries the private task id (or, for a create,
+	// the client-generated placeholder id the list shows until it is synced).
+	| {
+			id: string;
+			kind: "createPrivateTask";
+			taskId: string;
+			input: { title: string };
+			createdAt: number;
+	  }
+	| {
+			id: string;
+			kind: "updatePrivateTask";
+			taskId: string;
+			input: { id: string; done: boolean };
+			createdAt: number;
+	  }
+	| {
+			id: string;
+			kind: "deletePrivateTask";
+			taskId: string;
+			input: { id: string };
+			createdAt: number;
 	  };
 
 export type QueuedWriteKind = QueuedWrite["kind"];
@@ -95,19 +118,62 @@ export function enqueueWrite(
 	// Status changes are NOT collapsed: the server enforces a state machine
 	// (e.g. blocked -> in_progress -> done), so every step must be replayed in
 	// the order the worker performed it.
-	const deduped =
-		queued.kind === "updateChecklistItem"
-			? queue.filter(
-					(item) =>
-						!(
-							item.kind === "updateChecklistItem" &&
-							item.input.id === queued.input.id
-						),
-				)
-			: queue;
+	// Done-toggles on a private to-do are idempotent too, and deleting one
+	// makes any queued toggle for it pointless.
+	const deduped = queue.filter((item) => {
+		if (queued.kind === "updateChecklistItem") {
+			return !(
+				item.kind === "updateChecklistItem" && item.input.id === queued.input.id
+			);
+		}
+		if (
+			queued.kind === "updatePrivateTask" ||
+			queued.kind === "deletePrivateTask"
+		) {
+			return !(
+				item.kind === "updatePrivateTask" && item.taskId === queued.taskId
+			);
+		}
+		return true;
+	});
 
 	writeQueue([...deduped, queued]);
 	return queued;
+}
+
+/** Private to-dos created offline that have not reached the server yet. */
+export function pendingPrivateTaskCreates(
+	queue: readonly QueuedWrite[],
+): { id: string; title: string; createdAt: number }[] {
+	const result: { id: string; title: string; createdAt: number }[] = [];
+	for (const item of queue) {
+		if (item.kind === "createPrivateTask") {
+			result.push({
+				id: item.taskId,
+				title: item.input.title,
+				createdAt: item.createdAt,
+			});
+		}
+	}
+	return result;
+}
+
+/**
+ * Queued done-toggles per private to-do id, and the ids whose delete is still
+ * waiting. Overlaid on server data so the list reflects what the worker did.
+ */
+export function pendingPrivateTaskChanges(queue: readonly QueuedWrite[]): {
+	done: Map<string, boolean>;
+	deleted: Set<string>;
+} {
+	const done = new Map<string, boolean>();
+	const deleted = new Set<string>();
+	for (const item of queue) {
+		if (item.kind === "updatePrivateTask")
+			done.set(item.taskId, item.input.done);
+		if (item.kind === "deletePrivateTask") deleted.add(item.taskId);
+	}
+	return { done, deleted };
 }
 
 /**

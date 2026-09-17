@@ -9,6 +9,7 @@ import {
 	buildTaskCommentTable,
 	buildTaskDependencyTable,
 	buildTaskTable,
+	privateTaskTable,
 	productTable,
 	revisionTable,
 	templateTable,
@@ -302,6 +303,21 @@ export const buildTaskActivityRelations = relations(
 		}),
 	}),
 );
+
+export const privateTaskRelations = relations(privateTaskTable, ({ one }) => ({
+	organization: one(organizationTable, {
+		fields: [privateTaskTable.organizationId],
+		references: [organizationTable.id],
+	}),
+	user: one(userTable, {
+		fields: [privateTaskTable.userId],
+		references: [userTable.id],
+	}),
+	buildTask: one(buildTaskTable, {
+		fields: [privateTaskTable.buildTaskId],
+		references: [buildTaskTable.id],
+	}),
+}));
 
 export const revisionRelations = relations(revisionTable, ({ one }) => ({
 	organization: one(organizationTable, {

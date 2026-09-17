@@ -257,8 +257,25 @@ export const auth = betterAuth({
 						});
 					}
 				},
-				// Sync seats after a member is removed
-				afterRemoveMember: async ({ organization }) => {
+				// Sync seats after a member is removed (also fired when someone
+				// leaves) and drop their private to-dos: the list belongs to the
+				// membership, not to the user.
+				afterRemoveMember: async ({ organization, member }) => {
+					try {
+						await db
+							.delete(schema.privateTaskTable)
+							.where(
+								and(
+									eq(schema.privateTaskTable.organizationId, organization.id),
+									eq(schema.privateTaskTable.userId, member.userId),
+								),
+							);
+					} catch (error) {
+						logger.error(
+							{ organizationId: organization.id, userId: member.userId, error },
+							"Failed to remove private tasks after member removed",
+						);
+					}
 					try {
 						await syncOrganizationSeats(organization.id);
 						logger.info("Synced seats after member removed", {

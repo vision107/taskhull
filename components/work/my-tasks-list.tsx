@@ -18,6 +18,7 @@ import { TaskStatusBadge } from "@/components/manufacturing/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOffline } from "@/components/work/offline-provider";
+import { PrivateTasksSection } from "@/components/work/private-tasks";
 import { useWorkLocale } from "@/components/work/work-locale-provider";
 import type { WorkDictionary } from "@/lib/i18n/work";
 import { pendingStatusFor } from "@/lib/offline/queue";
@@ -81,6 +82,12 @@ export function MyTasksList(): React.JSX.Element {
 	);
 	const done = data.filter((task) => task.status === "done");
 
+	// Offered when pinning a private note to one of the caller's tasks.
+	const linkOptions = data.map((task) => ({
+		id: task.id,
+		label: `${task.title} · ${task.build.serialNumber}`,
+	}));
+
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
@@ -118,6 +125,8 @@ export function MyTasksList(): React.JSX.Element {
 					))}
 				</Section>
 			)}
+
+			<PrivateTasksSection showDone={showDone} linkOptions={linkOptions} />
 
 			<div className="pt-2">
 				<Button

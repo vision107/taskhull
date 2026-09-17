@@ -165,6 +165,21 @@ export function OfflineProvider({
 							await deletePhoto(item.input.photoId).catch(() => undefined);
 							break;
 						}
+						case "createPrivateTask":
+							await utils.client.organization.privateTask.create.mutate(
+								item.input,
+							);
+							break;
+						case "updatePrivateTask":
+							await utils.client.organization.privateTask.update.mutate(
+								item.input,
+							);
+							break;
+						case "deletePrivateTask":
+							await utils.client.organization.privateTask.delete.mutate(
+								item.input,
+							);
+							break;
 					}
 					removeWrite(item.id);
 					touchedTasks.add(item.taskId);
@@ -194,6 +209,7 @@ export function OfflineProvider({
 				}
 				void utils.organization.work.myTasks.invalidate();
 				void utils.organization.work.activity.invalidate();
+				void utils.organization.privateTask.list.invalidate();
 			}
 			if (synced > 0) {
 				toast.success(t.sync.synced(synced));

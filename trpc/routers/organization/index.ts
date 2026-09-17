@@ -23,6 +23,7 @@ import {
 } from "@/trpc/init";
 import { organizationBuildRouter } from "@/trpc/routers/organization/organization-build-router";
 import { organizationCreditRouter } from "@/trpc/routers/organization/organization-credit-router";
+import { organizationPrivateTaskRouter } from "@/trpc/routers/organization/organization-private-task-router";
 import { organizationProductRouter } from "@/trpc/routers/organization/organization-product-router";
 import { organizationSubscriptionRouter } from "@/trpc/routers/organization/organization-subscription-router";
 import { organizationTemplateRouter } from "@/trpc/routers/organization/organization-template-router";
@@ -188,4 +189,5 @@ export const organizationRouter = createTRPCRouter({
 	product: organizationProductRouter,
 	build: organizationBuildRouter,
 	work: organizationWorkRouter,
+	privateTask: organizationPrivateTaskRouter,
 });
