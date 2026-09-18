@@ -60,7 +60,7 @@ const en = {
 	nav: {
 		label: "Main navigation",
 		myTasks: "Tasks",
-		myList: "My tasks",
+		myList: "My list",
 		dashboard: "Dashboard",
 		projects: "Projects",
 		noProjects: "No projects yet",
@@ -133,7 +133,7 @@ const en = {
 		blockTask: (title: string) => `Mark "${title}" blocked`,
 	},
 	privateList: {
-		title: "My tasks",
+		title: "My list",
 		hint: "Only you can see these. They stay with this team.",
 		addPlaceholder: "Add an item and press Enter",
 		empty: "Reminders for yourself: parts to ask about, things to check.",
@@ -293,7 +293,7 @@ const de: WorkDictionary = {
 	nav: {
 		label: "Hauptnavigation",
 		myTasks: "Aufgaben",
-		myList: "Meine Aufgaben",
+		myList: "Meine Liste",
 		dashboard: "Übersicht",
 		projects: "Projekte",
 		noProjects: "Noch keine Projekte",
@@ -367,7 +367,7 @@ const de: WorkDictionary = {
 		blockTask: (title) => `„${title}" als blockiert markieren`,
 	},
 	privateList: {
-		title: "Meine Aufgaben",
+		title: "Meine Liste",
 		hint: "Nur du siehst diese Einträge. Sie gehören zu diesem Team.",
 		addPlaceholder: "Eintrag hinzufügen und Enter drücken",
 		empty: "Erinnerungen für dich: Teile nachfragen, Dinge prüfen.",

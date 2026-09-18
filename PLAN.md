@@ -412,7 +412,7 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
     command menu. The switcher lists organizations (and the admin panel for
     platform admins) only; breadcrumbs drop the "Home" crumb.
   - _Private to‑dos live inside the organization._ What people still want
-    from a personal space is a scratch list; that is now "My tasks" at
+    from a personal space is a scratch list; that is now "My list" at
     `/dashboard/organization/my-list`, reached from the sidebar as the only
     child of the collapsible "Tasks" item (assigned work stays at
     `/dashboard/organization/my-tasks`). "Projects" is collapsible too and

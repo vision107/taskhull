@@ -67,7 +67,7 @@ const organizationNavItems: NavItem[] = [
 		icon: FactoryIcon,
 	},
 	{
-		title: "My tasks",
+		title: "My list",
 		href: "/dashboard/organization/my-list",
 		icon: ListTodoIcon,
 	},
