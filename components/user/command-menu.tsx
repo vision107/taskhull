@@ -2,8 +2,11 @@
 
 import NiceModal, { type NiceModalHocProps } from "@ebay/nice-modal-react";
 import {
+	ClipboardCheckIcon,
 	CreditCardIcon,
+	FactoryIcon,
 	LayoutDashboardIcon,
+	ListTodoIcon,
 	MonitorSmartphoneIcon,
 	SettingsIcon,
 	ShieldIcon,
@@ -52,6 +55,21 @@ const organizationNavItems: NavItem[] = [
 		title: "Dashboard",
 		href: "/dashboard/organization",
 		icon: LayoutDashboardIcon,
+	},
+	{
+		title: "Tasks",
+		href: "/dashboard/organization/my-tasks",
+		icon: ClipboardCheckIcon,
+	},
+	{
+		title: "Projects",
+		href: "/dashboard/organization/projects",
+		icon: FactoryIcon,
+	},
+	{
+		title: "My list",
+		href: "/dashboard/organization/my-list",
+		icon: ListTodoIcon,
 	},
 	{
 		title: "General Settings",

@@ -10,6 +10,7 @@ import {
 	Link2Icon,
 	LockIcon,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -46,21 +47,26 @@ type PrivateTaskRow = Pick<
 };
 
 interface PrivateTasksSectionProps {
-	/** Mirrors the "show finished" toggle of the main list. */
+	/** When true, finished items are listed under the open ones. */
 	showDone: boolean;
-	/** The caller's project tasks, offered when pinning a note to a task. */
-	linkOptions: PrivateTaskLinkOption[];
+	/** The caller's project tasks, offered when pinning an item to a task. */
+	linkOptions?: PrivateTaskLinkOption[];
+	/** Hide the in-page heading when the surrounding page already titles it. */
+	hideHeading?: boolean;
+	/** Open this item's editor once it is loaded (sidebar deep link). */
+	openItemId?: string | null;
 }
 
 /**
- * The member's own to-do list inside the organization, rendered under the
- * assigned tasks on "My tasks". Nobody else sees it; it lives and dies with
- * the membership. Quick add, tick off and delete work offline through the
- * write queue; editing a note needs a connection.
+ * The member's own to-do list inside the organization. Nobody else sees it;
+ * it lives and dies with the membership. Quick add, tick off and delete work
+ * offline through the write queue; editing an item needs a connection.
  */
 export function PrivateTasksSection({
 	showDone,
-	linkOptions,
+	linkOptions = [],
+	hideHeading = false,
+	openItemId = null,
 }: PrivateTasksSectionProps): React.JSX.Element {
 	const { t } = useWorkLocale();
 	const offline = useOffline();
@@ -183,6 +189,9 @@ export function PrivateTasksSection({
 		}
 	};
 
+	const openedItem = React.useRef<string | null>(null);
+	const openEditorRef = React.useRef<(row: PrivateTaskRow) => void>(() => {});
+
 	const openEditor = (row: PrivateTaskRow) => {
 		if (row.pendingCreateId) return;
 		void NiceModal.show(PrivateTaskSheet, {
@@ -236,21 +245,40 @@ export function PrivateTasksSection({
 	const open = rows.filter((row) => !row.done);
 	const finished = rows.filter((row) => row.done);
 
+	openEditorRef.current = openEditor;
+
+	React.useEffect(() => {
+		if (!openItemId || openedItem.current === openItemId) return;
+		const row = rows.find((item) => item.id === openItemId);
+		if (!row) return;
+		openedItem.current = openItemId;
+		openEditorRef.current(row);
+	}, [openItemId, rows]);
+
 	return (
-		<section className="space-y-2" aria-labelledby="private-tasks-heading">
-			<div className="px-1">
-				<h2
-					id="private-tasks-heading"
-					className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase"
-				>
-					<LockIcon className="size-3.5" />
-					{t.privateList.title}
-					{open.length > 0 && <span>· {open.length}</span>}
-				</h2>
-				<p className="mt-0.5 text-xs text-muted-foreground">
+		<section
+			className="space-y-2"
+			aria-labelledby={hideHeading ? undefined : "private-tasks-heading"}
+		>
+			{hideHeading ? (
+				<p className="px-1 text-sm text-muted-foreground">
 					{t.privateList.hint}
 				</p>
-			</div>
+			) : (
+				<div className="px-1">
+					<h2
+						id="private-tasks-heading"
+						className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+					>
+						<LockIcon className="size-3.5" />
+						{t.privateList.title}
+						{open.length > 0 && <span>· {open.length}</span>}
+					</h2>
+					<p className="mt-0.5 text-xs text-muted-foreground">
+						{t.privateList.hint}
+					</p>
+				</div>
+			)}
 
 			<div className="overflow-hidden rounded-xl border bg-background shadow-xs">
 				<QuickAddTask
@@ -385,5 +413,32 @@ function PrivateTaskItem({
 				)}
 			</button>
 		</li>
+	);
+}
+
+/**
+ * Standalone page for the member's list: assigned tasks are offered as
+ * link targets, and `?item=` from the sidebar opens the editor.
+ */
+export function PrivateTasksView(): React.JSX.Element {
+	const searchParams = useSearchParams();
+	const itemId = searchParams.get("item");
+	const { data: tasks } = trpc.organization.work.myTasks.useQuery({
+		includeDone: true,
+	});
+	const linkOptions = (tasks ?? []).map((task) => ({
+		id: task.id,
+		label: `${task.title} · ${task.build.serialNumber}`,
+	}));
+
+	return (
+		<div className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6">
+			<PrivateTasksSection
+				showDone
+				hideHeading
+				linkOptions={linkOptions}
+				openItemId={itemId}
+			/>
+		</div>
 	);
 }
