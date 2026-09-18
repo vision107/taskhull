@@ -252,7 +252,7 @@ describe("personal list tasks", () => {
 		).rejects.toMatchObject({ code: "NOT_FOUND" });
 
 		await expect(
-			workerCaller.organization.build.assign({
+			callerAs(worker, ORG_ID, MemberRole.member).organization.build.assign({
 				buildTaskIds: [task.id],
 				userId: PLANNER_ID,
 			}),
