@@ -411,10 +411,9 @@ export function MyTasksList({
 				<QuickAddTask
 					onAdd={async (title) => {
 						const created = await createPersonal.mutateAsync({ title });
-						onSelectTask?.(created.id);
-						if (!onOpenTask?.(created.id)) {
-							router.push(`${taskPageBase}/${created.id}`);
-						}
+						// Peek writes `?task=`; on phones that is not enough — go to the item page.
+						if (onOpenTask?.(created.id)) return;
+						router.push(`${taskPageBase}/${created.id}`);
 					}}
 					placeholder={t.privateList.addPlaceholder}
 					className="border-b border-subtle"
