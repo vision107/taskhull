@@ -379,9 +379,11 @@ function PrivateTaskRowItem({
 							{row.title}
 						</Link>
 					)}
-					<p className="truncate text-xs text-fg-tertiary @xl:hidden">
-						{linked ?? t.privateList.edit.noLink}
-					</p>
+					{linked && (
+						<p className="truncate text-xs text-fg-tertiary @xl:hidden">
+							{linked}
+						</p>
+					)}
 				</div>
 				{row.notes && (
 					<AlignLeftIcon
