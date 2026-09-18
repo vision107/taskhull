@@ -412,9 +412,12 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
     command menu. The switcher lists organizations (and the admin panel for
     platform admins) only; breadcrumbs drop the "Home" crumb.
   - _Private to‑dos live inside the organization._ What people still want
-    from a personal space is a scratch list; that is now the "My notes"
-    section at the bottom of My tasks (`/dashboard/organization/my-tasks`,
-    "Mine" view, phone and desktop).
+    from a personal space is a scratch list; that is now "My tasks" at
+    `/dashboard/organization/my-list`, reached from the sidebar as the only
+    child of the collapsible "Tasks" item (assigned work stays at
+    `/dashboard/organization/my-tasks`). "Projects" is collapsible too and
+    lists the open projects; no task titles appear in the sidebar. On the
+    phone the private list sits behind the Menu tab.
     Table `private_task` scoped to `(organization_id, user_id)` with title,
     notes, due date, done flag and an optional link to a `build_task`
     (`ON DELETE SET NULL`). Router `organization.privateTask.{list, create,
@@ -424,7 +427,7 @@ update, delete}` — every query filters by org **and** caller, so owners
     (also fired when someone leaves) deletes the rows. Quick add, tick off
     and delete work offline through the write queue (`createPrivateTask`,
     `updatePrivateTask`, `deletePrivateTask`; offline creates show as
-    read‑only "waiting to sync" rows); editing a note in the bottom sheet
+    read‑only "waiting to sync" rows); editing an item in the bottom sheet
     needs a connection. Tests: `tests/trpc/routers/organization-private-task.test.ts`.
 
 ## Local setup
