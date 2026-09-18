@@ -601,7 +601,7 @@ export function TaskPlannerView({
 
 							{/* Fields */}
 							<dl className="grid grid-cols-[minmax(6rem,8rem)_1fr] gap-x-4 gap-y-1">
-								{isPersonal ? null : (
+								{!isPersonal && (
 									<TaskFieldRow label="Assignee">
 										<div className="flex flex-wrap items-center gap-1.5">
 											{owners.map((assignment) => (
