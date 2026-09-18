@@ -7,7 +7,6 @@ import {
 	FactoryIcon,
 	FileStackIcon,
 	LayoutDashboardIcon,
-	ListTodoIcon,
 	SettingsIcon,
 	UsersIcon,
 } from "lucide-react";
@@ -71,17 +70,10 @@ export function OrganizationMenuItems({
 	const basePath = "/dashboard/organization";
 
 	const { data: projects } = trpc.organization.build.list.useQuery({});
-	const { data: privateTasks } = trpc.organization.privateTask.list.useQuery({
-		includeDone: false,
-	});
 
 	const projectChildren: MenuChild[] = (projects ?? []).map((project) => ({
 		label: project.name ?? project.serialNumber,
 		href: `${basePath}/projects/${project.id}`,
-	}));
-	const listChildren: MenuChild[] = (privateTasks ?? []).map((task) => ({
-		label: task.title,
-		href: `${basePath}/my-list?item=${task.id}`,
 	}));
 
 	const menuGroups: MenuGroup[] = [
@@ -99,12 +91,12 @@ export function OrganizationMenuItems({
 					href: `${basePath}/my-tasks`,
 					icon: ClipboardCheckIcon,
 					activePrefixes: [`${basePath}/tasks`],
-				},
-				{
-					label: t.nav.myList,
-					href: `${basePath}/my-list`,
-					icon: ListTodoIcon,
-					children: listChildren,
+					children: [
+						{
+							label: t.nav.myList,
+							href: `${basePath}/my-list`,
+						},
+					],
 				},
 				{
 					label: t.nav.projects,
@@ -195,11 +187,7 @@ export function OrganizationMenuItems({
 											key={item.href}
 											item={item}
 											isActive={isActive}
-											emptyLabel={
-												item.href.endsWith("/projects")
-													? t.nav.noProjects
-													: t.privateList.empty
-											}
+											emptyLabel={t.nav.noProjects}
 											expandLabel={t.list.expand(item.label)}
 											collapseLabel={t.list.collapse(item.label)}
 										/>
