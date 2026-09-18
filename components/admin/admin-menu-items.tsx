@@ -13,7 +13,6 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
 
 type MenuItem = {
 	label: string;
@@ -82,23 +81,8 @@ export function AdminMenuItems(): React.JSX.Element {
 											tooltip={item.label}
 										>
 											<Link href={item.href}>
-												<item.icon
-													className={cn(
-														"size-4 shrink-0",
-														isActive
-															? "text-foreground"
-															: "text-muted-foreground",
-													)}
-												/>
-												<span
-													className={cn(
-														isActive
-															? "dark:text-foreground"
-															: "dark:text-muted-foreground",
-													)}
-												>
-													{item.label}
-												</span>
+												<item.icon />
+												<span>{item.label}</span>
 											</Link>
 										</SidebarMenuButton>
 									</SidebarMenuItem>

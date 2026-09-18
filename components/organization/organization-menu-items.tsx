@@ -172,9 +172,9 @@ export function OrganizationMenuItems({
 
 	return (
 		<ScrollArea className="h-full" verticalScrollBar>
-			<div className="flex min-h-full flex-col -space-y-1">
+			<div className="flex min-h-full flex-col">
 				{menuGroups.map((group) => (
-					<SidebarGroup className="pb-1" key={group.label}>
+					<SidebarGroup key={group.label}>
 						{group.label ? (
 							<SidebarGroupLabel>{group.label}</SidebarGroupLabel>
 						) : null}
@@ -201,23 +201,8 @@ export function OrganizationMenuItems({
 											tooltip={item.label}
 										>
 											<Link href={item.href}>
-												<item.icon
-													className={cn(
-														"size-4 shrink-0",
-														isActive
-															? "text-foreground"
-															: "text-muted-foreground",
-													)}
-												/>
-												<span
-													className={cn(
-														isActive
-															? "dark:text-foreground"
-															: "dark:text-muted-foreground",
-													)}
-												>
-													{item.label}
-												</span>
+												<item.icon />
+												<span>{item.label}</span>
 											</Link>
 										</SidebarMenuButton>
 									</SidebarMenuItem>
@@ -265,21 +250,8 @@ function CollapsibleNavItem({
 			<SidebarMenuItem>
 				<SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
 					<Link href={item.href}>
-						<item.icon
-							className={cn(
-								"size-4 shrink-0",
-								isActive ? "text-foreground" : "text-muted-foreground",
-							)}
-						/>
-						<span
-							className={cn(
-								isActive
-									? "dark:text-foreground"
-									: "dark:text-muted-foreground",
-							)}
-						>
-							{item.label}
-						</span>
+						<item.icon />
+						<span>{item.label}</span>
 					</Link>
 				</SidebarMenuButton>
 				<CollapsibleTrigger asChild>
