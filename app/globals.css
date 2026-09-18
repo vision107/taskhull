@@ -50,7 +50,7 @@
 	--radius: 0.5rem;
 
 	--sidebar: var(--color-neutral-50);
-	--sidebar-foreground: oklch(37.05% 0.012 285.8);
+	--sidebar-foreground: var(--color-neutral-950);
 	--sidebar-primary: var(--color-neutral-950);
 	--sidebar-primary-foreground: var(--color-white);
 	--sidebar-accent: var(--color-neutral-100);
@@ -153,13 +153,13 @@
 	--chart-4: var(--color-purple-500);
 	--chart-5: var(--color-pink-500);
 
-	--sidebar: var(--color-neutral-950);
+	--sidebar: var(--color-neutral-900);
 	--sidebar-foreground: var(--color-white);
 	--sidebar-primary: var(--color-blue-500);
 	--sidebar-primary-foreground: var(--color-white);
 	--sidebar-accent: var(--color-neutral-800);
 	--sidebar-accent-foreground: var(--color-white);
-	--sidebar-border: var(--border);
+	--sidebar-border: oklch(1 0 0 / 10%);
 	--sidebar-ring: var(--ring);
 
 	/* App surface model (dark) */
