@@ -26,6 +26,34 @@ function usePeekAvailable(): boolean {
  * Asana-style side peek: on wide screens a task opens next to the list
  * (`?task=`), on phones the caller should navigate to the full page.
  */
+function useQueryPeek(param: "task" | "item"): {
+	id: string | null;
+	showPeek: boolean;
+	open: (id: string) => boolean;
+	close: () => void;
+	setId: (id: string | null) => void;
+} {
+	const [id, setId] = useQueryState(param);
+	const canPeek = usePeekAvailable();
+	const showPeek = canPeek && Boolean(id);
+
+	return {
+		id,
+		showPeek,
+		open: (next: string) => {
+			if (!canPeek) return false;
+			void setId(next);
+			return true;
+		},
+		close: () => {
+			void setId(null);
+		},
+		setId: (next: string | null) => {
+			void setId(next);
+		},
+	};
+}
+
 export function useTaskPeek(): {
 	taskId: string | null;
 	showPeek: boolean;
@@ -33,24 +61,31 @@ export function useTaskPeek(): {
 	close: () => void;
 	setTaskId: (id: string | null) => void;
 } {
-	const [taskId, setTaskId] = useQueryState("task");
-	const canPeek = usePeekAvailable();
-	const showPeek = canPeek && Boolean(taskId);
-
+	const peek = useQueryPeek("task");
 	return {
-		taskId,
-		showPeek,
-		open: (id: string) => {
-			if (!canPeek) return false;
-			void setTaskId(id);
-			return true;
-		},
-		close: () => {
-			void setTaskId(null);
-		},
-		setTaskId: (id: string | null) => {
-			void setTaskId(id);
-		},
+		taskId: peek.id,
+		showPeek: peek.showPeek,
+		open: peek.open,
+		close: peek.close,
+		setTaskId: peek.setId,
+	};
+}
+
+/** Same two-pane rule as assigned work, keyed on `?item=`. */
+export function usePrivateItemPeek(): {
+	itemId: string | null;
+	showPeek: boolean;
+	open: (id: string) => boolean;
+	close: () => void;
+	setItemId: (id: string | null) => void;
+} {
+	const peek = useQueryPeek("item");
+	return {
+		itemId: peek.id,
+		showPeek: peek.showPeek,
+		open: peek.open,
+		close: peek.close,
+		setItemId: peek.setId,
 	};
 }
 

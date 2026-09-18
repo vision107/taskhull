@@ -411,6 +411,8 @@ export const listPrivateTasksSchema = z.object({
 	includeDone: z.boolean().default(false),
 });
 
+export const getPrivateTaskSchema = idSchema;
+
 const privateTaskFields = {
 	title: z
 		.string()

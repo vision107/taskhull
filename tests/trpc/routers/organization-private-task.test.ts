@@ -252,6 +252,20 @@ describe("private task router", () => {
 		expect(reopened.completedAt).toBeNull();
 	});
 
+	it("returns one item to its owner and hides it from everyone else", async () => {
+		const c = callerAs(worker, ORG_ID, MemberRole.member);
+		const note = await c.organization.privateTask.create({
+			title: "Ask about bracket",
+		});
+		const fetched = await c.organization.privateTask.get({ id: note.id });
+		expect(fetched).toMatchObject({ id: note.id, title: "Ask about bracket" });
+
+		const ownerCaller = callerAs(planner);
+		await expect(
+			ownerCaller.organization.privateTask.get({ id: note.id }),
+		).rejects.toMatchObject({ code: "NOT_FOUND" });
+	});
+
 	it("edits fields independently and clears them with null", async () => {
 		const c = callerAs(worker, ORG_ID, MemberRole.member);
 		const note = await c.organization.privateTask.create({

@@ -7,6 +7,7 @@ import { getOwnedBuildTask } from "@/lib/manufacturing/builds";
 import {
 	createPrivateTaskSchema,
 	deletePrivateTaskSchema,
+	getPrivateTaskSchema,
 	listPrivateTasksSchema,
 	updatePrivateTaskSchema,
 } from "@/schemas/manufacturing-schemas";
@@ -33,7 +34,7 @@ async function getOwnedPrivateTask(
 	});
 
 	if (!task) {
-		throw new TRPCError({ code: "NOT_FOUND", message: "Note not found." });
+		throw new TRPCError({ code: "NOT_FOUND", message: "Item not found." });
 	}
 
 	return task;
@@ -82,6 +83,25 @@ export const organizationPrivateTaskRouter = createTRPCRouter({
 			});
 		}),
 
+	get: protectedOrganizationProcedure
+		.input(getPrivateTaskSchema)
+		.query(async ({ ctx, input }) => {
+			const task = await db.query.privateTaskTable.findFirst({
+				where: and(
+					eq(privateTaskTable.id, input.id),
+					ownedBy(ctx.organization.id, ctx.user.id),
+				),
+				with: { buildTask: linkedTaskColumns },
+			});
+			if (!task) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Item not found.",
+				});
+			}
+			return task;
+		}),
+
 	create: protectedOrganizationProcedure
 		.input(createPrivateTaskSchema)
 		.mutation(async ({ ctx, input }) => {
@@ -105,7 +125,7 @@ export const organizationPrivateTaskRouter = createTRPCRouter({
 			if (!created) {
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
-					message: "Failed to create note.",
+					message: "Failed to create item.",
 				});
 			}
 
