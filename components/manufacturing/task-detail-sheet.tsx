@@ -1454,7 +1454,7 @@ function InlineDescription({
 			aria-label="Description"
 			placeholder="What is this task about? Instructions for the worker."
 			className={cn(
-				"-mx-2 field-sizing-content min-h-20 w-full resize-none rounded-md border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none",
+				"-mx-2 field-sizing-content min-h-20 w-full resize-none rounded-md border border-transparent bg-transparent px-2 py-1.5 text-base outline-none md:text-sm",
 				"placeholder:text-muted-foreground hover:border-border focus:border-ring focus:ring-2 focus:ring-ring/30",
 			)}
 			onChange={(event) => setDraft(event.target.value)}
@@ -1501,7 +1501,7 @@ function InlineText({
 				placeholder={placeholder}
 				list={list && list.length > 0 ? listId : undefined}
 				className={cn(
-					"-ml-2 h-7 w-full max-w-64 rounded-md border border-transparent bg-transparent px-2 text-sm outline-none",
+					"-ml-2 h-8 w-full max-w-64 rounded-md border border-transparent bg-transparent px-2 text-base outline-none md:h-7 md:text-sm",
 					"placeholder:text-muted-foreground hover:border-border focus:border-ring focus:ring-2 focus:ring-ring/30",
 				)}
 				onChange={(event) => setDraft(event.target.value)}
@@ -1576,7 +1576,7 @@ function InlineNumber({
 				step={step}
 				placeholder={placeholder}
 				className={cn(
-					"-ml-2 h-7 w-16 rounded-md border border-transparent bg-transparent px-2 text-right text-sm tabular-nums outline-none",
+					"-ml-2 h-8 w-16 rounded-md border border-transparent bg-transparent px-2 text-right text-base tabular-nums outline-none md:h-7 md:text-sm",
 					"placeholder:text-muted-foreground hover:border-border focus:border-ring focus:ring-2 focus:ring-ring/30",
 					"[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
 				)}

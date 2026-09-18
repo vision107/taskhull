@@ -74,7 +74,8 @@ export function QuickAddTask({
 				autoComplete="off"
 				aria-label={placeholder}
 				placeholder={placeholder}
-				className="h-8 min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground disabled:opacity-60"
+				// 16px on phones: iOS Safari zooms into inputs with smaller text.
+				className="h-8 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground disabled:opacity-60 md:text-sm"
 				onChange={(event) => setValue(event.target.value)}
 				onKeyDown={(event) => {
 					if (event.key === "Enter") {

@@ -55,7 +55,7 @@ export default async function MyListItemPage({
 				<TaskPageView
 					taskId={itemId}
 					canPlan
-					taskHref={(id) => `/dashboard/organization/my-list/${id}`}
+					taskBasePath="/dashboard/organization/my-list"
 				/>
 			</PageBody>
 		</Page>

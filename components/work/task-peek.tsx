@@ -103,19 +103,23 @@ export function TaskPeek({
 	);
 }
 
-/** Full-page task route: related tasks stay on this URL instead of opening a sheet. */
+/**
+ * Full-page task route: related tasks stay on this URL instead of opening a sheet.
+ * Rendered from Server Components, so it takes the route as a plain string
+ * (functions cannot cross the server → client boundary).
+ */
 export function TaskPageView({
 	taskId,
 	canPlan,
-	taskHref,
+	taskBasePath = "/dashboard/organization/tasks",
 }: {
 	taskId: string;
 	canPlan: boolean;
-	taskHref?: (taskId: string) => string;
+	/** Route the task pages live under, e.g. `/dashboard/organization/my-list`. */
+	taskBasePath?: string;
 }): React.JSX.Element {
 	const router = useRouter();
-	const hrefFor =
-		taskHref ?? ((id: string) => `/dashboard/organization/tasks/${id}`);
+	const hrefFor = (id: string) => `${taskBasePath}/${id}`;
 	const openTask = (id: string) => {
 		router.push(hrefFor(id));
 	};

@@ -15,6 +15,7 @@ import {
 	RefreshCwIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -101,6 +102,7 @@ export function MyTasksList({
 	listKind = "assigned",
 }: MyTasksListProps): React.JSX.Element {
 	const { t } = useWorkLocale();
+	const router = useRouter();
 	const { pending } = useOffline();
 	const filters = useMyTasksFilters();
 	const searchRef = React.useRef<HTMLInputElement>(null);
@@ -345,7 +347,7 @@ export function MyTasksList({
 							onChange={(event) =>
 								filters.setProjectId(event.target.value || null)
 							}
-							className="h-7 max-w-40 rounded-md border border-subtle bg-transparent px-2 text-xs"
+							className="h-8 max-w-40 rounded-md border border-subtle bg-transparent px-2 text-base md:h-7 md:text-xs"
 						>
 							<option value="">{t.list.columns.project}</option>
 							{projects.map((project) => (
@@ -360,7 +362,7 @@ export function MyTasksList({
 							aria-label={t.list.columns.phase}
 							value={filters.phase ?? ""}
 							onChange={(event) => filters.setPhase(event.target.value || null)}
-							className="h-7 max-w-36 rounded-md border border-subtle bg-transparent px-2 text-xs"
+							className="h-8 max-w-36 rounded-md border border-subtle bg-transparent px-2 text-base md:h-7 md:text-xs"
 						>
 							<option value="">{t.list.columns.phase}</option>
 							{phases.map((phase) => (
@@ -376,7 +378,7 @@ export function MyTasksList({
 						onChange={(event) =>
 							filters.setSort(event.target.value as typeof filters.sort)
 						}
-						className="h-7 rounded-md border border-subtle bg-transparent px-2 text-xs"
+						className="h-8 rounded-md border border-subtle bg-transparent px-2 text-base md:h-7 md:text-xs"
 					>
 						<option value="start">{t.list.sortStart}</option>
 						<option value="project">{t.list.sortProject}</option>
@@ -390,7 +392,7 @@ export function MyTasksList({
 						onChange={(event) => filters.setQuery(event.target.value)}
 						placeholder={t.list.searchPlaceholder}
 						aria-label={t.list.search}
-						className="h-7 w-36 border-subtle text-xs sm:w-44"
+						className="h-8 w-36 border-subtle sm:w-44 md:h-7 md:text-xs"
 					/>
 					{filters.hasFilters && (
 						<Button
@@ -409,8 +411,9 @@ export function MyTasksList({
 				<QuickAddTask
 					onAdd={async (title) => {
 						const created = await createPersonal.mutateAsync({ title });
-						onSelectTask?.(created.id);
-						onOpenTask?.(created.id);
+						// Peek writes `?task=`; on phones that is not enough — go to the item page.
+						if (onOpenTask?.(created.id)) return;
+						router.push(`${taskPageBase}/${created.id}`);
 					}}
 					placeholder={t.privateList.addPlaceholder}
 					className="border-b border-subtle"
