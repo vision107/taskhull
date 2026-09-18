@@ -13,7 +13,7 @@ import { appConfig } from "@/config/app.config";
 import { getSession } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { memberTable } from "@/lib/db/schema/tables";
-import { canPlan } from "@/lib/manufacturing/permissions";
+import { homeForRole } from "@/lib/manufacturing/permissions";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -22,16 +22,13 @@ export const metadata: Metadata = {
 	title: "Choose an organization",
 };
 
-function getLandingPath(role: string): string {
-	return canPlan(role) ? "/dashboard/organization" : "/dashboard/work";
-}
-
 /**
  * Entry point of the app. There is no personal area: every signed-in user
  * works inside an organization, so this page only decides which one.
+ * Everyone shares the same shell; the role only picks the landing page
+ * (planners → organization dashboard, workers → My tasks).
  *
- * - Active organization on the session → planner dashboard or worker task list.
- * - Worker everywhere → task list (it picks the organization itself).
+ * - Active organization on the session → role home.
  * - Exactly one organization → activate it and continue.
  * - Otherwise (several organizations, none active, or none at all) → picker.
  */
@@ -51,12 +48,7 @@ export default async function DashboardPage(): Promise<React.JSX.Element> {
 		? memberships.find((m) => m.organizationId === activeId)
 		: undefined;
 	if (activeMembership) {
-		redirect(getLandingPath(activeMembership.role));
-	}
-
-	const planning = memberships.filter((m) => canPlan(m.role));
-	if (memberships.length > 0 && planning.length === 0) {
-		redirect("/dashboard/work");
+		redirect(homeForRole(activeMembership.role));
 	}
 
 	const onlyMembership = memberships.length === 1 ? memberships[0] : undefined;
@@ -64,7 +56,7 @@ export default async function DashboardPage(): Promise<React.JSX.Element> {
 		return (
 			<ActivateOrganization
 				organizationId={onlyMembership.organizationId}
-				redirectTo={getLandingPath(onlyMembership.role)}
+				redirectTo={homeForRole(onlyMembership.role)}
 			/>
 		);
 	}

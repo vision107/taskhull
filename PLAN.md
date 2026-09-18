@@ -38,8 +38,11 @@ Better Auth 1.7, so UI is rebuilt rather than copied.
   task or added ad hoc. Has assignees, checklist, comments, attachments, status.
 - **Product** — legacy grouping (table + router kept, no UI). Projects are
   grouped by template now.
-- **Planner** — org `owner`/`admin`; works in the web dashboard.
-- **Worker** — org `member`; works in the PWA under `/work`.
+- **Planner** — org `owner`/`admin`; may edit templates, projects and
+  assignments.
+- **Worker** — org `member`; works the tasks assigned to them. Since Phase 9
+  both use the same dashboard shell (sidebar ≥ `md`, tab bar below); the role
+  only decides what is editable. `/dashboard/work/*` redirects.
 
 ## Domain model
 
@@ -179,7 +182,7 @@ subscribePush / unsubscribePush`, `lib/notifications/push.ts` (web‑push,
      organizations grid. `authConfig.redirectAfterSignIn` becomes
      `/dashboard/start`; `?redirectTo=` and invitation links keep priority
      (`getAuthRedirectPath`). Sidebar "Home" stays on `/dashboard`.
-     (Folded into `/dashboard` itself in Phase 9.)
+     (Folded into `/dashboard` itself in Phase 10.)
   2. _Planner‑side task editing on the build page._ Router already has
      `build.createTask / updateTask / deleteTask`; add the UI:
      `components/manufacturing/build-task-modal.tsx` (NiceModal form: title,
@@ -326,70 +329,92 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
      the task. `DatePicker` now closes on pick. `BuildTaskModal` remains only
      for "Add with details".
 
-- **Phase 8b — My tasks in the web view** (proposal, not started)
-  Today `/dashboard/work` is the phone layout stretched to a 32rem column;
-  on a desktop it wastes the screen and every task is a round trip. Goals:
-  a planner or a worker at a workstation PC should be able to work a day's
-  list without leaving the page, and the phone PWA must not change.
-  1. _Two‑pane layout ≥ `lg`._ Same route. Left: the task list (as now, but
-     denser rows). Right: the task detail (`WorkTaskDetail`) for the selected
-     task, driven by `?task=<id>` so links from notifications/e‑mails still
-     open the right task and the phone keeps navigating to
-     `/work/tasks/[id]`. Below `lg` nothing changes. The work layout widens
-     `max-w-lg` → `max-w-6xl` only when the two‑pane mode is active.
-  2. _Grouping and filters._ Segmented control **Ready · Waiting · Done** plus
-     chips for project (serial), phase and "due": _Overdue_, _Today_, _This
-     week_, _Later_. State in the URL (`?status=&project=&phase=&due=`) so a
-     filtered view can be bookmarked. Server: `work.myTasks` gains optional
-     `projectId`, `phase`, `dueBefore/After` and returns `plannedHours` and
-     `endDate` so the list can show "due Thu · 4h left".
-  3. _Sort and density._ Sort by start date (default), project, phase or
-     effort. A compact table mode on desktop (one line per task: status dot,
-     title, project, phase, dates, effort, blockers) with the same row
-     component underneath so phone and desktop stay in sync.
-  4. _Act from the list._ Status change directly on the row (To do → In
-     progress → Done; Blocked opens the reason sheet), checklist ticks in the
-     right pane, comment box in the right pane. Everything reuses the
-     existing `work.*` mutations and the offline queue, so nothing is
-     duplicated.
-  5. _Keyboard._ `j`/`k` move selection, `Enter` opens, `s` cycles status,
-     `c` focuses the comment box, `/` focuses the filter. Cheap to add once
-     selection lives in the URL.
-  6. _Today at a glance._ Header line: "5 ready · 2 waiting · 14h planned
-     today" computed client‑side from the list. Overdue tasks get the amber
-     date colour already used on the phone.
-  7. _For planners only._ A "Team" toggle on the same page that switches
-     `work.myTasks` → a new `work.teamTasks` (planner‑only, same shape, plus
-     assignee) so a planner can see everyone's list grouped by worker and
-     re‑assign from the row (`build.assign/unassign`). This is the first step
-     towards a workload view; the assignment grid stays per template.
+- **Phase 8b — My tasks in the web view** ✅ Built on the Phase 9 routes
+  (`/dashboard/organization/my-tasks` + `?task=` peek; phone still goes to
+  `/dashboard/organization/tasks/[id]`).
+  1. _Two‑pane layout ≥ `lg`._ ✅ Phase 9 peek.
+  2. _Grouping and filters._ ✅ Segmented **Ready · Waiting · Done** plus
+     chips for project, phase and due (Overdue / Today / This week / Later).
+     URL state `?status=&project=&phase=&due=&q=&sort=&view=`. Server:
+     `work.myTasks` accepts `projectId`, `phase`, `dueAfter` / `dueBefore`
+     and returns `plannedHours`.
+  3. _Sort._ ✅ Start date (default), project, phase or effort. Density is
+     the Phase 9 column layout (no separate table mode).
+  4. _Act from the list._ ✅ Completion circle, status badge cycles
+     to‑do → in progress → done, `b` / blocked opens the reason sheet.
+     Checklist and comments stay in the peek.
+  5. _Keyboard._ ✅ `j`/`k` move selection, `Enter` opens, `s` cycles
+     status, `c` focuses the comment box, `/` focuses search.
+  6. _Today at a glance._ ✅ "5 ready · 2 waiting · 14h planned today".
+  7. _Team toggle._ ✅ Planners switch `view=team` → `work.teamTasks`
+     (forbidden for members), grouped by worker, re‑assign from the row.
   8. _Not in this phase:_ drag‑and‑drop re‑scheduling, time tracking against
      `plannedHours`, a calendar view.
 
-  Order of work: 1 → 2 → 4 (this is the useful core), then 3, 6, 5, 7.
-  Tests: extend `organization-manufacturing.test.ts` for the new `myTasks`
-  filters and `teamTasks` permissions; a Playwright smoke for the two‑pane
-  route with `?task=`.
+- **Phase 9 — One shell for planners and workers** ✅ (lessons from Plane /
+  Kuayle / Asana, see the design notes in the PR)
+  1. _Tokens._ ✅ Semantic surface model in `app/globals.css`: `bg-canvas`,
+     `bg-surface-1`, `bg-layer-1`, `hover:bg-layer-transparent-hover`, text
+     tiers `text-fg-secondary/tertiary/placeholder`, border weights
+     `border-subtle/strong`, `warning`/`success` accents, `text-13` for dense
+     rows. Light and dark; shadcn tokens unchanged.
+  2. _Shell._ ✅ `app/(saas)/dashboard/(sidebar)/layout.tsx` owns
+     `WorkLocaleProvider`, `OfflineProvider` (service worker, write queue,
+     push) and the PWA metadata for every dashboard page. `SidebarLayout`
+     takes a `mobileNav` slot: `components/app-shell/bottom-nav.tsx` renders a
+     tab bar below `md` (My tasks · Projects · Templates|Dashboard · Inbox ·
+     Menu; Menu opens the sidebar sheet) and `sync-status-pill.tsx` floats
+     the offline / "n to sync" state. `--bottom-nav` exposes the bar height.
+     Language and push toggles moved into the user menu.
+  3. _Routes._ ✅ `/dashboard/organization/my-tasks` (list) and
+     `/dashboard/organization/tasks/[taskId]` (task view, shared by both
+     roles); `/dashboard/notifications` is a real inbox page. The worker
+     layout, header, tab bar and org picker are deleted; the organization
+     layout activates a single membership in place. `/dashboard` (Phase 10)
+     sends members to My tasks and planners to the dashboard. Manifest, service
+     worker (`isAppPage`, cache `v2`), notification URLs and tests updated.
+  4. _My tasks._ ✅ Full-width Asana-style list: collapsible sections, a
+     column header once the list is wide enough (name, due, project,
+     progress, status), completion circles that finish or reopen in place.
+     Columns are container queries so they collapse when the peek is open or
+     on a phone.
+  5. _Task view + peek._ ✅ `WorkTaskDetail` is a flat pane (top action bar,
+     field rows, Comments / All activity). On `lg+`, My tasks opens a task
+     next to the list via `?task=`; phones go to the full page. Shared
+     layout primitives live in `components/work/task-layout.tsx` and are
+     used by the planner `TaskDetailSheet` too.
+  6. _Project list + project page._ ✅ Projects index uses the same dense
+     rows. Opening a project uses the My tasks design: phase sections,
+     completion circles, Name / Due / Assignees / Progress / Status columns,
+     and the same `?task=` side peek (shared `useTaskPeek`). Timeline and
+     Activity stay as toolbar tabs. Planner row actions (assign, status,
+     quick-add, subtasks) are unchanged.
+  7. _One task view + dense grid._ ✅ `TaskView` is the peek/page entry
+     (`canPlan` chooses the editable planner pane or the worker pane).
+     Assignment grid rows match the My tasks density (`text-13`, tighter
+     cells, `size-5` avatars).
 
-- **Phase 9 — No personal area** ✅ People reach the app through their
+- **Phase 10 — No personal area** ✅ People reach the app through their
   employer, so the starter's "Personal" account space (own sidebar with
   Home / Profile / Security / Sessions, organizations grid as home page) only
   made the sidebar change shape when switching. Removed:
   - `/dashboard` is now the landing resolver (the former `/dashboard/start`):
-    active organization → planner dashboard or worker list, single
-    membership → activate it, worker everywhere → `/work`, otherwise a
-    sidebar‑less organization picker (also the empty state for users without
+    active organization → `homeForRole` (planner dashboard or My tasks),
+    single membership → activate it, otherwise a sidebar‑less organization
+    picker (also the empty state for users without
     any organization, with sign‑out). `authConfig.redirectAfterSignIn` is
     `/dashboard` again.
   - One sidebar. `app/(saas)/dashboard/(sidebar)/(workspace)/layout.tsx`
-    (the former organization layout) now wraps both `/organization/*` and the
-    account settings at `/dashboard/settings`, so the navigation never
+    (the former organization layout) now wraps `/organization/*`, the inbox
+    at `/dashboard/notifications` and the account settings at
+    `/dashboard/settings`, so the navigation never
     changes; account settings are reached from the user menu (⇧⌘P) and the
     command menu. The switcher lists organizations (and the admin panel for
     platform admins) only; breadcrumbs drop the "Home" crumb.
   - _Private to‑dos live inside the organization._ What people still want
     from a personal space is a scratch list; that is now the "My notes"
-    section at the bottom of My tasks (`/dashboard/work`, phone and desktop).
+    section at the bottom of My tasks (`/dashboard/organization/my-tasks`,
+    "Mine" view, phone and desktop).
     Table `private_task` scoped to `(organization_id, user_id)` with title,
     notes, due date, done flag and an optional link to a `build_task`
     (`ON DELETE SET NULL`). Router `organization.privateTask.{list, create,

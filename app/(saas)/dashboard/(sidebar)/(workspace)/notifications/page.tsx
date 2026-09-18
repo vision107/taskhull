@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type * as React from "react";
 
-import { BuildsList } from "@/components/manufacturing/builds-list";
+import { NotificationInbox } from "@/components/notifications/notification-inbox";
 import {
 	Page,
 	PageBody,
@@ -12,12 +12,11 @@ import {
 import { getPlannerPageContext } from "@/lib/manufacturing/page-context";
 
 export const metadata: Metadata = {
-	title: "Projects",
+	title: "Inbox",
 };
 
-export default async function ProjectsPage(): Promise<React.JSX.Element> {
-	const { organization, canPlan } = await getPlannerPageContext();
-
+export default async function NotificationsPage(): Promise<React.JSX.Element> {
+	const { organization } = await getPlannerPageContext();
 	return (
 		<Page>
 			<PageHeader>
@@ -25,13 +24,15 @@ export default async function ProjectsPage(): Promise<React.JSX.Element> {
 					<PageBreadcrumb
 						segments={[
 							{ label: organization.name, href: "/dashboard/organization" },
-							{ label: "Projects" },
+							{ label: "Inbox" },
 						]}
 					/>
 				</PagePrimaryBar>
 			</PageHeader>
-			<PageBody disableScroll className="min-h-0">
-				<BuildsList canPlan={canPlan} />
+			<PageBody>
+				<div className="mx-auto w-full max-w-3xl px-4 pt-4 pb-10 sm:px-6 sm:pt-6">
+					<NotificationInbox />
+				</div>
 			</PageBody>
 		</Page>
 	);

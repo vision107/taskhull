@@ -2,7 +2,10 @@
 
 import NiceModal from "@ebay/nice-modal-react";
 import {
+	BellIcon,
+	BellOffIcon,
 	ExternalLinkIcon,
+	LanguagesIcon,
 	LaptopIcon,
 	MoonIcon,
 	MoreHorizontalIcon,
@@ -35,10 +38,13 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { CommandMenu } from "@/components/user/command-menu";
 import { UserAvatar } from "@/components/user/user-avatar";
+import { useOffline } from "@/components/work/offline-provider";
+import { useWorkLocale } from "@/components/work/work-locale-provider";
 import { appConfig } from "@/config/app.config";
 import { useProgressRouter } from "@/hooks/use-progress-router";
 import { useSession } from "@/hooks/use-session";
 import { useSignOut } from "@/hooks/use-sign-out";
+import { WorkLocales, workDictionaries } from "@/lib/i18n/work";
 import { capitalize, cn } from "@/lib/utils";
 
 function isDialogOpen(): boolean {
@@ -107,6 +113,9 @@ export function UserDropDownMenu(
 	const { setTheme, theme } = useTheme();
 	const router = useProgressRouter();
 	const { state: sidebarState } = useSidebar();
+	const { push } = useOffline();
+	const { t, locale, setLocale, saving: localeSaving } = useWorkLocale();
+	const otherLocale = WorkLocales.find((item) => item !== locale) ?? locale;
 	const [mounted, setMounted] = React.useState(false);
 
 	React.useEffect(() => {
@@ -278,6 +287,31 @@ export function UserDropDownMenu(
 										<DropdownMenuSeparator />
 									</>
 								)}
+								<DropdownMenuItem
+									className="cursor-pointer"
+									disabled={localeSaving}
+									onClick={() => void setLocale(otherLocale)}
+								>
+									<LanguagesIcon className="size-4 text-muted-foreground" />
+									{t.header.switchLanguage(
+										workDictionaries[otherLocale].languageName,
+									)}
+								</DropdownMenuItem>
+								{push.supported && push.enabled && (
+									<DropdownMenuItem
+										className="cursor-pointer"
+										disabled={push.busy}
+										onClick={() => void push.toggle()}
+									>
+										{push.subscribed ? (
+											<BellOffIcon className="size-4 text-muted-foreground" />
+										) : (
+											<BellIcon className="size-4 text-muted-foreground" />
+										)}
+										{push.subscribed ? t.header.pushOff : t.header.pushOn}
+									</DropdownMenuItem>
+								)}
+								<DropdownMenuSeparator />
 								<DropdownMenuItem
 									className="cursor-pointer"
 									onClick={() => window.open("/", "_blank")}

@@ -3,15 +3,15 @@
  * Taskhull worker PWA service worker.
  *
  * - Static Next.js assets: cache-first (they are content-hashed).
- * - Worker pages and tRPC queries: network-first, falling back to the last
- *   good response so the task list and task pages still open offline.
+ * - Dashboard pages and tRPC queries: network-first, falling back to the
+ *   last good response so the task list and task pages still open offline.
  * - Push: shows a notification and opens the linked page on tap.
  *
  * Writes done while offline are handled by the app (see lib/offline/queue.ts),
  * not by the service worker, so they stay under React Query's control.
  */
 
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC_CACHE = `taskhull-static-${VERSION}`;
 const PAGES_CACHE = `taskhull-pages-${VERSION}`;
 const DATA_CACHE = `taskhull-data-${VERSION}`;
@@ -57,10 +57,11 @@ self.addEventListener("message", (event) => {
 	}
 });
 
-function isWorkerPage(url) {
+// Everything signed-in lives under /dashboard; the shell is the same on a
+// phone and a desktop, so every dashboard page may be opened offline.
+function isAppPage(url) {
 	return (
-		url.pathname === "/dashboard/work" ||
-		url.pathname.startsWith("/dashboard/work/")
+		url.pathname === "/dashboard" || url.pathname.startsWith("/dashboard/")
 	);
 }
 
@@ -108,7 +109,7 @@ self.addEventListener("fetch", (event) => {
 		return;
 	}
 
-	if (request.mode === "navigate" && isWorkerPage(url)) {
+	if (request.mode === "navigate" && isAppPage(url)) {
 		event.respondWith(networkFirst(request, PAGES_CACHE, OFFLINE_URL));
 		return;
 	}
@@ -119,8 +120,8 @@ self.addEventListener("fetch", (event) => {
 		return;
 	}
 
-	// RSC payloads for worker pages (client-side navigation).
-	if (isWorkerPage(url) && request.headers.get("RSC") === "1") {
+	// RSC payloads for app pages (client-side navigation).
+	if (isAppPage(url) && request.headers.get("RSC") === "1") {
 		event.respondWith(networkFirst(request, PAGES_CACHE));
 	}
 });
@@ -130,7 +131,11 @@ self.addEventListener("fetch", (event) => {
 // ---------------------------------------------------------------------------
 
 self.addEventListener("push", (event) => {
-	let payload = { title: "Taskhull", body: "", url: "/dashboard/work" };
+	let payload = {
+		title: "Taskhull",
+		body: "",
+		url: "/dashboard/organization/my-tasks",
+	};
 	try {
 		if (event.data) payload = { ...payload, ...event.data.json() };
 	} catch {
@@ -143,7 +148,7 @@ self.addEventListener("push", (event) => {
 			icon: "/web-app-manifest-192x192.png",
 			badge: "/web-app-manifest-192x192.png",
 			tag: payload.tag || undefined,
-			data: { url: payload.url || "/dashboard/work" },
+			data: { url: payload.url || "/dashboard/organization/my-tasks" },
 		}),
 	);
 });
@@ -152,7 +157,7 @@ self.addEventListener("notificationclick", (event) => {
 	event.notification.close();
 	const target = new URL(
 		(event.notification.data && event.notification.data.url) ||
-			"/dashboard/work",
+			"/dashboard/organization/my-tasks",
 		self.location.origin,
 	).href;
 

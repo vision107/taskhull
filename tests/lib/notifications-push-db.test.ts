@@ -89,7 +89,7 @@ describe("sendPushToUsers", () => {
 		const result = await sendPushToUsers([USER_A, USER_A], {
 			title: "New task assigned",
 			body: "Wire control cabinet · CX-1",
-			url: "/dashboard/work/tasks/x",
+			url: "/dashboard/organization/tasks/x",
 		});
 
 		expect(result).toEqual({ sent: 1, removed: 1 });
@@ -100,7 +100,7 @@ describe("sendPushToUsers", () => {
 		) as Record<string, unknown>;
 		expect(payload).toMatchObject({
 			title: "New task assigned",
-			url: "/dashboard/work/tasks/x",
+			url: "/dashboard/organization/tasks/x",
 		});
 
 		const remaining = await db.query.pushSubscriptionTable.findMany({

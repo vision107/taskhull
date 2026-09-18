@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type * as React from "react";
 
-import { BuildDetail } from "@/components/manufacturing/build-detail";
+import { ProjectView } from "@/components/manufacturing/project-view";
 import {
 	Page,
 	PageBody,
@@ -36,14 +36,12 @@ export default async function ProjectDetailPage({
 					/>
 				</PagePrimaryBar>
 			</PageHeader>
-			<PageBody>
-				<div className="p-4 pb-24 sm:px-6 sm:pt-6">
-					<BuildDetail
-						buildId={buildId}
-						canPlan={canPlan}
-						currentUserId={session.user.id}
-					/>
-				</div>
+			<PageBody disableScroll className="min-h-0">
+				<ProjectView
+					buildId={buildId}
+					canPlan={canPlan}
+					currentUserId={session.user.id}
+				/>
 			</PageBody>
 		</Page>
 	);

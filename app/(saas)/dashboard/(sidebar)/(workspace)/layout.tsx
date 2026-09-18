@@ -1,11 +1,17 @@
+import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type * as React from "react";
 
+import { ActivateOrganization } from "@/components/organization/activate-organization";
 import { OrganizationMenuItems } from "@/components/organization/organization-menu-items";
+import { OrganizationMobileNav } from "@/components/organization/organization-mobile-nav";
 import { SidebarLayout } from "@/components/sidebar-layout";
 import { getOrganizationById, getSession } from "@/lib/auth/server";
 import { shouldRedirectToChoosePlan } from "@/lib/billing/guards";
+import { db } from "@/lib/db";
+import { memberTable } from "@/lib/db/schema/tables";
+import { canPlan } from "@/lib/manufacturing/permissions";
 
 import { OrganizationProviders } from "./providers";
 
@@ -13,13 +19,15 @@ export type WorkspaceLayoutProps = React.PropsWithChildren;
 
 /**
  * Sidebar shell for everything a signed-in user does in the web app: the
- * organization pages under /dashboard/organization and the account settings
- * at /dashboard/settings. Always renders the organization sidebar so the
- * navigation never changes shape.
+ * organization pages under /dashboard/organization, the inbox at
+ * /dashboard/notifications and the account settings at /dashboard/settings.
+ * Always renders the organization sidebar so the navigation never changes
+ * shape.
  *
- * Requires an active organization in the session; otherwise redirects to
- * /dashboard, which picks or lets the user choose one. If billing requires a
- * plan and none is active, redirects to /dashboard/choose-plan.
+ * Requires an active organization in the session. Users who belong to exactly
+ * one organization get it activated in place (so deep links from notifications
+ * work on a fresh device); everyone else is sent to /dashboard to pick one. If
+ * billing requires a plan and none is active, redirects to /dashboard/choose-plan.
  */
 export default async function WorkspaceLayout({
 	children,
@@ -31,9 +39,17 @@ export default async function WorkspaceLayout({
 		redirect("/auth/sign-in");
 	}
 
-	// If no active organization, redirect to dashboard to select one
 	const activeOrganizationId = session.session.activeOrganizationId;
 	if (!activeOrganizationId) {
+		const memberships = await db.query.memberTable.findMany({
+			where: eq(memberTable.userId, session.user.id),
+			columns: { organizationId: true },
+		});
+		if (memberships.length === 1 && memberships[0]) {
+			return (
+				<ActivateOrganization organizationId={memberships[0].organizationId} />
+			);
+		}
 		redirect("/dashboard");
 	}
 
@@ -50,6 +66,9 @@ export default async function WorkspaceLayout({
 		redirect("/dashboard/choose-plan");
 	}
 
+	const membership = organization.members.find(
+		(member) => member.userId === session.user.id,
+	);
 	const cookieStore = await cookies();
 
 	return (
@@ -57,7 +76,12 @@ export default async function WorkspaceLayout({
 			<SidebarLayout
 				defaultOpen={cookieStore.get("sidebar_state")?.value !== "false"}
 				defaultWidth={cookieStore.get("sidebar_width")?.value}
-				menuItems={<OrganizationMenuItems />}
+				menuItems={
+					<OrganizationMenuItems canPlan={canPlan(membership?.role)} />
+				}
+				mobileNav={
+					<OrganizationMobileNav canPlan={canPlan(membership?.role)} />
+				}
 			>
 				{children}
 			</SidebarLayout>

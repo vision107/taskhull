@@ -145,7 +145,7 @@ export async function getAssigneeUserIds(
 }
 
 export const workTaskUrl = (buildTaskId: string) =>
-	`/dashboard/work/tasks/${buildTaskId}`;
+	`/dashboard/organization/tasks/${buildTaskId}`;
 export const plannerBuildUrl = (buildId: string) =>
 	`/dashboard/organization/projects/${buildId}`;
 
@@ -195,7 +195,10 @@ export async function notifyTasksAssigned(params: {
 								.map((task) => task.title)
 								.join(", ") + (tasks.length > 3 ? ", …" : ""),
 		}),
-		actionUrl: tasks.length === 1 ? workTaskUrl(first.id) : "/dashboard/work",
+		actionUrl:
+			tasks.length === 1
+				? workTaskUrl(first.id)
+				: "/dashboard/organization/my-tasks",
 	});
 }
 

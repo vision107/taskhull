@@ -1,17 +1,11 @@
-import type { Metadata } from "next";
-import type * as React from "react";
+import { redirect } from "next/navigation";
 
-import { WorkTaskDetail } from "@/components/work/work-task-detail";
-
-export const metadata: Metadata = {
-	title: "Task",
-};
-
+/** Legacy worker task URL (still present in old notifications and bookmarks). */
 export default async function WorkTaskPage({
 	params,
 }: {
 	params: Promise<{ taskId: string }>;
-}): Promise<React.JSX.Element> {
+}): Promise<never> {
 	const { taskId } = await params;
-	return <WorkTaskDetail taskId={taskId} />;
+	redirect(`/dashboard/organization/tasks/${taskId}`);
 }

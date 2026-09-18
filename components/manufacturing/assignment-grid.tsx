@@ -206,11 +206,11 @@ export function AssignmentGrid({
 				)}
 			</div>
 
-			<div className="overflow-x-auto rounded-lg border">
-				<table className="w-full min-w-max border-collapse text-sm">
+			<div className="overflow-x-auto rounded-lg border border-subtle">
+				<table className="w-full min-w-max border-collapse text-13">
 					<thead>
-						<tr className="bg-muted/40">
-							<th className="sticky left-0 z-10 min-w-56 border-r border-b bg-muted/40 px-3 py-2 text-left font-medium backdrop-blur">
+						<tr className="bg-surface-1">
+							<th className="sticky left-0 z-10 min-w-52 border-r border-b border-subtle bg-surface-1 px-2 py-1.5 text-left text-xs font-medium text-fg-secondary backdrop-blur">
 								Task
 							</th>
 							{builds.map((build) => {
@@ -223,7 +223,7 @@ export function AssignmentGrid({
 								return (
 									<th
 										key={build.id}
-										className="min-w-40 border-r border-b px-3 py-2 text-left font-medium last:border-r-0"
+										className="min-w-32 border-r border-b border-subtle px-2 py-1.5 text-left text-xs font-medium last:border-r-0"
 									>
 										<div className="flex items-start gap-2">
 											{canPlan && (
@@ -268,8 +268,8 @@ export function AssignmentGrid({
 							const allSelected =
 								rowIds.length > 0 && rowIds.every((id) => selected.has(id));
 							return (
-								<tr key={row.key} className="group">
-									<th className="sticky left-0 z-10 border-r border-b bg-background px-3 py-2 text-left font-normal group-hover:bg-muted/30">
+								<tr key={row.key} className="group h-9">
+									<th className="sticky left-0 z-10 border-r border-b border-subtle bg-surface-1 px-2 py-1 text-left font-normal group-hover:bg-layer-transparent-hover">
 										<div className="flex items-center gap-2">
 											{canPlan && (
 												<Checkbox
@@ -315,7 +315,7 @@ export function AssignmentGrid({
 											return (
 												<td
 													key={build.id}
-													className="border-r border-b px-3 py-2 text-center text-muted-foreground last:border-r-0"
+													className="border-r border-b border-subtle px-2 py-1 text-center text-fg-tertiary last:border-r-0"
 												>
 													–
 												</td>
@@ -330,7 +330,7 @@ export function AssignmentGrid({
 											<td
 												key={build.id}
 												className={cn(
-													"border-r border-b p-0 last:border-r-0",
+													"border-r border-b border-subtle p-0 last:border-r-0",
 													isSelected && "bg-primary/10",
 												)}
 											>
@@ -341,7 +341,7 @@ export function AssignmentGrid({
 																type="button"
 																aria-label="Open task details"
 																onClick={() => openTaskDetail(cell.id, canPlan)}
-																className="flex shrink-0 items-center pr-1.5 pl-3 hover:bg-muted/40"
+																className="flex shrink-0 items-center pr-1 pl-2 hover:bg-layer-transparent-hover"
 															>
 																<span
 																	className={cn(
@@ -368,7 +368,7 @@ export function AssignmentGrid({
 																? toggle([cell.id])
 																: openTaskDetail(cell.id, canPlan)
 														}
-														className="flex min-w-0 flex-1 items-center gap-2 py-2 pr-3 pl-1.5 text-left hover:bg-muted/40"
+														className="flex min-w-0 flex-1 items-center gap-1.5 py-1 pr-2 pl-1 text-left hover:bg-layer-transparent-hover"
 													>
 														{owners.length === 0 ? (
 															<span className="text-xs text-muted-foreground">
@@ -383,8 +383,8 @@ export function AssignmentGrid({
 																				<UserAvatar
 																					name={assignment.user.name}
 																					src={assignment.user.image}
-																					className="size-6"
-																					fallbackClassName="text-[10px]"
+																					className="size-5"
+																					fallbackClassName="text-[9px]"
 																				/>
 																			</span>
 																		</TooltipTrigger>

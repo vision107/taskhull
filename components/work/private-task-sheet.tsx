@@ -219,7 +219,7 @@ export const PrivateTaskSheet = NiceModal.create<PrivateTaskSheetProps>(
 								</Select>
 								{buildTaskId !== NO_LINK && (
 									<Link
-										href={`/dashboard/work/tasks/${buildTaskId}`}
+										href={`/dashboard/organization/tasks/${buildTaskId}`}
 										className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-4 hover:underline"
 										onClick={modal.handleClose}
 									>

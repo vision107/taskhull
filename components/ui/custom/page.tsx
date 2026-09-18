@@ -56,8 +56,11 @@ function PagePrimaryBar({
 			)}
 			{...other}
 		>
-			<SidebarTrigger />
-			<Separator className="mr-2 h-4!" orientation="vertical" />
+			{/* The phone tab bar has its own Menu tab, so the trigger is desktop-only there. */}
+			<div className="flex items-center max-md:group-[.has-bottom-nav]/shell:hidden">
+				<SidebarTrigger />
+				<Separator className="mr-2 h-4!" orientation="vertical" />
+			</div>
 			<div className="w-full min-w-0">{children}</div>
 		</div>
 	);

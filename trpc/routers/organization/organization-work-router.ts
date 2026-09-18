@@ -28,6 +28,7 @@ import {
 	getOwnedBuildTask,
 	syncBuildStatus,
 } from "@/lib/manufacturing/builds";
+import { matchesDueRange } from "@/lib/manufacturing/format";
 import {
 	extractMentionedUserIds,
 	sanitizeMentions,
@@ -36,7 +37,7 @@ import {
 	notifyTaskCommented,
 	notifyTaskStatusChanged,
 } from "@/lib/manufacturing/notifications";
-import { canPlan } from "@/lib/manufacturing/permissions";
+import { assertCanPlan, canPlan } from "@/lib/manufacturing/permissions";
 import { normalizeContentType } from "@/lib/manufacturing/uploads";
 import { getSignedUploadUrl, getSignedUrl } from "@/lib/storage";
 import {
@@ -49,6 +50,7 @@ import {
 	getBuildTaskSchema,
 	listBuildTaskActivitySchema,
 	listMyTasksSchema,
+	listTeamTasksSchema,
 	updateBuildTaskChecklistItemSchema,
 	updateBuildTaskStatusSchema,
 } from "@/schemas/manufacturing-schemas";
@@ -104,6 +106,139 @@ const ALLOWED_TRANSITIONS: Record<BuildTaskStatus, BuildTaskStatus[]> = {
 	[BuildTaskStatus.done]: [BuildTaskStatus.inProgress],
 };
 
+const listTaskWith = {
+	build: {
+		columns: {
+			id: true,
+			serialNumber: true,
+			name: true,
+			status: true,
+		},
+		with: {
+			product: { columns: { id: true, name: true } },
+			templateVersion: {
+				columns: { id: true, versionNumber: true },
+				with: { template: { columns: { id: true, name: true } } },
+			},
+		},
+	},
+	checklistItems: { columns: { id: true, status: true } },
+	dependencies: {
+		with: {
+			dependsOn: { columns: { id: true, title: true, status: true } },
+		},
+	},
+	attachments: { columns: { id: true } },
+	comments: { columns: { id: true } },
+	parent: { columns: { id: true, title: true } },
+	subtasks: { columns: { id: true, status: true } },
+	assignments: {
+		with: { user: { columns: { id: true, name: true, image: true } } },
+	},
+} as const;
+
+function listTaskConditions(
+	organizationId: string,
+	input: {
+		status?: BuildTaskStatus[];
+		includeDone: boolean;
+		projectId?: string;
+		phase?: string;
+		taskIds?: string[];
+	},
+) {
+	const conditions = [eq(buildTaskTable.organizationId, organizationId)];
+	if (input.taskIds) {
+		if (input.taskIds.length === 0) return null;
+		conditions.push(inArray(buildTaskTable.id, input.taskIds));
+	}
+	if (input.projectId) {
+		conditions.push(eq(buildTaskTable.buildId, input.projectId));
+	}
+	if (input.phase) {
+		conditions.push(eq(buildTaskTable.phase, input.phase));
+	}
+	if (input.status && input.status.length > 0) {
+		conditions.push(inArray(buildTaskTable.status, input.status));
+	} else if (!input.includeDone) {
+		conditions.push(ne(buildTaskTable.status, BuildTaskStatus.done));
+	}
+	return conditions;
+}
+
+function mapListedTask(
+	task: {
+		id: string;
+		title: string;
+		parent: { id: string; title: string } | null;
+		subtasks: { status: BuildTaskStatus }[];
+		phase: string | null;
+		status: BuildTaskStatus;
+		startDate: string | null;
+		endDate: string | null;
+		plannedHours: number | null;
+		requiresPhoto: boolean;
+		requiresComment: boolean;
+		build: {
+			id: string;
+			serialNumber: string;
+			name: string | null;
+			status: (typeof BuildStatus)[keyof typeof BuildStatus];
+			product: { id: string; name: string } | null;
+			templateVersion: {
+				id: string;
+				versionNumber: number;
+				template: { id: string; name: string };
+			} | null;
+		};
+		checklistItems: { status: ChecklistItemStatus }[];
+		dependencies: {
+			dependsOn: { id: string; title: string; status: BuildTaskStatus };
+		}[];
+		attachments: { id: string }[];
+		comments: { id: string }[];
+		assignments: {
+			role: string;
+			user: { id: string; name: string; image: string | null };
+		}[];
+	},
+	myRole: string | null,
+) {
+	return {
+		id: task.id,
+		title: task.title,
+		parent: task.parent,
+		subtaskTotal: task.subtasks.length,
+		subtaskDone: task.subtasks.filter(
+			(subtask) => subtask.status === BuildTaskStatus.done,
+		).length,
+		phase: task.phase,
+		status: task.status,
+		startDate: task.startDate,
+		endDate: task.endDate,
+		plannedHours: task.plannedHours,
+		requiresPhoto: task.requiresPhoto,
+		requiresComment: task.requiresComment,
+		myRole,
+		build: task.build,
+		checklistTotal: task.checklistItems.length,
+		checklistDone: task.checklistItems.filter(
+			(item) => item.status !== ChecklistItemStatus.open,
+		).length,
+		openBlockers: task.dependencies
+			.map((dep) => dep.dependsOn)
+			.filter((dep) => dep.status !== BuildTaskStatus.done),
+		attachmentCount: task.attachments.length,
+		commentCount: task.comments.length,
+		assignees: task.assignments.map((assignment) => ({
+			userId: assignment.user.id,
+			name: assignment.user.name,
+			image: assignment.user.image,
+			role: assignment.role,
+		})),
+	};
+}
+
 export const organizationWorkRouter = createTRPCRouter({
 	/**
 	 * The worker's todo list: every task they are assigned to on an open build,
@@ -117,7 +252,11 @@ export const organizationWorkRouter = createTRPCRouter({
 				where: eq(buildTaskAssignmentTable.userId, ctx.user.id),
 				columns: { buildTaskId: true, role: true },
 			});
-			if (assignments.length === 0) return [];
+			const conditions = listTaskConditions(ctx.organization.id, {
+				...input,
+				taskIds: assignments.map((assignment) => assignment.buildTaskId),
+			});
+			if (!conditions) return [];
 
 			const roleByTask = new Map(
 				assignments.map((assignment) => [
@@ -126,18 +265,35 @@ export const organizationWorkRouter = createTRPCRouter({
 				]),
 			);
 
-			const conditions = [
-				eq(buildTaskTable.organizationId, ctx.organization.id),
-				inArray(
-					buildTaskTable.id,
-					assignments.map((assignment) => assignment.buildTaskId),
-				),
-			];
-			if (input.status && input.status.length > 0) {
-				conditions.push(inArray(buildTaskTable.status, input.status));
-			} else if (!input.includeDone) {
-				conditions.push(ne(buildTaskTable.status, BuildTaskStatus.done));
-			}
+			const tasks = await db.query.buildTaskTable.findMany({
+				where: and(...conditions),
+				orderBy: [
+					asc(buildTaskTable.startDate),
+					asc(buildTaskTable.sortOrder),
+					asc(buildTaskTable.createdAt),
+				],
+				with: listTaskWith,
+			});
+
+			return tasks
+				.filter(
+					(task) =>
+						task.build.status !== BuildStatus.archived &&
+						matchesDueRange(task, input),
+				)
+				.map((task) => mapListedTask(task, roleByTask.get(task.id) ?? null));
+		}),
+
+	/**
+	 * Planner-only: every assigned task in the org, same shape as myTasks plus
+	 * the full assignee list. Used for the Team toggle on My tasks.
+	 */
+	teamTasks: protectedOrganizationProcedure
+		.input(listTeamTasksSchema)
+		.query(async ({ ctx, input }) => {
+			assertCanPlan(ctx.membership.role);
+			const conditions = listTaskConditions(ctx.organization.id, input);
+			if (!conditions) return [];
 
 			const tasks = await db.query.buildTaskTable.findMany({
 				where: and(...conditions),
@@ -146,63 +302,17 @@ export const organizationWorkRouter = createTRPCRouter({
 					asc(buildTaskTable.sortOrder),
 					asc(buildTaskTable.createdAt),
 				],
-				with: {
-					build: {
-						columns: {
-							id: true,
-							serialNumber: true,
-							name: true,
-							status: true,
-						},
-						with: {
-							product: { columns: { id: true, name: true } },
-							templateVersion: {
-								columns: { id: true, versionNumber: true },
-								with: { template: { columns: { id: true, name: true } } },
-							},
-						},
-					},
-					checklistItems: { columns: { id: true, status: true } },
-					dependencies: {
-						with: {
-							dependsOn: { columns: { id: true, title: true, status: true } },
-						},
-					},
-					attachments: { columns: { id: true } },
-					comments: { columns: { id: true } },
-					parent: { columns: { id: true, title: true } },
-					subtasks: { columns: { id: true, status: true } },
-				},
+				with: listTaskWith,
 			});
 
 			return tasks
-				.filter((task) => task.build.status !== BuildStatus.archived)
-				.map((task) => ({
-					id: task.id,
-					title: task.title,
-					parent: task.parent,
-					subtaskTotal: task.subtasks.length,
-					subtaskDone: task.subtasks.filter(
-						(subtask) => subtask.status === BuildTaskStatus.done,
-					).length,
-					phase: task.phase,
-					status: task.status,
-					startDate: task.startDate,
-					endDate: task.endDate,
-					requiresPhoto: task.requiresPhoto,
-					requiresComment: task.requiresComment,
-					myRole: roleByTask.get(task.id) ?? null,
-					build: task.build,
-					checklistTotal: task.checklistItems.length,
-					checklistDone: task.checklistItems.filter(
-						(item) => item.status !== ChecklistItemStatus.open,
-					).length,
-					openBlockers: task.dependencies
-						.map((dep) => dep.dependsOn)
-						.filter((dep) => dep.status !== BuildTaskStatus.done),
-					attachmentCount: task.attachments.length,
-					commentCount: task.comments.length,
-				}));
+				.filter(
+					(task) =>
+						task.build.status !== BuildStatus.archived &&
+						task.assignments.length > 0 &&
+						matchesDueRange(task, input),
+				)
+				.map((task) => mapListedTask(task, null));
 		}),
 
 	getTask: protectedOrganizationProcedure
