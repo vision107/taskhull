@@ -8,7 +8,7 @@ import {
 	PageHeader,
 	PagePrimaryBar,
 } from "@/components/ui/custom/page";
-import { PrivateItemPageView } from "@/components/work/private-item-detail";
+import { TaskPageView } from "@/components/work/task-peek";
 import { getSession } from "@/lib/auth/server";
 import { getWorkDictionary, resolveWorkLocale } from "@/lib/i18n/work";
 import { getPlannerPageContext } from "@/lib/manufacturing/page-context";
@@ -46,13 +46,17 @@ export default async function MyListItemPage({
 								label: t.privateList.title,
 								href: "/dashboard/organization/my-list",
 							},
-							{ label: t.privateList.itemTitle },
+							{ label: t.detail.taskTitle },
 						]}
 					/>
 				</PagePrimaryBar>
 			</PageHeader>
 			<PageBody disableScroll className="min-h-0">
-				<PrivateItemPageView itemId={itemId} />
+				<TaskPageView
+					taskId={itemId}
+					canPlan
+					taskHref={(id) => `/dashboard/organization/my-list/${id}`}
+				/>
 			</PageBody>
 		</Page>
 	);

@@ -79,6 +79,8 @@ export interface WorkTaskDetailProps {
 	onClose?: () => void;
 	/** Open a related task in this same surface (peek/page) instead of a hard navigation. */
 	onOpenTask?: (taskId: string) => void;
+	/** Full-page URL for the maximize control (My list uses `/my-list/:id`). */
+	taskHref?: (taskId: string) => string;
 }
 
 export function WorkTaskDetail({
@@ -86,6 +88,7 @@ export function WorkTaskDetail({
 	variant = "page",
 	onClose,
 	onOpenTask,
+	taskHref,
 }: WorkTaskDetailProps): React.JSX.Element {
 	const utils = trpc.useUtils();
 	const { user } = useSession();
@@ -120,6 +123,7 @@ export function WorkTaskDetail({
 		void utils.organization.work.getTask.invalidate({ id: taskId });
 		void utils.organization.work.myTasks.invalidate();
 		void utils.organization.work.teamTasks.invalidate();
+		void utils.organization.work.personalTasks.invalidate();
 	};
 
 	// -- offline fallbacks ----------------------------------------------------
@@ -400,6 +404,15 @@ export function WorkTaskDetail({
 	};
 
 	const isPeek = variant === "peek";
+	const isPersonal = Boolean(task.build.ownerUserId);
+	const listHref = isPersonal
+		? "/dashboard/organization/my-list"
+		: "/dashboard/organization/my-tasks";
+	const pageHref =
+		taskHref?.(task.id) ??
+		(isPersonal
+			? `/dashboard/organization/my-list/${task.id}`
+			: `/dashboard/organization/tasks/${task.id}`);
 	const projectName =
 		task.build.templateVersion?.template.name ?? task.build.name ?? "Project";
 	const attachmentCount =
@@ -412,7 +425,7 @@ export function WorkTaskDetail({
 			<div className="flex h-12 shrink-0 items-center gap-1.5 border-b border-subtle px-2 sm:px-3">
 				{!isPeek && (
 					<Link
-						href="/dashboard/organization/my-tasks"
+						href={listHref}
 						aria-label={t.detail.back}
 						className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-fg-secondary hover:bg-layer-transparent-hover md:hidden"
 					>
@@ -445,9 +458,7 @@ export function WorkTaskDetail({
 								variant="ghost"
 								size="icon-sm"
 								nativeButton={false}
-								render={
-									<Link href={`/dashboard/organization/tasks/${task.id}`} />
-								}
+								render={<Link href={pageHref} />}
 								aria-label={t.detail.openFullPage}
 								className="text-fg-secondary"
 							>
@@ -516,28 +527,32 @@ export function WorkTaskDetail({
 
 					{/* Field rows, label left / value right like Asana's task pane. */}
 					<dl className="mt-4 grid grid-cols-[minmax(6rem,8rem)_1fr] gap-x-4 gap-y-1 text-sm sm:grid-cols-[9rem_1fr]">
-						<TaskFieldRow label={t.detail.assignees}>
-							{task.assignments.length === 0 ? (
-								<span className="text-fg-tertiary">{t.detail.unassigned}</span>
-							) : (
-								<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-									{task.assignments.map((assignment) => (
-										<span
-											key={assignment.id}
-											className="inline-flex items-center gap-1.5"
-										>
-											<UserAvatar
-												name={assignment.user.name}
-												src={assignment.user.image}
-												className="size-6"
-												fallbackClassName="text-[10px]"
-											/>
-											<span className="truncate">{assignment.user.name}</span>
-										</span>
-									))}
-								</span>
-							)}
-						</TaskFieldRow>
+						{isPersonal ? null : (
+							<TaskFieldRow label={t.detail.assignees}>
+								{task.assignments.length === 0 ? (
+									<span className="text-fg-tertiary">
+										{t.detail.unassigned}
+									</span>
+								) : (
+									<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+										{task.assignments.map((assignment) => (
+											<span
+												key={assignment.id}
+												className="inline-flex items-center gap-1.5"
+											>
+												<UserAvatar
+													name={assignment.user.name}
+													src={assignment.user.image}
+													className="size-6"
+													fallbackClassName="text-[10px]"
+												/>
+												<span className="truncate">{assignment.user.name}</span>
+											</span>
+										))}
+									</span>
+								)}
+							</TaskFieldRow>
+						)}
 						<TaskFieldRow label={t.detail.due}>
 							{task.startDate ? (
 								<span className="inline-flex items-center gap-1.5">
@@ -558,18 +573,20 @@ export function WorkTaskDetail({
 								</span>
 							)}
 						</TaskFieldRow>
-						<TaskFieldRow label={t.detail.project}>
-							<Link
-								href={`/dashboard/organization/projects/${task.build.id}`}
-								className="inline-flex max-w-full items-center gap-1.5 rounded-md bg-layer-1 px-2 py-0.5 text-13 hover:bg-layer-1-hover"
-							>
-								<span className="size-2 shrink-0 rounded-sm bg-primary/70" />
-								<span className="truncate">{projectName}</span>
-								<span className="shrink-0 text-fg-tertiary">
-									{task.build.serialNumber}
-								</span>
-							</Link>
-						</TaskFieldRow>
+						{isPersonal ? null : (
+							<TaskFieldRow label={t.detail.project}>
+								<Link
+									href={`/dashboard/organization/projects/${task.build.id}`}
+									className="inline-flex max-w-full items-center gap-1.5 rounded-md bg-layer-1 px-2 py-0.5 text-13 hover:bg-layer-1-hover"
+								>
+									<span className="size-2 shrink-0 rounded-sm bg-primary/70" />
+									<span className="truncate">{projectName}</span>
+									<span className="shrink-0 text-fg-tertiary">
+										{task.build.serialNumber}
+									</span>
+								</Link>
+							</TaskFieldRow>
+						)}
 						{task.phase && (
 							<TaskFieldRow label={t.detail.phase}>{task.phase}</TaskFieldRow>
 						)}

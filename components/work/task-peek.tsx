@@ -26,7 +26,7 @@ function usePeekAvailable(): boolean {
  * Asana-style side peek: on wide screens a task opens next to the list
  * (`?task=`), on phones the caller should navigate to the full page.
  */
-function useQueryPeek(param: "task" | "item"): {
+function useQueryPeek(param: "task"): {
 	id: string | null;
 	showPeek: boolean;
 	open: (id: string) => boolean;
@@ -71,34 +71,18 @@ export function useTaskPeek(): {
 	};
 }
 
-/** Same two-pane rule as assigned work, keyed on `?item=`. */
-export function usePrivateItemPeek(): {
-	itemId: string | null;
-	showPeek: boolean;
-	open: (id: string) => boolean;
-	close: () => void;
-	setItemId: (id: string | null) => void;
-} {
-	const peek = useQueryPeek("item");
-	return {
-		itemId: peek.id,
-		showPeek: peek.showPeek,
-		open: peek.open,
-		close: peek.close,
-		setItemId: peek.setId,
-	};
-}
-
 export function TaskPeek({
 	taskId,
 	canPlan,
 	onClose,
 	onOpenTask,
+	taskHref,
 }: {
 	taskId: string;
 	canPlan?: boolean;
 	onClose: () => void;
 	onOpenTask?: (taskId: string) => void;
+	taskHref?: (taskId: string) => string;
 }): React.JSX.Element {
 	const { t } = useWorkLocale();
 	return (
@@ -113,6 +97,7 @@ export function TaskPeek({
 				variant="peek"
 				onClose={onClose}
 				onOpenTask={onOpenTask}
+				taskHref={taskHref}
 			/>
 		</aside>
 	);
@@ -122,13 +107,17 @@ export function TaskPeek({
 export function TaskPageView({
 	taskId,
 	canPlan,
+	taskHref,
 }: {
 	taskId: string;
 	canPlan: boolean;
+	taskHref?: (taskId: string) => string;
 }): React.JSX.Element {
 	const router = useRouter();
+	const hrefFor =
+		taskHref ?? ((id: string) => `/dashboard/organization/tasks/${id}`);
 	const openTask = (id: string) => {
-		router.push(`/dashboard/organization/tasks/${id}`);
+		router.push(hrefFor(id));
 	};
 
 	return (
@@ -138,6 +127,7 @@ export function TaskPageView({
 			canPlan={canPlan}
 			variant="page"
 			onOpenTask={openTask}
+			taskHref={hrefFor}
 		/>
 	);
 }

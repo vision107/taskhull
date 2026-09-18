@@ -8,7 +8,7 @@ import {
 	PageHeader,
 	PagePrimaryBar,
 } from "@/components/ui/custom/page";
-import { PrivateListView } from "@/components/work/private-tasks";
+import { MyTasksView } from "@/components/work/my-tasks-view";
 import { getSession } from "@/lib/auth/server";
 import { getWorkDictionary, resolveWorkLocale } from "@/lib/i18n/work";
 import { getPlannerPageContext } from "@/lib/manufacturing/page-context";
@@ -41,9 +41,9 @@ export default async function MyListPage(): Promise<React.JSX.Element> {
 					/>
 				</PagePrimaryBar>
 			</PageHeader>
-			{/* The view owns its scroll regions: list on the left, item peek on the right. */}
+			{/* Same list + peek as assigned work; the owner can edit every field. */}
 			<PageBody disableScroll className="min-h-0">
-				<PrivateListView />
+				<MyTasksView canPlan listKind="personal" />
 			</PageBody>
 		</Page>
 	);

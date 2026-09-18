@@ -400,40 +400,6 @@ export const listBuildTaskActivitySchema = z.object({
 	limit: z.number().int().min(1).max(200).default(50),
 });
 
-// ---------------------------------------------------------------------------
-// Private tasks (a member's own to-do list, scoped to the organization)
-// ---------------------------------------------------------------------------
-
-export const PRIVATE_TASK_TITLE_MAX = 200;
-export const PRIVATE_TASK_NOTES_MAX = 5000;
-
-export const listPrivateTasksSchema = z.object({
-	includeDone: z.boolean().default(false),
+export const createPersonalTaskSchema = z.object({
+	title: z.string().trim().min(1).max(200),
 });
-
-export const getPrivateTaskSchema = idSchema;
-
-const privateTaskFields = {
-	title: z
-		.string()
-		.trim()
-		.min(1, "Title is required")
-		.max(PRIVATE_TASK_TITLE_MAX),
-	notes: z.string().trim().max(PRIVATE_TASK_NOTES_MAX).nullable().optional(),
-	dueDate: isoDate.nullable().optional(),
-	/** Pin the note to one of the organization's project tasks. */
-	buildTaskId: z.uuid().nullable().optional(),
-};
-
-export const createPrivateTaskSchema = z.object(privateTaskFields);
-
-export const updatePrivateTaskSchema = z.object({
-	id: z.uuid(),
-	title: privateTaskFields.title.optional(),
-	notes: privateTaskFields.notes,
-	dueDate: privateTaskFields.dueDate,
-	buildTaskId: privateTaskFields.buildTaskId,
-	done: z.boolean().optional(),
-});
-
-export const deletePrivateTaskSchema = idSchema;

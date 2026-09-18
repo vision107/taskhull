@@ -12,10 +12,16 @@ import { TaskPeek, useTaskPeek } from "@/components/work/task-peek";
  */
 export function MyTasksView({
 	canPlan = false,
+	listKind = "assigned",
 }: {
 	canPlan?: boolean;
+	listKind?: "assigned" | "personal";
 }): React.JSX.Element {
 	const peek = useTaskPeek();
+	const taskHref =
+		listKind === "personal"
+			? (id: string) => `/dashboard/organization/my-list/${id}`
+			: undefined;
 
 	return (
 		<div className="flex h-full min-h-0">
@@ -25,6 +31,7 @@ export function MyTasksView({
 					onOpenTask={peek.open}
 					onSelectTask={peek.setTaskId}
 					canPlan={canPlan}
+					listKind={listKind}
 				/>
 			</div>
 			{peek.showPeek && peek.taskId && (
@@ -33,6 +40,7 @@ export function MyTasksView({
 					canPlan={canPlan}
 					onClose={peek.close}
 					onOpenTask={peek.setTaskId}
+					taskHref={taskHref}
 				/>
 			)}
 		</div>

@@ -418,21 +418,16 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
     `/dashboard/organization/my-tasks`). "Projects" is collapsible too and
     lists the open projects; no task titles appear in the sidebar. On the
     phone the private list sits behind the Menu tab.
-    Table `private_task` scoped to `(organization_id, user_id)` with title,
-    notes, due date, done flag and an optional link to a `build_task`
-    (`ON DELETE SET NULL`). Router `organization.privateTask.{list, get,
-create, update, delete}` — every query filters by org **and** caller, so
-    owners cannot read a member's list; a linked task must belong to the same
-    organization. The list dies with the membership: `afterRemoveMember`
-    (also fired when someone leaves) deletes the rows. The page uses the same
-    Asana-style shell as assigned work: full-width collapsible Open /
-    Finished sections, a `?item=` side peek on `lg+`, and
-    `/dashboard/organization/my-list/[itemId]` on the phone. Quick add, tick
-    off and delete work offline through the write queue (`createPrivateTask`,
-    `updatePrivateTask`, `deletePrivateTask`; offline creates show as
-    read‑only "waiting to sync" rows); editing title, notes, due date or the
-    linked task in the peek needs a connection. Tests:
-    `tests/trpc/routers/organization-private-task.test.ts`.
+    My list items are ordinary `build_task` rows on a hidden personal
+    `build` (`owner_user_id` unique per organization). They reuse
+    `MyTasksList` / `TaskPeek` / `TaskView` — same fields, same peek and
+    phone page. The only product differences: they are never listed as a
+    project, never appear on assigned / team work, and cannot be assigned
+    to anyone else. `organization.work.{personalTasks, createPersonalTask,
+deletePersonalTask}` plus the existing task/edit procedures (owner of
+    a personal list may edit even as a member). The list dies with the
+    membership: `afterRemoveMember` deletes that member's personal build.
+    Tests: `tests/trpc/routers/organization-personal-task.test.ts`.
 
 ## Local setup
 
