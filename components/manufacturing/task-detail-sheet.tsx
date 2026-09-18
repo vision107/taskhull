@@ -105,6 +105,8 @@ export type TaskPlannerViewProps = TaskDetailSheetProps & {
 	onClose?: () => void;
 	/** Open another task in this same surface (peek/page) instead of a new sheet. */
 	onOpenTask?: (taskId: string) => void;
+	/** Full-page URL for the maximize control (My list uses `/my-list/:id`). */
+	taskHref?: (taskId: string) => string;
 };
 
 const ISO = "yyyy-MM-dd";
@@ -126,6 +128,7 @@ export function TaskPlannerView({
 	variant = "sheet",
 	onClose,
 	onOpenTask,
+	taskHref,
 }: TaskPlannerViewProps): React.JSX.Element {
 	const { user } = useSession();
 	const isPeek = variant === "peek";
@@ -157,6 +160,7 @@ export function TaskPlannerView({
 		void utils.organization.work.activity.invalidate();
 		void utils.organization.work.myTasks.invalidate();
 		void utils.organization.work.teamTasks.invalidate();
+		void utils.organization.work.personalTasks.invalidate();
 		if (task) {
 			void utils.organization.build.get.invalidate({ id: task.buildId });
 		}
@@ -347,6 +351,7 @@ export function TaskPlannerView({
 		? [...task.comments].reverse().find((item) => item.authorId !== user?.id)
 		: undefined;
 	const isDone = task?.status === BuildTaskStatus.done;
+	const isPersonal = Boolean(task?.build.ownerUserId);
 	const completeBlockedBy =
 		task && !isDone
 			? task.blockers.length > 0
@@ -498,7 +503,12 @@ export function TaskPlannerView({
 										size="icon-sm"
 										nativeButton={false}
 										render={
-											<Link href={`/dashboard/organization/tasks/${task.id}`} />
+											<Link
+												href={
+													taskHref?.(task.id) ??
+													`/dashboard/organization/tasks/${task.id}`
+												}
+											/>
 										}
 										aria-label="Open as page"
 										className="text-fg-secondary"
@@ -547,19 +557,23 @@ export function TaskPlannerView({
 							{/* Breadcrumb + title */}
 							<div>
 								<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-									<Link
-										href={`/dashboard/organization/projects/${task.build.id}`}
-										onClick={onClose}
-										className="truncate hover:underline"
-									>
-										{task.build.templateVersion?.template.name ??
-											task.build.name ??
-											"Project"}{" "}
-										· #{task.build.serialNumber}
-									</Link>
+									{isPersonal ? null : (
+										<Link
+											href={`/dashboard/organization/projects/${task.build.id}`}
+											onClick={onClose}
+											className="truncate hover:underline"
+										>
+											{task.build.templateVersion?.template.name ??
+												task.build.name ??
+												"Project"}{" "}
+											· #{task.build.serialNumber}
+										</Link>
+									)}
 									{task.parent && (
 										<>
-											<ChevronRightIcon className="size-3 shrink-0" />
+											{isPersonal ? null : (
+												<ChevronRightIcon className="size-3 shrink-0" />
+											)}
 											<RelatedTaskLink
 												taskId={task.parent.id}
 												onOpenTask={openTask}
@@ -570,7 +584,7 @@ export function TaskPlannerView({
 											</RelatedTaskLink>
 										</>
 									)}
-									{task.sourceTemplateTaskId === null && (
+									{!isPersonal && task.sourceTemplateTaskId === null && (
 										<span className="ml-1 rounded border px-1 text-[10px] leading-4">
 											ad-hoc
 										</span>
@@ -587,70 +601,72 @@ export function TaskPlannerView({
 
 							{/* Fields */}
 							<dl className="grid grid-cols-[minmax(6rem,8rem)_1fr] gap-x-4 gap-y-1">
-								<TaskFieldRow label="Assignee">
-									<div className="flex flex-wrap items-center gap-1.5">
-										{owners.map((assignment) => (
-											<span
-												key={assignment.id}
-												className="inline-flex items-center gap-1.5 rounded-full border py-0.5 pr-1.5 pl-0.5 text-sm"
-											>
-												<UserAvatar
-													name={assignment.user.name}
-													src={assignment.user.image}
-													className="size-5"
-													fallbackClassName="text-[9px]"
+								{!isPersonal && (
+									<TaskFieldRow label="Assignee">
+										<div className="flex flex-wrap items-center gap-1.5">
+											{owners.map((assignment) => (
+												<span
+													key={assignment.id}
+													className="inline-flex items-center gap-1.5 rounded-full border py-0.5 pr-1.5 pl-0.5 text-sm"
+												>
+													<UserAvatar
+														name={assignment.user.name}
+														src={assignment.user.image}
+														className="size-5"
+														fallbackClassName="text-[9px]"
+													/>
+													{assignment.user.name}
+													{canPlan && (
+														<button
+															type="button"
+															aria-label={`Unassign ${assignment.user.name}`}
+															className="text-muted-foreground hover:text-destructive"
+															onClick={() =>
+																unassignMutation.mutate({
+																	buildTaskIds: [task.id],
+																	userId: assignment.userId,
+																})
+															}
+														>
+															<XIcon className="size-3.5" />
+														</button>
+													)}
+												</span>
+											))}
+											{canPlan ? (
+												<AssigneePicker
+													selectedIds={owners.map((a) => a.userId)}
+													onSelect={(picked) =>
+														assignMutation.mutate({
+															buildTaskIds: [task.id],
+															userId: picked.id,
+															replace: false,
+														})
+													}
+													onDeselect={(picked) =>
+														unassignMutation.mutate({
+															buildTaskIds: [task.id],
+															userId: picked.id,
+														})
+													}
+													disabled={assignMutation.isPending}
+													label={owners.length === 0 ? "Assign" : ""}
+													buttonProps={{
+														variant: "ghost",
+														size: owners.length === 0 ? "sm" : "icon-xs",
+														className:
+															owners.length === 0
+																? "-ml-2 text-muted-foreground"
+																: "text-muted-foreground",
+														"aria-label": "Add assignee",
+													}}
 												/>
-												{assignment.user.name}
-												{canPlan && (
-													<button
-														type="button"
-														aria-label={`Unassign ${assignment.user.name}`}
-														className="text-muted-foreground hover:text-destructive"
-														onClick={() =>
-															unassignMutation.mutate({
-																buildTaskIds: [task.id],
-																userId: assignment.userId,
-															})
-														}
-													>
-														<XIcon className="size-3.5" />
-													</button>
-												)}
-											</span>
-										))}
-										{canPlan ? (
-											<AssigneePicker
-												selectedIds={owners.map((a) => a.userId)}
-												onSelect={(picked) =>
-													assignMutation.mutate({
-														buildTaskIds: [task.id],
-														userId: picked.id,
-														replace: false,
-													})
-												}
-												onDeselect={(picked) =>
-													unassignMutation.mutate({
-														buildTaskIds: [task.id],
-														userId: picked.id,
-													})
-												}
-												disabled={assignMutation.isPending}
-												label={owners.length === 0 ? "Assign" : ""}
-												buttonProps={{
-													variant: "ghost",
-													size: owners.length === 0 ? "sm" : "icon-xs",
-													className:
-														owners.length === 0
-															? "-ml-2 text-muted-foreground"
-															: "text-muted-foreground",
-													"aria-label": "Add assignee",
-												}}
-											/>
-										) : owners.length === 0 ? (
-											<Muted>Unassigned</Muted>
-										) : null}
-									</div>
-								</TaskFieldRow>
+											) : owners.length === 0 ? (
+												<Muted>Unassigned</Muted>
+											) : null}
+										</div>
+									</TaskFieldRow>
+								)}
 
 								<TaskFieldRow label="Due date">
 									{canPlan ? (

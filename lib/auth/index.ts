@@ -258,22 +258,22 @@ export const auth = betterAuth({
 					}
 				},
 				// Sync seats after a member is removed (also fired when someone
-				// leaves) and drop their private to-dos: the list belongs to the
+				// leaves) and drop their personal list: it belongs to the
 				// membership, not to the user.
 				afterRemoveMember: async ({ organization, member }) => {
 					try {
 						await db
-							.delete(schema.privateTaskTable)
+							.delete(schema.buildTable)
 							.where(
 								and(
-									eq(schema.privateTaskTable.organizationId, organization.id),
-									eq(schema.privateTaskTable.userId, member.userId),
+									eq(schema.buildTable.organizationId, organization.id),
+									eq(schema.buildTable.ownerUserId, member.userId),
 								),
 							);
 					} catch (error) {
 						logger.error(
 							{ organizationId: organization.id, userId: member.userId, error },
-							"Failed to remove private tasks after member removed",
+							"Failed to remove personal list after member removed",
 						);
 					}
 					try {

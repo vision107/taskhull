@@ -412,20 +412,22 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
     command menu. The switcher lists organizations (and the admin panel for
     platform admins) only; breadcrumbs drop the "Home" crumb.
   - _Private to‑dos live inside the organization._ What people still want
-    from a personal space is a scratch list; that is now the "My notes"
-    section at the bottom of My tasks (`/dashboard/organization/my-tasks`,
-    "Mine" view, phone and desktop).
-    Table `private_task` scoped to `(organization_id, user_id)` with title,
-    notes, due date, done flag and an optional link to a `build_task`
-    (`ON DELETE SET NULL`). Router `organization.privateTask.{list, create,
-update, delete}` — every query filters by org **and** caller, so owners
-    cannot read a member's list; a linked task must belong to the same
-    organization. The list dies with the membership: `afterRemoveMember`
-    (also fired when someone leaves) deletes the rows. Quick add, tick off
-    and delete work offline through the write queue (`createPrivateTask`,
-    `updatePrivateTask`, `deletePrivateTask`; offline creates show as
-    read‑only "waiting to sync" rows); editing a note in the bottom sheet
-    needs a connection. Tests: `tests/trpc/routers/organization-private-task.test.ts`.
+    from a personal space is a scratch list; that is now "My list" at
+    `/dashboard/organization/my-list`, reached from the sidebar as the only
+    child of the collapsible "Tasks" item (assigned work stays at
+    `/dashboard/organization/my-tasks`). "Projects" is collapsible too and
+    lists the open projects; no task titles appear in the sidebar. On the
+    phone the private list sits behind the Menu tab.
+    My list items are ordinary `build_task` rows on a hidden personal
+    `build` (`owner_user_id` unique per organization). They reuse
+    `MyTasksList` / `TaskPeek` / `TaskView` — same fields, same peek and
+    phone page. The only product differences: they are never listed as a
+    project, never appear on assigned / team work, and cannot be assigned
+    to anyone else. `organization.work.{personalTasks, createPersonalTask,
+deletePersonalTask}` plus the existing task/edit procedures (owner of
+    a personal list may edit even as a member). The list dies with the
+    membership: `afterRemoveMember` deletes that member's personal build.
+    Tests: `tests/trpc/routers/organization-personal-task.test.ts`.
 
 ## Local setup
 

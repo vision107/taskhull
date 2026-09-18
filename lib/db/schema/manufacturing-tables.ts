@@ -272,6 +272,13 @@ export const buildTable = pgTable(
 		createdById: uuid("created_by_id").references(() => userTable.id, {
 			onDelete: "set null",
 		}),
+		/**
+		 * When set, this build is that member's private list: not a project,
+		 * not shared with the team. One per (organization, user).
+		 */
+		ownerUserId: uuid("owner_user_id").references(() => userTable.id, {
+			onDelete: "cascade",
+		}),
 		...timestamps,
 	},
 	(table) => [
@@ -283,6 +290,9 @@ export const buildTable = pgTable(
 			table.organizationId,
 			table.serialNumber,
 		),
+		uniqueIndex("build_org_personal_owner_idx")
+			.on(table.organizationId, table.ownerUserId)
+			.where(sql`${table.ownerUserId} is not null`),
 	],
 );
 
@@ -512,38 +522,6 @@ export const buildTaskActivityTable = pgTable(
 // ---------------------------------------------------------------------------
 // Private tasks — a member's own to-do list inside an organization
 // ---------------------------------------------------------------------------
-
-/**
- * A personal note/to-do that only its author sees. Scoped to the organization
- * on purpose: it lives and dies with the membership, so leaving the
- * organization (or being removed from it) takes the list along.
- * `buildTaskId` optionally pins the note to a project task ("remember to ask
- * about the bracket on task X").
- */
-export const privateTaskTable = pgTable(
-	"private_task",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		organizationId: uuid("organization_id")
-			.notNull()
-			.references(() => organizationTable.id, { onDelete: "cascade" }),
-		userId: uuid("user_id")
-			.notNull()
-			.references(() => userTable.id, { onDelete: "cascade" }),
-		buildTaskId: uuid("build_task_id").references(() => buildTaskTable.id, {
-			onDelete: "set null",
-		}),
-		title: text("title").notNull(),
-		notes: text("notes"),
-		dueDate: date("due_date"),
-		completedAt: timestamp("completed_at", { withTimezone: true }),
-		...timestamps,
-	},
-	(table) => [
-		index("private_task_org_user_idx").on(table.organizationId, table.userId),
-		index("private_task_build_task_id_idx").on(table.buildTaskId),
-	],
-);
 
 // ---------------------------------------------------------------------------
 // Generic audit log

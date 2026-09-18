@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -32,6 +32,82 @@ import {
 
 export type Build = typeof buildTable.$inferSelect;
 export type BuildTask = typeof buildTaskTable.$inferSelect;
+
+/** Serial prefix so personal lists never collide with real project numbers. */
+export const PERSONAL_BUILD_SERIAL_PREFIX = "~list-";
+
+export function isPersonalBuild(build: {
+	ownerUserId?: string | null;
+}): boolean {
+	return Boolean(build.ownerUserId);
+}
+
+/** Shared project lists omit personal builds. */
+export function sharedBuildScope(organizationId: string) {
+	return and(
+		eq(buildTable.organizationId, organizationId),
+		isNull(buildTable.ownerUserId),
+	);
+}
+
+/**
+ * Personal lists are invisible to everyone except their owner. Callers that
+ * already 404 on a missing build should use this so a guessed URL does not
+ * leak that the list exists.
+ */
+export function denyForeignPersonalBuild(
+	build: { ownerUserId?: string | null },
+	userId: string,
+): void {
+	if (build.ownerUserId && build.ownerUserId !== userId) {
+		throw new TRPCError({ code: "NOT_FOUND", message: "Build not found." });
+	}
+}
+
+export async function findPersonalBuild(
+	organizationId: string,
+	userId: string,
+) {
+	return db.query.buildTable.findFirst({
+		where: and(
+			eq(buildTable.organizationId, organizationId),
+			eq(buildTable.ownerUserId, userId),
+		),
+	});
+}
+
+/** One hidden personal project per member, created on first use. */
+export async function getOrCreatePersonalBuild(
+	organizationId: string,
+	userId: string,
+): Promise<Build> {
+	const existing = await findPersonalBuild(organizationId, userId);
+	if (existing) return existing;
+
+	try {
+		const [created] = await db
+			.insert(buildTable)
+			.values({
+				organizationId,
+				ownerUserId: userId,
+				createdById: userId,
+				serialNumber: `${PERSONAL_BUILD_SERIAL_PREFIX}${userId}`,
+				name: "My list",
+				status: BuildStatus.active,
+				plannedStartDate: toDateString(new Date()),
+			})
+			.returning();
+		if (created) return created;
+	} catch {
+		const raced = await findPersonalBuild(organizationId, userId);
+		if (raced) return raced;
+	}
+
+	throw new TRPCError({
+		code: "INTERNAL_SERVER_ERROR",
+		message: "Failed to open your list.",
+	});
+}
 
 export async function getOwnedProduct(
 	productId: string,
@@ -82,6 +158,17 @@ export async function getOwnedBuildTask(
 	}
 
 	return task;
+}
+
+export async function getAccessibleBuildTask(
+	buildTaskId: string,
+	organizationId: string,
+	userId: string,
+) {
+	const task = await getOwnedBuildTask(buildTaskId, organizationId);
+	const build = await getOwnedBuild(task.buildId, organizationId);
+	denyForeignPersonalBuild(build, userId);
+	return { task, build };
 }
 
 /**

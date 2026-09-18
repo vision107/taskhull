@@ -26,6 +26,34 @@ function usePeekAvailable(): boolean {
  * Asana-style side peek: on wide screens a task opens next to the list
  * (`?task=`), on phones the caller should navigate to the full page.
  */
+function useQueryPeek(param: "task"): {
+	id: string | null;
+	showPeek: boolean;
+	open: (id: string) => boolean;
+	close: () => void;
+	setId: (id: string | null) => void;
+} {
+	const [id, setId] = useQueryState(param);
+	const canPeek = usePeekAvailable();
+	const showPeek = canPeek && Boolean(id);
+
+	return {
+		id,
+		showPeek,
+		open: (next: string) => {
+			if (!canPeek) return false;
+			void setId(next);
+			return true;
+		},
+		close: () => {
+			void setId(null);
+		},
+		setId: (next: string | null) => {
+			void setId(next);
+		},
+	};
+}
+
 export function useTaskPeek(): {
 	taskId: string | null;
 	showPeek: boolean;
@@ -33,24 +61,13 @@ export function useTaskPeek(): {
 	close: () => void;
 	setTaskId: (id: string | null) => void;
 } {
-	const [taskId, setTaskId] = useQueryState("task");
-	const canPeek = usePeekAvailable();
-	const showPeek = canPeek && Boolean(taskId);
-
+	const peek = useQueryPeek("task");
 	return {
-		taskId,
-		showPeek,
-		open: (id: string) => {
-			if (!canPeek) return false;
-			void setTaskId(id);
-			return true;
-		},
-		close: () => {
-			void setTaskId(null);
-		},
-		setTaskId: (id: string | null) => {
-			void setTaskId(id);
-		},
+		taskId: peek.id,
+		showPeek: peek.showPeek,
+		open: peek.open,
+		close: peek.close,
+		setTaskId: peek.setId,
 	};
 }
 
@@ -59,11 +76,13 @@ export function TaskPeek({
 	canPlan,
 	onClose,
 	onOpenTask,
+	taskHref,
 }: {
 	taskId: string;
 	canPlan?: boolean;
 	onClose: () => void;
 	onOpenTask?: (taskId: string) => void;
+	taskHref?: (taskId: string) => string;
 }): React.JSX.Element {
 	const { t } = useWorkLocale();
 	return (
@@ -78,6 +97,7 @@ export function TaskPeek({
 				variant="peek"
 				onClose={onClose}
 				onOpenTask={onOpenTask}
+				taskHref={taskHref}
 			/>
 		</aside>
 	);
@@ -87,13 +107,17 @@ export function TaskPeek({
 export function TaskPageView({
 	taskId,
 	canPlan,
+	taskHref,
 }: {
 	taskId: string;
 	canPlan: boolean;
+	taskHref?: (taskId: string) => string;
 }): React.JSX.Element {
 	const router = useRouter();
+	const hrefFor =
+		taskHref ?? ((id: string) => `/dashboard/organization/tasks/${id}`);
 	const openTask = (id: string) => {
-		router.push(`/dashboard/organization/tasks/${id}`);
+		router.push(hrefFor(id));
 	};
 
 	return (
@@ -103,6 +127,7 @@ export function TaskPageView({
 			canPlan={canPlan}
 			variant="page"
 			onOpenTask={openTask}
+			taskHref={hrefFor}
 		/>
 	);
 }

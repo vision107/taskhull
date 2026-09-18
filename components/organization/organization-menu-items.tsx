@@ -24,6 +24,7 @@ import {
 	SidebarGroup,
 	SidebarGroupLabel,
 	SidebarMenu,
+	SidebarMenuAction,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarMenuSub,
@@ -33,6 +34,12 @@ import {
 } from "@/components/ui/sidebar";
 import { useWorkLocale } from "@/components/work/work-locale-provider";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/trpc/client";
+
+type MenuChild = {
+	label: string;
+	href: string;
+};
 
 type MenuItem = {
 	label: string;
@@ -41,13 +48,13 @@ type MenuItem = {
 	external?: boolean;
 	exactMatch?: boolean;
 	activePrefixes?: string[];
+	/** When set, the item expands to show these links under it. */
+	children?: MenuChild[];
 };
 
 type MenuGroup = {
 	label: string;
 	items: MenuItem[];
-	collapsible?: boolean;
-	defaultOpen?: boolean;
 };
 
 export function OrganizationMenuItems({
@@ -59,9 +66,15 @@ export function OrganizationMenuItems({
 	const searchParams = useSearchParams();
 	const { state } = useSidebar();
 	const { t } = useWorkLocale();
-	const [openGroup, setOpenGroup] = React.useState<string>("Acquisition");
-
+	const isCollapsed = state === "collapsed";
 	const basePath = "/dashboard/organization";
+
+	const { data: projects } = trpc.organization.build.list.useQuery({});
+
+	const projectChildren: MenuChild[] = (projects ?? []).map((project) => ({
+		label: project.name ?? project.serialNumber,
+		href: `${basePath}/projects/${project.id}`,
+	}));
 
 	const menuGroups: MenuGroup[] = [
 		{
@@ -78,11 +91,18 @@ export function OrganizationMenuItems({
 					href: `${basePath}/my-tasks`,
 					icon: ClipboardCheckIcon,
 					activePrefixes: [`${basePath}/tasks`],
+					children: [
+						{
+							label: t.nav.myList,
+							href: `${basePath}/my-list`,
+						},
+					],
 				},
 				{
 					label: t.nav.projects,
 					href: `${basePath}/projects`,
 					icon: FactoryIcon,
+					children: projectChildren,
 				},
 				...(canPlan
 					? [
@@ -94,7 +114,6 @@ export function OrganizationMenuItems({
 						]
 					: []),
 			],
-			collapsible: false,
 		},
 		{
 			label: "Settings",
@@ -115,12 +134,16 @@ export function OrganizationMenuItems({
 					icon: CreditCardIcon,
 				},
 			],
-			collapsible: false,
 		},
 	];
 
 	const getIsActive = React.useCallback(
-		(item: MenuItem): boolean => {
+		(
+			item: Pick<
+				MenuItem,
+				"href" | "external" | "exactMatch" | "activePrefixes"
+			>,
+		): boolean => {
 			if (item.external) {
 				return false;
 			}
@@ -130,16 +153,12 @@ export function OrganizationMenuItems({
 			if (item.activePrefixes?.some((prefix) => pathname.startsWith(prefix))) {
 				return true;
 			}
-			// Check if the href contains query params
 			if (item.href.includes("?")) {
 				const [itemPath, itemQuery] = item.href.split("?");
 				const itemParams = new URLSearchParams(itemQuery);
 				const itemTab = itemParams.get("tab");
 				const currentTab = searchParams.get("tab");
 
-				// Match if pathname matches and either:
-				// 1. tabs match exactly, or
-				// 2. item is the default tab (general) and no tab is set in URL
 				if (pathname === itemPath) {
 					if (currentTab === itemTab) return true;
 					if (itemTab === "general" && !currentTab) return true;
@@ -151,176 +170,179 @@ export function OrganizationMenuItems({
 		[pathname, searchParams],
 	);
 
-	const isCollapsed = state === "collapsed";
-
-	const handleGroupToggle = (groupLabel: string) => {
-		setOpenGroup(openGroup === groupLabel ? "" : groupLabel);
-	};
-
 	return (
 		<ScrollArea className="h-full" verticalScrollBar>
 			<div className="flex min-h-full flex-col -space-y-1">
-				{menuGroups.map((group, groupIndex) => {
-					if (!group.collapsible) {
-						return (
-							<React.Fragment key={groupIndex}>
-								<SidebarGroup className="pb-1">
-									{group.label && (
-										<SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-									)}
-									<SidebarMenu>
-										{group.items.map((item, itemIndex) => {
-											const isActive = getIsActive(item);
-											return (
-												<SidebarMenuItem key={itemIndex}>
-													<SidebarMenuButton
-														asChild
-														isActive={isActive}
-														tooltip={item.label}
-													>
-														<Link
-															href={item.href}
-															{...(item.external && {
-																target: "_blank",
-																rel: "noopener noreferrer",
-															})}
-														>
-															<item.icon
-																className={cn(
-																	"size-4 shrink-0",
-																	isActive
-																		? "text-foreground"
-																		: "text-muted-foreground",
-																)}
-															/>
-															<span
-																className={cn(
-																	isActive
-																		? "dark:text-foreground"
-																		: "dark:text-muted-foreground",
-																)}
-															>
-																{item.label}
-															</span>
-														</Link>
-													</SidebarMenuButton>
-												</SidebarMenuItem>
-											);
-										})}
-									</SidebarMenu>
-								</SidebarGroup>
-							</React.Fragment>
-						);
-					}
-
-					// When collapsed, show all items as individual menu buttons
-					if (isCollapsed) {
-						return (
-							<SidebarGroup className="pb-1" key={groupIndex}>
-								<SidebarMenu>
-									{group.items.map((item, itemIndex) => {
-										const isActive = getIsActive(item);
-										return (
-											<SidebarMenuItem key={itemIndex}>
-												<SidebarMenuButton
-													asChild
-													isActive={isActive}
-													tooltip={item.label}
+				{menuGroups.map((group) => (
+					<SidebarGroup className="pb-1" key={group.label}>
+						{group.label ? (
+							<SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+						) : null}
+						<SidebarMenu>
+							{group.items.map((item) => {
+								const isActive = getIsActive(item);
+								if (item.children && !isCollapsed) {
+									return (
+										<CollapsibleNavItem
+											key={item.href}
+											item={item}
+											isActive={isActive}
+											emptyLabel={t.nav.noProjects}
+											expandLabel={t.list.expand(item.label)}
+											collapseLabel={t.list.collapse(item.label)}
+										/>
+									);
+								}
+								return (
+									<SidebarMenuItem key={item.href}>
+										<SidebarMenuButton
+											asChild
+											isActive={isActive}
+											tooltip={item.label}
+										>
+											<Link href={item.href}>
+												<item.icon
+													className={cn(
+														"size-4 shrink-0",
+														isActive
+															? "text-foreground"
+															: "text-muted-foreground",
+													)}
+												/>
+												<span
+													className={cn(
+														isActive
+															? "dark:text-foreground"
+															: "dark:text-muted-foreground",
+													)}
 												>
-													<Link
-														href={item.href}
-														{...(item.external && {
-															target: "_blank",
-															rel: "noopener noreferrer",
-														})}
-													>
-														<item.icon
-															className={cn(
-																"size-4 shrink-0",
-																isActive
-																	? "text-foreground"
-																	: "text-muted-foreground",
-															)}
-														/>
-														<span
-															className={cn(
-																isActive
-																	? "dark:text-foreground"
-																	: "dark:text-muted-foreground",
-															)}
-														>
-															{item.label}
-														</span>
-													</Link>
-												</SidebarMenuButton>
-											</SidebarMenuItem>
-										);
-									})}
-								</SidebarMenu>
-							</SidebarGroup>
-						);
-					}
-
-					// When expanded, show collapsible groups
-					const isOpen = openGroup === group.label;
-					return (
-						<SidebarGroup className="pb-1" key={groupIndex}>
-							<SidebarMenu>
-								<Collapsible
-									className="group/collapsible"
-									onOpenChange={() => handleGroupToggle(group.label)}
-									open={isOpen}
-								>
-									<SidebarMenuItem>
-										<CollapsibleTrigger asChild>
-											<SidebarMenuButton
-												className="flex w-full items-center justify-between px-2 text-xs font-medium text-sidebar-foreground/70"
-												tooltip={group.label}
-											>
-												<span>{group.label}</span>
-												<ChevronRight className="ml-auto h-4 w-4 shrink-0 transition-transform duration-200 group-data-open/collapsible:rotate-90" />
-											</SidebarMenuButton>
-										</CollapsibleTrigger>
-										<CollapsibleContent>
-											<SidebarMenuSub className="ml-0 border-0">
-												{group.items.map((item, itemIndex) => {
-													const isActive = getIsActive(item);
-													return (
-														<SidebarMenuSubItem key={itemIndex}>
-															<SidebarMenuSubButton asChild isActive={isActive}>
-																<Link
-																	href={item.href}
-																	{...(item.external && {
-																		target: "_blank",
-																		rel: "noopener noreferrer",
-																	})}
-																>
-																	<item.icon
-																		className={cn("size-4 shrink-0")}
-																	/>
-																	<span
-																		className={cn(
-																			isActive
-																				? "dark:text-foreground"
-																				: "dark:text-muted-foreground",
-																		)}
-																	>
-																		{item.label}
-																	</span>
-																</Link>
-															</SidebarMenuSubButton>
-														</SidebarMenuSubItem>
-													);
-												})}
-											</SidebarMenuSub>
-										</CollapsibleContent>
+													{item.label}
+												</span>
+											</Link>
+										</SidebarMenuButton>
 									</SidebarMenuItem>
-								</Collapsible>
-							</SidebarMenu>
-						</SidebarGroup>
-					);
-				})}
+								);
+							})}
+						</SidebarMenu>
+					</SidebarGroup>
+				))}
 			</div>
 		</ScrollArea>
 	);
+}
+
+function CollapsibleNavItem({
+	item,
+	isActive,
+	emptyLabel,
+	expandLabel,
+	collapseLabel,
+}: {
+	item: MenuItem;
+	isActive: boolean;
+	emptyLabel: string;
+	expandLabel: string;
+	collapseLabel: string;
+}): React.JSX.Element {
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const children = item.children ?? [];
+	const childIsActive = children.some((child) =>
+		isChildActive(child.href, pathname, searchParams),
+	);
+	const [open, setOpen] = React.useState(isActive || childIsActive);
+
+	React.useEffect(() => {
+		if (childIsActive) setOpen(true);
+	}, [childIsActive]);
+
+	return (
+		<Collapsible
+			className="group/collapsible"
+			open={open}
+			onOpenChange={setOpen}
+		>
+			<SidebarMenuItem>
+				<SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+					<Link href={item.href}>
+						<item.icon
+							className={cn(
+								"size-4 shrink-0",
+								isActive ? "text-foreground" : "text-muted-foreground",
+							)}
+						/>
+						<span
+							className={cn(
+								isActive
+									? "dark:text-foreground"
+									: "dark:text-muted-foreground",
+							)}
+						>
+							{item.label}
+						</span>
+					</Link>
+				</SidebarMenuButton>
+				<CollapsibleTrigger asChild>
+					<SidebarMenuAction
+						aria-label={open ? collapseLabel : expandLabel}
+						aria-expanded={open}
+					>
+						<ChevronRight
+							className={cn(
+								"transition-transform duration-200",
+								open && "rotate-90",
+							)}
+						/>
+					</SidebarMenuAction>
+				</CollapsibleTrigger>
+				<CollapsibleContent>
+					<SidebarMenuSub>
+						{children.length === 0 ? (
+							<SidebarMenuSubItem>
+								<span className="px-2 py-1.5 text-xs text-muted-foreground">
+									{emptyLabel}
+								</span>
+							</SidebarMenuSubItem>
+						) : (
+							children.map((child) => {
+								const active = isChildActive(
+									child.href,
+									pathname,
+									searchParams,
+								);
+								return (
+									<SidebarMenuSubItem key={child.href}>
+										<SidebarMenuSubButton asChild isActive={active}>
+											<Link href={child.href}>
+												<span>{child.label}</span>
+											</Link>
+										</SidebarMenuSubButton>
+									</SidebarMenuSubItem>
+								);
+							})
+						)}
+					</SidebarMenuSub>
+				</CollapsibleContent>
+			</SidebarMenuItem>
+		</Collapsible>
+	);
+}
+
+function isChildActive(
+	href: string,
+	pathname: string,
+	searchParams: URLSearchParams,
+): boolean {
+	const [path, query] = href.split("?");
+	if (pathname !== path && !pathname.startsWith(`${path}/`)) {
+		return false;
+	}
+	if (!query) {
+		return pathname === path || pathname.startsWith(`${path}/`);
+	}
+	const expected = new URLSearchParams(query);
+	for (const [key, value] of expected.entries()) {
+		if (searchParams.get(key) !== value) return false;
+	}
+	return true;
 }

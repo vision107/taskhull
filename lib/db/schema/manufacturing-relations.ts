@@ -9,7 +9,6 @@ import {
 	buildTaskCommentTable,
 	buildTaskDependencyTable,
 	buildTaskTable,
-	privateTaskTable,
 	productTable,
 	revisionTable,
 	templateTable,
@@ -157,6 +156,11 @@ export const buildRelations = relations(buildTable, ({ one, many }) => ({
 		fields: [buildTable.createdById],
 		references: [userTable.id],
 	}),
+	owner: one(userTable, {
+		fields: [buildTable.ownerUserId],
+		references: [userTable.id],
+		relationName: "personalBuildOwner",
+	}),
 	tasks: many(buildTaskTable),
 	activity: many(buildTaskActivityTable),
 }));
@@ -303,21 +307,6 @@ export const buildTaskActivityRelations = relations(
 		}),
 	}),
 );
-
-export const privateTaskRelations = relations(privateTaskTable, ({ one }) => ({
-	organization: one(organizationTable, {
-		fields: [privateTaskTable.organizationId],
-		references: [organizationTable.id],
-	}),
-	user: one(userTable, {
-		fields: [privateTaskTable.userId],
-		references: [userTable.id],
-	}),
-	buildTask: one(buildTaskTable, {
-		fields: [privateTaskTable.buildTaskId],
-		references: [buildTaskTable.id],
-	}),
-}));
 
 export const revisionRelations = relations(revisionTable, ({ one }) => ({
 	organization: one(organizationTable, {

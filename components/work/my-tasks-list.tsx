@@ -19,6 +19,7 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import { AssigneePicker } from "@/components/manufacturing/assignee-picker";
+import { QuickAddTask } from "@/components/manufacturing/quick-add-task";
 import { TaskStatusBadge } from "@/components/manufacturing/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { BlockReasonSheet } from "@/components/work/block-reason-sheet";
 import { useOffline } from "@/components/work/offline-provider";
-import { PrivateTasksSection } from "@/components/work/private-tasks";
 import { useMyTasksFilters } from "@/components/work/use-my-tasks-filters";
 import { useWorkLocale } from "@/components/work/work-locale-provider";
 import type { BuildTaskStatus } from "@/lib/db/schema/enums";
@@ -58,8 +58,11 @@ type MyTask =
  *   @xl     → name · due · project · status
  *   @3xl    → name · due · project · progress · status
  */
-const gridColumns =
+const assignedGridColumns =
 	"grid grid-cols-[minmax(0,1fr)_5.5rem] @xl:grid-cols-[minmax(0,1fr)_7rem_minmax(9rem,13rem)_7.5rem] @3xl:grid-cols-[minmax(0,1fr)_7rem_minmax(9rem,14rem)_9rem_7.5rem]";
+
+const personalGridColumns =
+	"grid grid-cols-[minmax(0,1fr)_5.5rem] @xl:grid-cols-[minmax(0,1fr)_7rem_7.5rem] @3xl:grid-cols-[minmax(0,1fr)_7rem_9rem_7.5rem]";
 
 const cellBorder = "@xl:border-l @xl:border-subtle";
 
@@ -86,6 +89,8 @@ export interface MyTasksListProps {
 	/** Highlight a row without opening it (keyboard selection). */
 	onSelectTask?: (taskId: string | null) => void;
 	canPlan?: boolean;
+	/** Assigned team work, or the member's private list (same rows, no project). */
+	listKind?: "assigned" | "personal";
 }
 
 export function MyTasksList({
@@ -93,6 +98,7 @@ export function MyTasksList({
 	onOpenTask,
 	onSelectTask,
 	canPlan = false,
+	listKind = "assigned",
 }: MyTasksListProps): React.JSX.Element {
 	const { t } = useWorkLocale();
 	const { pending } = useOffline();
@@ -102,21 +108,48 @@ export function MyTasksList({
 		() => new Set(),
 	);
 	const includeDone = filters.section === "done";
-	const showTeam = filters.team && canPlan;
+	const isPersonal = listKind === "personal";
+	const showTeam = !isPersonal && filters.team && canPlan;
+	const columns = isPersonal ? personalGridColumns : assignedGridColumns;
+	const taskPageBase = isPersonal
+		? "/dashboard/organization/my-list"
+		: "/dashboard/organization/tasks";
 	const mineQuery = trpc.organization.work.myTasks.useQuery(
 		{ includeDone },
-		{ refetchOnWindowFocus: true, enabled: !showTeam },
+		{ refetchOnWindowFocus: true, enabled: !isPersonal && !showTeam },
 	);
 	const teamQuery = trpc.organization.work.teamTasks.useQuery(
 		{ includeDone },
 		{ refetchOnWindowFocus: true, enabled: showTeam },
 	);
-	const fetched = showTeam ? teamQuery.data : mineQuery.data;
-	const isLoading = showTeam ? teamQuery.isLoading : mineQuery.isLoading;
-	const isRefetching = showTeam
-		? teamQuery.isRefetching
-		: mineQuery.isRefetching;
-	const refetch = showTeam ? teamQuery.refetch : mineQuery.refetch;
+	const personalQuery = trpc.organization.work.personalTasks.useQuery(
+		{ includeDone },
+		{ refetchOnWindowFocus: true, enabled: isPersonal },
+	);
+	const fetched = isPersonal
+		? personalQuery.data
+		: showTeam
+			? teamQuery.data
+			: mineQuery.data;
+	const isLoading = isPersonal
+		? personalQuery.isLoading
+		: showTeam
+			? teamQuery.isLoading
+			: mineQuery.isLoading;
+	const isRefetching = isPersonal
+		? personalQuery.isRefetching
+		: showTeam
+			? teamQuery.isRefetching
+			: mineQuery.isRefetching;
+	const refetch = isPersonal
+		? personalQuery.refetch
+		: showTeam
+			? teamQuery.refetch
+			: mineQuery.refetch;
+	const utils = trpc.useUtils();
+	const createPersonal = trpc.organization.work.createPersonalTask.useMutation({
+		onSuccess: () => void utils.organization.work.personalTasks.invalidate(),
+	});
 
 	const toggleSection = (key: string) =>
 		setCollapsed((current) => {
@@ -161,6 +194,7 @@ export function MyTasksList({
 		onSelectTask,
 		focusSearch: () => searchRef.current?.focus(),
 		canPlan,
+		pageBase: taskPageBase,
 	});
 
 	if (isLoading || !fetched) {
@@ -201,32 +235,29 @@ export function MyTasksList({
 
 	const emptyTitle = filters.hasFilters
 		? t.list.emptyFilteredTitle
-		: showTeam
-			? t.list.emptyTeamTitle
-			: t.list.emptyTitle;
+		: isPersonal
+			? t.privateList.empty
+			: showTeam
+				? t.list.emptyTeamTitle
+				: t.list.emptyTitle;
 	const emptyHint = filters.hasFilters
 		? t.list.emptyFilteredHint
-		: showTeam
-			? t.list.emptyTeamHint
-			: t.list.emptyHint;
-
-	// Offered when pinning a private note to one of the caller's tasks. Only
-	// meaningful in the "Mine" view: the private list is the member's own.
-	const linkOptions = showTeam
-		? []
-		: overlayed.map((task) => ({
-				id: task.id,
-				label: `${task.title} · ${task.build.serialNumber}`,
-			}));
+		: isPersonal
+			? t.privateList.hint
+			: showTeam
+				? t.list.emptyTeamHint
+				: t.list.emptyHint;
 
 	return (
 		<div className="@container flex min-h-full flex-col">
 			<div className="shrink-0 space-y-2 border-b border-subtle px-2 py-2 sm:px-3">
 				<div className="flex flex-wrap items-center gap-2">
 					<p className="min-w-0 flex-1 text-13 text-fg-secondary">
-						{t.list.glance(glance.ready, glance.waiting, glance.hoursToday)}
+						{isPersonal
+							? t.privateList.hint
+							: t.list.glance(glance.ready, glance.waiting, glance.hoursToday)}
 					</p>
-					{canPlan && (
+					{canPlan && !isPersonal && (
 						<div className="flex rounded-md border border-subtle p-0.5">
 							<Chip
 								pressed={!filters.team}
@@ -260,12 +291,14 @@ export function MyTasksList({
 						label={t.list.readyChip}
 						onSelect={filters.setSection}
 					/>
-					<SectionChip
-						current={filters.section}
-						value="waiting"
-						label={t.list.waitingChip}
-						onSelect={filters.setSection}
-					/>
+					{!isPersonal && (
+						<SectionChip
+							current={filters.section}
+							value="waiting"
+							label={t.list.waitingChip}
+							onSelect={filters.setSection}
+						/>
+					)}
 					<SectionChip
 						current={filters.section}
 						value="done"
@@ -305,7 +338,7 @@ export function MyTasksList({
 					>
 						{t.list.later}
 					</Chip>
-					{projects.length > 1 && (
+					{!isPersonal && projects.length > 1 && (
 						<select
 							aria-label={t.list.columns.project}
 							value={filters.projectId ?? ""}
@@ -322,7 +355,7 @@ export function MyTasksList({
 							))}
 						</select>
 					)}
-					{phases.length > 1 && (
+					{!isPersonal && phases.length > 1 && (
 						<select
 							aria-label={t.list.columns.phase}
 							value={filters.phase ?? ""}
@@ -372,16 +405,30 @@ export function MyTasksList({
 				</div>
 			</div>
 
+			{isPersonal && (
+				<QuickAddTask
+					onAdd={async (title) => {
+						const created = await createPersonal.mutateAsync({ title });
+						onSelectTask?.(created.id);
+						onOpenTask?.(created.id);
+					}}
+					placeholder={t.privateList.addPlaceholder}
+					className="border-b border-subtle"
+				/>
+			)}
+
 			{/* Column header: only worth the space once columns exist. */}
 			<div
 				className={cn(
-					gridColumns,
+					columns,
 					"sticky top-0 z-10 hidden h-8 shrink-0 items-center border-b border-subtle bg-surface-1 text-xs text-fg-tertiary @xl:grid",
 				)}
 			>
 				<div className="pl-3">{t.list.columns.name}</div>
 				<div className={cn(cellBorder, "px-2")}>{t.list.columns.due}</div>
-				<div className={cn(cellBorder, "px-2")}>{t.list.columns.project}</div>
+				{!isPersonal && (
+					<div className={cn(cellBorder, "px-2")}>{t.list.columns.project}</div>
+				)}
 				<div className={cn(cellBorder, "hidden px-2 @3xl:block")}>
 					{t.list.columns.progress}
 				</div>
@@ -433,6 +480,8 @@ export function MyTasksList({
 											onOpen={onOpenTask}
 											canPlan={canPlan}
 											showAssignees={showTeam}
+											hideProject={isPersonal}
+											pageBase={taskPageBase}
 										/>
 									))}
 								</ul>
@@ -440,16 +489,6 @@ export function MyTasksList({
 						</section>
 					);
 				})}
-
-				{/* The member's own notes sit under their assigned work; the team view is someone else's list. */}
-				{!showTeam && (
-					<div className="px-2 pt-6 sm:px-3">
-						<PrivateTasksSection
-							showDone={includeDone}
-							linkOptions={linkOptions}
-						/>
-					</div>
-				)}
 			</div>
 			<span className="sr-only">{visibleIds.join(" ")}</span>
 		</div>
@@ -558,6 +597,7 @@ function useTaskListKeyboard({
 	onSelectTask,
 	focusSearch,
 	canPlan,
+	pageBase,
 }: {
 	visible: MyTask[];
 	selectedTaskId?: string | null;
@@ -565,6 +605,7 @@ function useTaskListKeyboard({
 	onSelectTask?: (taskId: string | null) => void;
 	focusSearch: () => void;
 	canPlan: boolean;
+	pageBase: string;
 }) {
 	const visibleRef = React.useRef(visible);
 	visibleRef.current = visible;
@@ -577,6 +618,7 @@ function useTaskListKeyboard({
 		onSuccess: (_data, variables) => {
 			void utils.organization.work.myTasks.invalidate();
 			void utils.organization.work.teamTasks.invalidate();
+			void utils.organization.work.personalTasks.invalidate();
 			void utils.organization.work.getTask.invalidate({ id: variables.id });
 		},
 		onError: (error, variables) => {
@@ -667,9 +709,7 @@ function useTaskListKeyboard({
 			if (event.key === "Enter") {
 				event.preventDefault();
 				if (!onOpenTask?.(selected.id)) {
-					window.location.assign(
-						`/dashboard/organization/tasks/${selected.id}`,
-					);
+					window.location.assign(`${pageBase}/${selected.id}`);
 				}
 				return;
 			}
@@ -691,9 +731,7 @@ function useTaskListKeyboard({
 			if (event.key === "c") {
 				event.preventDefault();
 				if (!onOpenTask?.(selected.id) && !canPlan) {
-					window.location.assign(
-						`/dashboard/organization/tasks/${selected.id}`,
-					);
+					window.location.assign(`${pageBase}/${selected.id}`);
 				}
 				requestAnimationFrame(() => {
 					document
@@ -710,6 +748,7 @@ function useTaskListKeyboard({
 		mutateStatus,
 		onOpenTask,
 		onSelectTask,
+		pageBase,
 		t.list.waiting,
 	]);
 }
@@ -724,12 +763,16 @@ function TaskRow({
 	onOpen,
 	canPlan,
 	showAssignees,
+	hideProject,
+	pageBase,
 }: {
 	task: MyTask;
 	selected: boolean;
 	onOpen?: (taskId: string) => boolean;
 	canPlan: boolean;
 	showAssignees: boolean;
+	hideProject: boolean;
+	pageBase: string;
 }): React.JSX.Element {
 	const { t, dateLocale } = useWorkLocale();
 	const offline = useOffline();
@@ -739,11 +782,12 @@ function TaskRow({
 	const status = task.status as BuildTaskStatus;
 	const isDone = status === "done";
 	const project = projectLabel(task);
-	const href = `/dashboard/organization/tasks/${task.id}`;
+	const href = `${pageBase}/${task.id}`;
 
 	const invalidate = () => {
 		void utils.organization.work.myTasks.invalidate();
 		void utils.organization.work.teamTasks.invalidate();
+		void utils.organization.work.personalTasks.invalidate();
 		void utils.organization.work.getTask.invalidate({ id: task.id });
 	};
 	const statusMutation = trpc.organization.work.updateStatus.useMutation({
@@ -825,7 +869,7 @@ function TaskRow({
 	return (
 		<li
 			className={cn(
-				gridColumns,
+				hideProject ? personalGridColumns : assignedGridColumns,
 				"group/row relative min-h-13 items-center border-b border-subtle text-sm transition-colors @xl:min-h-9",
 				selected ? "bg-layer-1" : "hover:bg-layer-transparent-hover",
 				isDone && "text-fg-secondary",
@@ -866,10 +910,12 @@ function TaskRow({
 						)}
 						{task.title}
 					</Link>
-					<p className="truncate text-xs text-fg-tertiary @xl:hidden">
-						{project} · {task.build.serialNumber}
-						{task.phase ? ` · ${task.phase}` : ""}
-					</p>
+					{!hideProject && (
+						<p className="truncate text-xs text-fg-tertiary @xl:hidden">
+							{project} · {task.build.serialNumber}
+							{task.phase ? ` · ${task.phase}` : ""}
+						</p>
+					)}
 				</div>
 				{showAssignees && (
 					<div className="relative z-10 flex shrink-0 items-center gap-1">
@@ -944,21 +990,22 @@ function TaskRow({
 				)}
 			</div>
 
-			{/* Project */}
-			<div
-				className={cn(
-					cellBorder,
-					"hidden h-full min-w-0 items-center px-2 @xl:flex",
-				)}
-			>
-				<span className="inline-flex max-w-full items-center gap-1.5 rounded bg-layer-1 px-1.5 py-px text-xs">
-					<span className="size-2 shrink-0 rounded-sm bg-primary/70" />
-					<span className="truncate">{project}</span>
-					<span className="shrink-0 text-fg-tertiary">
-						{task.build.serialNumber}
+			{!hideProject && (
+				<div
+					className={cn(
+						cellBorder,
+						"hidden h-full min-w-0 items-center px-2 @xl:flex",
+					)}
+				>
+					<span className="inline-flex max-w-full items-center gap-1.5 rounded bg-layer-1 px-1.5 py-px text-xs">
+						<span className="size-2 shrink-0 rounded-sm bg-primary/70" />
+						<span className="truncate">{project}</span>
+						<span className="shrink-0 text-fg-tertiary">
+							{task.build.serialNumber}
+						</span>
 					</span>
-				</span>
-			</div>
+				</div>
+			)}
 
 			{/* Progress & requirements */}
 			<div

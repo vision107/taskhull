@@ -7,6 +7,7 @@ import { recordRevision } from "@/lib/db/revision";
 import {
 	AttachmentKind,
 	BuildStatus,
+	BuildTaskAssignmentRole,
 	BuildTaskStatus,
 	ChecklistItemStatus,
 	RevisionAction,
@@ -23,9 +24,14 @@ import {
 import { memberTable } from "@/lib/db/schema/tables";
 import { ActivityAction, logActivity } from "@/lib/manufacturing/activity";
 import {
+	denyForeignPersonalBuild,
+	findPersonalBuild,
+	getAccessibleBuildTask,
 	getOpenBlockers,
+	getOrCreatePersonalBuild,
 	getOwnedBuild,
 	getOwnedBuildTask,
+	isPersonalBuild,
 	syncBuildStatus,
 } from "@/lib/manufacturing/builds";
 import { matchesDueRange } from "@/lib/manufacturing/format";
@@ -38,6 +44,7 @@ import {
 	notifyTaskStatusChanged,
 } from "@/lib/manufacturing/notifications";
 import { assertCanPlan, canPlan } from "@/lib/manufacturing/permissions";
+import { toDateString } from "@/lib/manufacturing/scheduling";
 import { normalizeContentType } from "@/lib/manufacturing/uploads";
 import { getSignedUploadUrl, getSignedUrl } from "@/lib/storage";
 import {
@@ -45,8 +52,10 @@ import {
 	addBuildTaskCommentSchema,
 	attachmentDownloadUrlSchema,
 	buildTaskAttachmentUploadUrlSchema,
+	createPersonalTaskSchema,
 	deleteBuildTaskAttachmentSchema,
 	deleteBuildTaskCommentSchema,
+	deleteBuildTaskSchema,
 	getBuildTaskSchema,
 	listBuildTaskActivitySchema,
 	listMyTasksSchema,
@@ -61,14 +70,21 @@ function sanitizeFileName(fileName: string): string {
 }
 
 /**
- * Workers may act on tasks they are assigned to; planners may act on any task
- * in the organization.
+ * Workers may act on tasks they are assigned to; planners may act on any
+ * shared project task. Personal-list tasks are owner-only, even for planners.
  */
 async function assertCanWorkOn(
 	buildTaskId: string,
 	userId: string,
 	role: string,
+	organizationId: string,
 ): Promise<void> {
+	const { build } = await getAccessibleBuildTask(
+		buildTaskId,
+		organizationId,
+		userId,
+	);
+	if (isPersonalBuild(build)) return;
 	if (canPlan(role)) return;
 
 	const assignment = await db.query.buildTaskAssignmentTable.findFirst({
@@ -113,6 +129,7 @@ const listTaskWith = {
 			serialNumber: true,
 			name: true,
 			status: true,
+			ownerUserId: true,
 		},
 		with: {
 			product: { columns: { id: true, name: true } },
@@ -184,6 +201,7 @@ function mapListedTask(
 			serialNumber: string;
 			name: string | null;
 			status: (typeof BuildStatus)[keyof typeof BuildStatus];
+			ownerUserId: string | null;
 			product: { id: string; name: string } | null;
 			templateVersion: {
 				id: string;
@@ -278,10 +296,107 @@ export const organizationWorkRouter = createTRPCRouter({
 			return tasks
 				.filter(
 					(task) =>
+						!task.build.ownerUserId &&
 						task.build.status !== BuildStatus.archived &&
 						matchesDueRange(task, input),
 				)
 				.map((task) => mapListedTask(task, roleByTask.get(task.id) ?? null));
+		}),
+
+	/**
+	 * The caller's private list: same task rows as assigned work, on a hidden
+	 * personal build that is never shared with the team or listed as a project.
+	 */
+	personalTasks: protectedOrganizationProcedure
+		.input(listMyTasksSchema)
+		.query(async ({ ctx, input }) => {
+			const build = await findPersonalBuild(ctx.organization.id, ctx.user.id);
+			if (!build) return [];
+
+			const conditions = listTaskConditions(ctx.organization.id, {
+				...input,
+				projectId: build.id,
+			});
+			if (!conditions) return [];
+
+			const tasks = await db.query.buildTaskTable.findMany({
+				where: and(...conditions),
+				orderBy: [
+					asc(buildTaskTable.startDate),
+					asc(buildTaskTable.sortOrder),
+					asc(buildTaskTable.createdAt),
+				],
+				with: listTaskWith,
+			});
+
+			return tasks
+				.filter((task) => matchesDueRange(task, input))
+				.map((task) => mapListedTask(task, "owner"));
+		}),
+
+	createPersonalTask: protectedOrganizationProcedure
+		.input(createPersonalTaskSchema)
+		.mutation(async ({ ctx, input }) => {
+			const build = await getOrCreatePersonalBuild(
+				ctx.organization.id,
+				ctx.user.id,
+			);
+			const startDate = toDateString(new Date());
+			const [task] = await db
+				.insert(buildTaskTable)
+				.values({
+					organizationId: ctx.organization.id,
+					buildId: build.id,
+					title: input.title,
+					sortOrder: Date.now() % 1_000_000,
+					plannedDurationDays: 1,
+					startDate,
+					endDate: startDate,
+				})
+				.returning();
+
+			if (!task) {
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Failed to create task.",
+				});
+			}
+
+			await db.insert(buildTaskAssignmentTable).values({
+				buildTaskId: task.id,
+				userId: ctx.user.id,
+				role: BuildTaskAssignmentRole.owner,
+				assignedById: ctx.user.id,
+			});
+
+			await logActivity({
+				organizationId: ctx.organization.id,
+				buildId: build.id,
+				buildTaskId: task.id,
+				actorId: ctx.user.id,
+				action: ActivityAction.taskCreated,
+				metadata: { title: task.title, personal: true },
+			});
+
+			return task;
+		}),
+
+	deletePersonalTask: protectedOrganizationProcedure
+		.input(deleteBuildTaskSchema)
+		.mutation(async ({ ctx, input }) => {
+			const { task, build } = await getAccessibleBuildTask(
+				input.id,
+				ctx.organization.id,
+				ctx.user.id,
+			);
+			if (!isPersonalBuild(build)) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "Only personal-list tasks can be deleted here.",
+				});
+			}
+			await db.delete(buildTaskTable).where(eq(buildTaskTable.id, task.id));
+			return { success: true };
 		}),
 
 	/**
@@ -308,6 +423,7 @@ export const organizationWorkRouter = createTRPCRouter({
 			return tasks
 				.filter(
 					(task) =>
+						!task.build.ownerUserId &&
 						task.build.status !== BuildStatus.archived &&
 						task.assignments.length > 0 &&
 						matchesDueRange(task, input),
@@ -331,6 +447,7 @@ export const organizationWorkRouter = createTRPCRouter({
 							name: true,
 							status: true,
 							plannedStartDate: true,
+							ownerUserId: true,
 						},
 						with: {
 							product: { columns: { id: true, name: true } },
@@ -394,15 +511,19 @@ export const organizationWorkRouter = createTRPCRouter({
 			if (!task) {
 				throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
 			}
+			denyForeignPersonalBuild(task.build, ctx.user.id);
 
 			const isAssigned = task.assignments.some(
 				(assignment) => assignment.userId === ctx.user.id,
 			);
+			const personal = isPersonalBuild(task.build);
 
 			return {
 				...task,
 				isAssigned,
-				canEdit: isAssigned || canPlan(ctx.membership.role),
+				canEdit: personal
+					? task.build.ownerUserId === ctx.user.id
+					: isAssigned || canPlan(ctx.membership.role),
 				documents: task.attachments.filter(
 					(attachment) => attachment.kind === AttachmentKind.document,
 				),
@@ -419,7 +540,12 @@ export const organizationWorkRouter = createTRPCRouter({
 		.input(updateBuildTaskStatusSchema)
 		.mutation(async ({ ctx, input }) => {
 			const before = await getOwnedBuildTask(input.id, ctx.organization.id);
-			await assertCanWorkOn(before.id, ctx.user.id, ctx.membership.role);
+			await assertCanWorkOn(
+				before.id,
+				ctx.user.id,
+				ctx.membership.role,
+				ctx.organization.id,
+			);
 
 			if (before.status === input.status) return before;
 
@@ -585,7 +711,12 @@ export const organizationWorkRouter = createTRPCRouter({
 				item.buildTaskId,
 				ctx.organization.id,
 			);
-			await assertCanWorkOn(task.id, ctx.user.id, ctx.membership.role);
+			await assertCanWorkOn(
+				task.id,
+				ctx.user.id,
+				ctx.membership.role,
+				ctx.organization.id,
+			);
 
 			const done = input.status !== ChecklistItemStatus.open;
 			const [updated] = await db
@@ -706,7 +837,12 @@ export const organizationWorkRouter = createTRPCRouter({
 				input.buildTaskId,
 				ctx.organization.id,
 			);
-			await assertCanWorkOn(task.id, ctx.user.id, ctx.membership.role);
+			await assertCanWorkOn(
+				task.id,
+				ctx.user.id,
+				ctx.membership.role,
+				ctx.organization.id,
+			);
 
 			const storageKey = `orgs/${ctx.organization.id}/builds/${task.buildId}/tasks/${task.id}/${crypto.randomUUID()}-${sanitizeFileName(input.fileName)}`;
 			const signedUrl = await getSignedUploadUrl(
@@ -726,7 +862,12 @@ export const organizationWorkRouter = createTRPCRouter({
 				input.buildTaskId,
 				ctx.organization.id,
 			);
-			await assertCanWorkOn(task.id, ctx.user.id, ctx.membership.role);
+			await assertCanWorkOn(
+				task.id,
+				ctx.user.id,
+				ctx.membership.role,
+				ctx.organization.id,
+			);
 
 			if (!input.storageKey.startsWith(`orgs/${ctx.organization.id}/`)) {
 				throw new TRPCError({

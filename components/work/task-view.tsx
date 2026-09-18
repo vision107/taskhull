@@ -13,6 +13,8 @@ export type TaskViewProps = {
 	onClose?: () => void;
 	/** Open another task in this same surface instead of a new sheet. */
 	onOpenTask?: (taskId: string) => void;
+	/** Full-page URL for the maximize control (My list uses `/my-list/:id`). */
+	taskHref?: (taskId: string) => string;
 };
 
 /**
@@ -26,6 +28,7 @@ export function TaskView({
 	variant = "page",
 	onClose,
 	onOpenTask,
+	taskHref,
 }: TaskViewProps): React.JSX.Element {
 	if (canPlan) {
 		return (
@@ -35,6 +38,7 @@ export function TaskView({
 				variant={variant}
 				onClose={onClose}
 				onOpenTask={onOpenTask}
+				taskHref={taskHref}
 			/>
 		);
 	}
@@ -45,6 +49,7 @@ export function TaskView({
 			variant={variant === "sheet" ? "page" : variant}
 			onClose={onClose}
 			onOpenTask={onOpenTask}
+			taskHref={taskHref}
 		/>
 	);
 }

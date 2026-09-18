@@ -16,9 +16,9 @@ import {
 import { useWorkT } from "@/components/work/work-locale-provider";
 
 /**
- * Phone tabs for the organization area. Workers get My tasks, Projects and
- * Inbox; planners additionally get Templates. Everything else is one tap away
- * behind the Menu tab.
+ * Phone tabs for the organization area. Workers get Tasks, Projects and
+ * Inbox; planners additionally get Templates. Everything else (including
+ * My list, the private list) is one tap away behind the Menu tab.
  */
 export function OrganizationMobileNav({
 	canPlan,
