@@ -78,6 +78,13 @@
       "when": 1789324354287,
       "tag": "20260913183234_subtasks",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789674658095,
+      "tag": "20260917195058_private_tasks",
+      "breakpoints": true
     }
   ]
 }

@@ -44,17 +44,34 @@ describe("work list helpers", () => {
 			title: "A",
 			phase: "QA",
 			plannedHours: 1,
-			build: { ...build, serialNumber: "XY-2", templateVersion: { template: { name: "Zed" } } },
+			build: {
+				...build,
+				serialNumber: "XY-2",
+				templateVersion: { template: { name: "Zed" } },
+			},
 		});
 		const b = task({
 			title: "B",
 			phase: "Electrics",
 			plannedHours: 8,
-			build: { ...build, serialNumber: "XY-1", templateVersion: { template: { name: "Alpha" } } },
+			build: {
+				...build,
+				serialNumber: "XY-1",
+				templateVersion: { template: { name: "Alpha" } },
+			},
 		});
-		expect(sortWorkTasks([a, b], "project").map((item) => item.title)).toEqual(["B", "A"]);
-		expect(sortWorkTasks([a, b], "phase").map((item) => item.title)).toEqual(["B", "A"]);
-		expect(sortWorkTasks([a, b], "effort").map((item) => item.title)).toEqual(["B", "A"]);
+		expect(sortWorkTasks([a, b], "project").map((item) => item.title)).toEqual([
+			"B",
+			"A",
+		]);
+		expect(sortWorkTasks([a, b], "phase").map((item) => item.title)).toEqual([
+			"B",
+			"A",
+		]);
+		expect(sortWorkTasks([a, b], "effort").map((item) => item.title)).toEqual([
+			"B",
+			"A",
+		]);
 	});
 
 	it("filters by section, project, phase, due and title", () => {

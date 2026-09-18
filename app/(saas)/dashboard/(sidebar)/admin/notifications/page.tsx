@@ -19,7 +19,6 @@ export default function AdminNotificationsPage() {
 				<PagePrimaryBar>
 					<PageBreadcrumb
 						segments={[
-							{ label: "Home", href: "/dashboard" },
 							{ label: "Admin", href: "/dashboard/admin" },
 							{ label: "Notifications" },
 						]}

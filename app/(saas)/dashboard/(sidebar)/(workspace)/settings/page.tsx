@@ -10,6 +10,7 @@ import {
 	PageTitle,
 } from "@/components/ui/custom/page";
 import { AccountSettingsTabs } from "@/components/user/account-settings-tabs";
+import { getPlannerPageContext } from "@/lib/manufacturing/page-context";
 import { trpc } from "@/trpc/server";
 
 export const metadata: Metadata = {
@@ -17,7 +18,10 @@ export const metadata: Metadata = {
 };
 
 export default async function AccountSettingsPage(): Promise<React.JSX.Element> {
-	const userAccounts = await trpc.user.getAccounts();
+	const [{ organization }, userAccounts] = await Promise.all([
+		getPlannerPageContext(),
+		trpc.user.getAccounts(),
+	]);
 	const userHasPassword = userAccounts?.some(
 		(account) => account.providerId === "credential",
 	);
@@ -27,8 +31,8 @@ export default async function AccountSettingsPage(): Promise<React.JSX.Element> 
 				<PagePrimaryBar>
 					<PageBreadcrumb
 						segments={[
-							{ label: "Home", href: "/dashboard" },
-							{ label: "Settings" },
+							{ label: organization.name, href: "/dashboard/organization" },
+							{ label: "Account Settings" },
 						]}
 					/>
 				</PagePrimaryBar>

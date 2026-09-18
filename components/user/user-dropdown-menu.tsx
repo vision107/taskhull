@@ -1,7 +1,6 @@
 "use client";
 
 import NiceModal from "@ebay/nice-modal-react";
-import { useQueryClient } from "@tanstack/react-query";
 import {
 	BellIcon,
 	BellOffIcon,
@@ -42,10 +41,9 @@ import { UserAvatar } from "@/components/user/user-avatar";
 import { useOffline } from "@/components/work/offline-provider";
 import { useWorkLocale } from "@/components/work/work-locale-provider";
 import { appConfig } from "@/config/app.config";
-import { authConfig } from "@/config/auth.config";
 import { useProgressRouter } from "@/hooks/use-progress-router";
 import { useSession } from "@/hooks/use-session";
-import { authClient } from "@/lib/auth/client";
+import { useSignOut } from "@/hooks/use-sign-out";
 import { WorkLocales, workDictionaries } from "@/lib/i18n/work";
 import { capitalize, cn } from "@/lib/utils";
 
@@ -114,7 +112,6 @@ export function UserDropDownMenu(
 	const { user } = useSession();
 	const { setTheme, theme } = useTheme();
 	const router = useProgressRouter();
-	const queryClient = useQueryClient();
 	const { state: sidebarState } = useSidebar();
 	const { push } = useOffline();
 	const { t, locale, setLocale, saving: localeSaving } = useWorkLocale();
@@ -155,32 +152,7 @@ export function UserDropDownMenu(
 		void NiceModal.show(CommandMenu);
 	};
 
-	const handleSignOut = React.useCallback(async () => {
-		try {
-			await authClient.signOut();
-		} finally {
-			// Clear the query cache to prevent any user data from persisting
-			// This is critical for security when switching users
-			queryClient.clear();
-
-			// Preserve device-level preferences
-			const theme = localStorage.getItem("theme");
-			const cookieConsent = localStorage.getItem("cookie_consent");
-
-			localStorage.clear();
-			sessionStorage.clear();
-
-			// Restore device-level preferences
-			if (theme) localStorage.setItem("theme", theme);
-			if (cookieConsent) localStorage.setItem("cookie_consent", cookieConsent);
-
-			router.refresh();
-			window.location.href = new URL(
-				authConfig.redirectAfterLogout,
-				window.location.origin,
-			).toString();
-		}
-	}, [queryClient, router]);
+	const handleSignOut = useSignOut();
 
 	React.useEffect(() => {
 		const mac = isMac();

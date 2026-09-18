@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { BlockReasonSheet } from "@/components/work/block-reason-sheet";
 import { useOffline } from "@/components/work/offline-provider";
+import { PrivateTasksSection } from "@/components/work/private-tasks";
 import { useMyTasksFilters } from "@/components/work/use-my-tasks-filters";
 import { useWorkLocale } from "@/components/work/work-locale-provider";
 import type { BuildTaskStatus } from "@/lib/db/schema/enums";
@@ -112,7 +113,9 @@ export function MyTasksList({
 	);
 	const fetched = showTeam ? teamQuery.data : mineQuery.data;
 	const isLoading = showTeam ? teamQuery.isLoading : mineQuery.isLoading;
-	const isRefetching = showTeam ? teamQuery.isRefetching : mineQuery.isRefetching;
+	const isRefetching = showTeam
+		? teamQuery.isRefetching
+		: mineQuery.isRefetching;
 	const refetch = showTeam ? teamQuery.refetch : mineQuery.refetch;
 
 	const toggleSection = (key: string) =>
@@ -206,6 +209,15 @@ export function MyTasksList({
 		: showTeam
 			? t.list.emptyTeamHint
 			: t.list.emptyHint;
+
+	// Offered when pinning a private note to one of the caller's tasks. Only
+	// meaningful in the "Mine" view: the private list is the member's own.
+	const linkOptions = showTeam
+		? []
+		: overlayed.map((task) => ({
+				id: task.id,
+				label: `${task.title} · ${task.build.serialNumber}`,
+			}));
 
 	return (
 		<div className="@container flex min-h-full flex-col">
@@ -428,6 +440,16 @@ export function MyTasksList({
 						</section>
 					);
 				})}
+
+				{/* The member's own notes sit under their assigned work; the team view is someone else's list. */}
+				{!showTeam && (
+					<div className="px-2 pt-6 sm:px-3">
+						<PrivateTasksSection
+							showDone={includeDone}
+							linkOptions={linkOptions}
+						/>
+					</div>
+				)}
 			</div>
 			<span className="sr-only">{visibleIds.join(" ")}</span>
 		</div>
@@ -645,7 +667,9 @@ function useTaskListKeyboard({
 			if (event.key === "Enter") {
 				event.preventDefault();
 				if (!onOpenTask?.(selected.id)) {
-					window.location.assign(`/dashboard/organization/tasks/${selected.id}`);
+					window.location.assign(
+						`/dashboard/organization/tasks/${selected.id}`,
+					);
 				}
 				return;
 			}
@@ -667,7 +691,9 @@ function useTaskListKeyboard({
 			if (event.key === "c") {
 				event.preventDefault();
 				if (!onOpenTask?.(selected.id) && !canPlan) {
-					window.location.assign(`/dashboard/organization/tasks/${selected.id}`);
+					window.location.assign(
+						`/dashboard/organization/tasks/${selected.id}`,
+					);
 				}
 				requestAnimationFrame(() => {
 					document
@@ -871,7 +897,9 @@ function TaskRow({
 										userId: user.id,
 									})
 								}
-								disabled={assignMutation.isPending || unassignMutation.isPending}
+								disabled={
+									assignMutation.isPending || unassignMutation.isPending
+								}
 								label={t.list.assignee}
 								buttonProps={{
 									variant: "ghost",

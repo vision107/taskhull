@@ -1,5 +1,9 @@
 import type { BuildTaskStatus } from "@/lib/db/schema/enums";
-import { dueIso, type DueChip, matchesDueChip } from "@/lib/manufacturing/format";
+import {
+	dueIso,
+	type DueChip,
+	matchesDueChip,
+} from "@/lib/manufacturing/format";
 
 export const WorkListSorts = ["start", "project", "phase", "effort"] as const;
 export type WorkListSort = (typeof WorkListSorts)[number];

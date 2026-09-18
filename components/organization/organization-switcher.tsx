@@ -3,6 +3,7 @@
 import NiceModal from "@ebay/nice-modal-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+	Building2Icon,
 	CheckIcon,
 	ChevronsUpDownIcon,
 	PlusIcon,
@@ -17,11 +18,11 @@ import { OrganizationLogo } from "@/components/organization/organization-logo";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
 	Command,
+	CommandEmpty,
 	CommandGroup,
 	CommandInput,
 	CommandItem,
 	CommandList,
-	CommandSeparator,
 } from "@/components/ui/command";
 import {
 	Popover,
@@ -36,7 +37,6 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PersonalAccountAvatar } from "@/components/user/personal-account-avatar";
 import { appConfig } from "@/config/app.config";
 import { useProgressRouter } from "@/hooks/use-progress-router";
 import { useSession } from "@/hooks/use-session";
@@ -48,7 +48,8 @@ import { clearOrganizationScopedQueries } from "@/trpc/query-client";
 /**
  * Organization switcher component that uses Better Auth's activeOrganization.
  * When switching organizations, it calls setActive() to update the session,
- * then navigates to the organization's dashboard.
+ * then navigates to the organization's dashboard. There is no personal
+ * account entry: users always work inside an organization.
  */
 export function OrganizationSwitcher(): React.JSX.Element | null {
 	const { user } = useSession();
@@ -60,9 +61,7 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 	const { data: allOrganizations, isLoading: isOrgsLoading } =
 		trpc.organization.list.useQuery();
 	const { state: sidebarState } = useSidebar();
-	const isAdminArea = pathname?.startsWith("/dashboard/admin");
-	const isOrganizationArea = pathname?.startsWith("/dashboard/organization");
-	const isPersonalArea = !isAdminArea && !isOrganizationArea;
+	const isAdminArea = pathname?.startsWith("/dashboard/admin") ?? false;
 
 	const [open, setOpen] = React.useState(false);
 	const [selectedValue, setSelectedValue] = React.useState<string>("");
@@ -87,9 +86,9 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 
 	React.useEffect(() => {
 		if (open) {
-			setSelectedValue(activeOrganization?.id ?? user?.id ?? "");
+			setSelectedValue(activeOrganization?.id ?? "");
 		}
-	}, [open, activeOrganization, user]);
+	}, [open, activeOrganization]);
 
 	const handleSelectOrganization = async (organizationId: string) => {
 		try {
@@ -111,30 +110,8 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 		setOpen(false);
 	};
 
-	const handleSelectPersonalAccount = async () => {
-		try {
-			// Unset the active organization
-			await authClient.organization.setActive({
-				organizationId: null,
-			});
-			// Clear only organization-scoped queries when leaving organization context
-			// while preserving user-level queries to avoid flickering
-			clearOrganizationScopedQueries(queryClient);
-			router.replace("/dashboard");
-		} catch (error) {
-			// Log the error for debugging but don't expose details to user
-			console.error("Failed to switch to personal account:", error);
-			// Keep popover open so user can retry
-			return;
-		}
-		setOpen(false);
-	};
-
-	const Icon = (props: { type: "personal" | "organization"; id?: string }) => {
-		const isChecked =
-			props.type === "personal"
-				? isPersonalArea
-				: isOrganizationArea && activeOrganization?.id === props.id;
+	const CheckedIndicator = (props: { id: string }) => {
+		const isChecked = !isAdminArea && activeOrganization?.id === props.id;
 		return (
 			<div
 				className={cn(
@@ -193,22 +170,22 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 									<div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-foreground text-background">
 										<ShieldIcon className="size-4" />
 									</div>
-								) : activeOrganization && isOrganizationArea ? (
+								) : activeOrganization ? (
 									<OrganizationLogo
 										className="size-6"
 										name={activeOrganization.name}
 										src={activeOrganization.logo}
 									/>
 								) : (
-									<PersonalAccountAvatar className="size-6 after:border-0" />
+									<div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+										<Building2Icon className="size-4" />
+									</div>
 								)}
 								<div className="flex flex-1 flex-col items-start gap-0.5 overflow-hidden text-left group-data-[collapsible=icon]:hidden">
 									<span className="block w-full truncate leading-none font-semibold">
 										{isAdminArea
 											? "Admin Panel"
-											: activeOrganization && isOrganizationArea
-												? activeOrganization.name
-												: "Personal"}
+											: (activeOrganization?.name ?? "Select organization")}
 									</span>
 								</div>
 								<ChevronsUpDownIcon className="ml-auto block size-4 shrink-0 text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden" />
@@ -223,55 +200,43 @@ export function OrganizationSwitcher(): React.JSX.Element | null {
 						>
 							<CommandInput className="h-9" placeholder="Search..." />
 							<CommandList>
-								<CommandItem
-									className="mx-1 mt-1 cursor-pointer"
-									onSelect={handleSelectPersonalAccount}
-									showCheckmark={false}
-									value={user.id}
-								>
-									<PersonalAccountAvatar className="size-6 shrink-0 after:border-0" />
-									<span className="mr-2">Personal</span>
-									<Icon type="personal" />
-								</CommandItem>
+								<CommandEmpty>No organization found.</CommandEmpty>
 								{Array.isArray(allOrganizations) &&
 									allOrganizations.length > 0 && (
-										<>
-											<CommandSeparator className="my-1" />
-											<CommandGroup
-												heading={`Your Organizations (${allOrganizations.length})`}
-											>
-												{allOrganizations.map((organization) => (
-													<CommandItem
-														className={cn(
-															"group flex cursor-pointer justify-between transition-colors",
-															{
-																"bg-muted":
-																	isOrganizationArea &&
-																	activeOrganization?.id === organization.id,
-															},
-														)}
-														key={organization.id}
-														onSelect={() =>
-															handleSelectOrganization(organization.id)
-														}
-														showCheckmark={false}
-														value={organization.id}
-													>
-														<div className="flex items-center">
-															<OrganizationLogo
-																className="mr-2 size-5 shrink-0"
-																name={organization.name}
-																src={organization.logo}
-															/>
-															<span className="mr-2 max-w-[165px] truncate">
-																{organization.name}
-															</span>
-														</div>
-														<Icon id={organization.id} type="organization" />
-													</CommandItem>
-												))}
-											</CommandGroup>
-										</>
+										<CommandGroup
+											heading={`Your Organizations (${allOrganizations.length})`}
+										>
+											{allOrganizations.map((organization) => (
+												<CommandItem
+													className={cn(
+														"group flex cursor-pointer justify-between transition-colors",
+														{
+															"bg-muted":
+																!isAdminArea &&
+																activeOrganization?.id === organization.id,
+														},
+													)}
+													key={organization.id}
+													onSelect={() =>
+														handleSelectOrganization(organization.id)
+													}
+													showCheckmark={false}
+													value={organization.id}
+												>
+													<div className="flex items-center">
+														<OrganizationLogo
+															className="mr-2 size-5 shrink-0"
+															name={organization.name}
+															src={organization.logo}
+														/>
+														<span className="mr-2 max-w-[165px] truncate">
+															{organization.name}
+														</span>
+													</div>
+													<CheckedIndicator id={organization.id} />
+												</CommandItem>
+											))}
+										</CommandGroup>
 									)}
 							</CommandList>
 						</Command>

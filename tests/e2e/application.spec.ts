@@ -51,9 +51,14 @@ test("owner can navigate account and organization surfaces", async ({
 	page,
 }) => {
 	await signIn(page, "owner@e2e.local");
+	// A user with a single organization lands straight on its dashboard;
+	// there is no personal area.
+	await expect(page).toHaveURL(/\/dashboard\/organization$/);
 	await expect(
-		page.getByRole("heading", { name: "Your Organizations" }),
+		page.getByRole("button", { name: /E2E Organization/ }),
 	).toBeVisible();
+	await page.getByRole("button", { name: /E2E Organization/ }).click();
+	await expect(page.getByText("Personal", { exact: true })).toBeHidden();
 	await page.getByRole("button", { name: "Create an Organization" }).click();
 	const createOrganizationDialog = page.getByRole("dialog", {
 		name: "Create Organization",
@@ -79,6 +84,11 @@ test("owner can navigate account and organization surfaces", async ({
 	await commandDialog.getByText("Profile", { exact: true }).click();
 	await expect(page).toHaveURL(/\/dashboard\/settings\?tab=profile/);
 	await expect(page.getByLabel("Current Email")).toBeDisabled();
+	// Account settings keep the organization sidebar.
+	await expect(
+		page.getByRole("button", { name: /E2E Organization/ }),
+	).toBeVisible();
+	await expect(page.getByRole("link", { name: "Projects" })).toBeVisible();
 	await page.getByRole("button", { name: /E2E Owner/ }).click();
 	await page.getByRole("menuitem", { name: /Command Menu/ }).click();
 	await expect(commandDialog).toBeVisible();
@@ -94,8 +104,10 @@ test("owner can navigate account and organization surfaces", async ({
 	await page.keyboard.press("Escape");
 	await expect(commandDialog).toBeHidden();
 	await waitForModalHistoryRelease(page);
+	// /dashboard always resolves to the active organization.
 	await page.goto("/dashboard");
-	await page.getByRole("button", { name: /Personal/ }).click();
+	await expect(page).toHaveURL(/\/dashboard\/organization$/);
+	await page.getByRole("button", { name: /E2E Organization/ }).click();
 	const organizationSearch = page.getByPlaceholder("Search...");
 	await organizationSearch.fill("E2E Organization");
 	await organizationSearch.press("Enter");
@@ -158,15 +170,17 @@ test("owner can navigate account and organization surfaces", async ({
 	const mobileSidebar = page.getByRole("dialog", { name: "Sidebar" });
 	await expect(mobileSidebar).toBeVisible();
 	await expect(
-		mobileSidebar.getByRole("link", { name: "Security" }),
+		mobileSidebar.getByRole("link", { name: "Members" }),
 	).toBeVisible();
 	await page.keyboard.press("Escape");
 	await expect(mobileSidebar).toBeHidden();
 	await expect(sidebarTrigger).toBeFocused();
 
 	await sidebarTrigger.click();
-	await mobileSidebar.getByRole("link", { name: "Security" }).click();
-	await expect(page).toHaveURL(/\/dashboard\/settings\?tab=security/);
+	await mobileSidebar.getByRole("link", { name: "Members" }).click();
+	await expect(page).toHaveURL(
+		/\/dashboard\/organization\/settings\?tab=members/,
+	);
 	await expect(mobileSidebar).toBeHidden();
 });
 

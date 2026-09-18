@@ -28,6 +28,7 @@ import {
 	getOwnedBuildTask,
 	syncBuildStatus,
 } from "@/lib/manufacturing/builds";
+import { matchesDueRange } from "@/lib/manufacturing/format";
 import {
 	extractMentionedUserIds,
 	sanitizeMentions,
@@ -36,7 +37,6 @@ import {
 	notifyTaskCommented,
 	notifyTaskStatusChanged,
 } from "@/lib/manufacturing/notifications";
-import { matchesDueRange } from "@/lib/manufacturing/format";
 import { assertCanPlan, canPlan } from "@/lib/manufacturing/permissions";
 import { normalizeContentType } from "@/lib/manufacturing/uploads";
 import { getSignedUploadUrl, getSignedUrl } from "@/lib/storage";

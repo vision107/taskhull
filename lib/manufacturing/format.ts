@@ -83,12 +83,10 @@ export function formatTaskDueLabel(
 	};
 }
 
-export function dueIso(
-	task: {
-		endDate?: string | Date | null;
-		startDate?: string | Date | null;
-	},
-): string | null {
+export function dueIso(task: {
+	endDate?: string | Date | null;
+	startDate?: string | Date | null;
+}): string | null {
 	const due =
 		dueDateFromEnd(task.endDate, task.startDate) ??
 		(task.startDate ? parseDate(task.startDate) : null);

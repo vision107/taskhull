@@ -133,16 +133,23 @@ describe("due chips", () => {
 
 	it("does not treat a finished past task as overdue", () => {
 		expect(
-			matchesDueChip({ endDate: "2026-03-10", status: "done" }, "overdue", today),
+			matchesDueChip(
+				{ endDate: "2026-03-10", status: "done" },
+				"overdue",
+				today,
+			),
 		).toBe(false);
 	});
 
 	it("filters an inclusive due range by the displayed due date", () => {
 		const task = { endDate: "2026-03-20", startDate: "2026-03-18" };
 		expect(dueIso(task)).toBe("2026-03-19");
-		expect(matchesDueRange(task, { dueAfter: "2026-03-19", dueBefore: "2026-03-19" })).toBe(
-			true,
-		);
+		expect(
+			matchesDueRange(task, {
+				dueAfter: "2026-03-19",
+				dueBefore: "2026-03-19",
+			}),
+		).toBe(true);
 		expect(matchesDueRange(task, { dueBefore: "2026-03-18" })).toBe(false);
 	});
 });

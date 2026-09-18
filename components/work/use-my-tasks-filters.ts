@@ -49,7 +49,9 @@ export function useMyTasksFilters(): {
 	);
 	const [sort, setSort] = useQueryState(
 		"sort",
-		parseAsStringLiteral(WorkListSorts).withDefault("start").withOptions(urlOptions),
+		parseAsStringLiteral(WorkListSorts)
+			.withDefault("start")
+			.withOptions(urlOptions),
 	);
 	const [teamValue, setTeamValue] = useQueryState(
 		"view",

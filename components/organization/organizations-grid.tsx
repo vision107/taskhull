@@ -24,7 +24,8 @@ import { trpc } from "@/trpc/client";
 import { clearOrganizationScopedQueries } from "@/trpc/query-client";
 
 /**
- * Grid display of all organizations the user belongs to.
+ * Grid display of all organizations the user belongs to, shown by the
+ * organization picker at /dashboard when no organization is active.
  * When an organization is selected, it sets it as active in the session
  * and navigates to the organization dashboard.
  */

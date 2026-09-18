@@ -182,6 +182,7 @@ subscribePush / unsubscribePush`, `lib/notifications/push.ts` (web‑push,
      organizations grid. `authConfig.redirectAfterSignIn` becomes
      `/dashboard/start`; `?redirectTo=` and invitation links keep priority
      (`getAuthRedirectPath`). Sidebar "Home" stays on `/dashboard`.
+     (Folded into `/dashboard` itself in Phase 10.)
   2. _Planner‑side task editing on the build page._ Router already has
      `build.createTask / updateTask / deleteTask`; add the UI:
      `components/manufacturing/build-task-modal.tsx` (NiceModal form: title,
@@ -369,8 +370,8 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
      `/dashboard/organization/tasks/[taskId]` (task view, shared by both
      roles); `/dashboard/notifications` is a real inbox page. The worker
      layout, header, tab bar and org picker are deleted; the organization
-     layout activates a single membership in place. `/dashboard/start` sends
-     members to My tasks and planners to the dashboard. Manifest, service
+     layout activates a single membership in place. `/dashboard` (Phase 10)
+     sends members to My tasks and planners to the dashboard. Manifest, service
      worker (`isAppPage`, cache `v2`), notification URLs and tests updated.
   4. _My tasks._ ✅ Full-width Asana-style list: collapsible sections, a
      column header once the list is wide enough (name, due, project,
@@ -392,6 +393,39 @@ contentType }` in `localStorage` and the (downscaled) blob in IndexedDB
      (`canPlan` chooses the editable planner pane or the worker pane).
      Assignment grid rows match the My tasks density (`text-13`, tighter
      cells, `size-5` avatars).
+
+- **Phase 10 — No personal area** ✅ People reach the app through their
+  employer, so the starter's "Personal" account space (own sidebar with
+  Home / Profile / Security / Sessions, organizations grid as home page) only
+  made the sidebar change shape when switching. Removed:
+  - `/dashboard` is now the landing resolver (the former `/dashboard/start`):
+    active organization → `homeForRole` (planner dashboard or My tasks),
+    single membership → activate it, otherwise a sidebar‑less organization
+    picker (also the empty state for users without
+    any organization, with sign‑out). `authConfig.redirectAfterSignIn` is
+    `/dashboard` again.
+  - One sidebar. `app/(saas)/dashboard/(sidebar)/(workspace)/layout.tsx`
+    (the former organization layout) now wraps `/organization/*`, the inbox
+    at `/dashboard/notifications` and the account settings at
+    `/dashboard/settings`, so the navigation never
+    changes; account settings are reached from the user menu (⇧⌘P) and the
+    command menu. The switcher lists organizations (and the admin panel for
+    platform admins) only; breadcrumbs drop the "Home" crumb.
+  - _Private to‑dos live inside the organization._ What people still want
+    from a personal space is a scratch list; that is now the "My notes"
+    section at the bottom of My tasks (`/dashboard/organization/my-tasks`,
+    "Mine" view, phone and desktop).
+    Table `private_task` scoped to `(organization_id, user_id)` with title,
+    notes, due date, done flag and an optional link to a `build_task`
+    (`ON DELETE SET NULL`). Router `organization.privateTask.{list, create,
+update, delete}` — every query filters by org **and** caller, so owners
+    cannot read a member's list; a linked task must belong to the same
+    organization. The list dies with the membership: `afterRemoveMember`
+    (also fired when someone leaves) deletes the rows. Quick add, tick off
+    and delete work offline through the write queue (`createPrivateTask`,
+    `updatePrivateTask`, `deletePrivateTask`; offline creates show as
+    read‑only "waiting to sync" rows); editing a note in the bottom sheet
+    needs a connection. Tests: `tests/trpc/routers/organization-private-task.test.ts`.
 
 ## Local setup
 

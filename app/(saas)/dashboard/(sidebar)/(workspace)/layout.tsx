@@ -15,18 +15,23 @@ import { canPlan } from "@/lib/manufacturing/permissions";
 
 import { OrganizationProviders } from "./providers";
 
-export type OrganizationLayoutProps = React.PropsWithChildren;
+export type WorkspaceLayoutProps = React.PropsWithChildren;
 
 /**
- * Organization layout that requires an active organization in the session.
- * Users who belong to exactly one organization get it activated in place (so
- * deep links from notifications work on a fresh device); everyone else is
- * sent to /dashboard to pick one.
- * If billing requires a plan and none is active, redirects to /dashboard/choose-plan.
+ * Sidebar shell for everything a signed-in user does in the web app: the
+ * organization pages under /dashboard/organization, the inbox at
+ * /dashboard/notifications and the account settings at /dashboard/settings.
+ * Always renders the organization sidebar so the navigation never changes
+ * shape.
+ *
+ * Requires an active organization in the session. Users who belong to exactly
+ * one organization get it activated in place (so deep links from notifications
+ * work on a fresh device); everyone else is sent to /dashboard to pick one. If
+ * billing requires a plan and none is active, redirects to /dashboard/choose-plan.
  */
-export default async function OrganizationLayout({
+export default async function WorkspaceLayout({
 	children,
-}: OrganizationLayoutProps): Promise<React.JSX.Element> {
+}: WorkspaceLayoutProps): Promise<React.JSX.Element> {
 	const session = await getSession();
 
 	// If no session, the auth middleware will handle redirect

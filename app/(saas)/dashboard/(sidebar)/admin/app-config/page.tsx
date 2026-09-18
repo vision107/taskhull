@@ -22,7 +22,6 @@ export default function AdminAppConfigPage(): React.JSX.Element {
 				<PagePrimaryBar>
 					<PageBreadcrumb
 						segments={[
-							{ label: "Home", href: "/dashboard" },
 							{ label: "Admin", href: "/dashboard/admin" },
 							{ label: "App Config" },
 						]}
