@@ -101,16 +101,16 @@ export function OrganizationMenuItems({
 					activePrefixes: [`${basePath}/tasks`],
 				},
 				{
-					label: t.nav.projects,
-					href: `${basePath}/projects`,
-					icon: FactoryIcon,
-					children: projectChildren,
-				},
-				{
 					label: t.nav.myList,
 					href: `${basePath}/my-list`,
 					icon: ListTodoIcon,
 					children: listChildren,
+				},
+				{
+					label: t.nav.projects,
+					href: `${basePath}/projects`,
+					icon: FactoryIcon,
+					children: projectChildren,
 				},
 				...(canPlan
 					? [
